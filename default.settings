@@ -1,0 +1,45 @@
+#########################################################################
+#           This is the default settings file for PyR@TE 3.             #
+# Feel free to adjust these settings depending on your usage of PyR@TE. #
+#########################################################################
+#     Note : if missing, this file will be automatically generated      #
+#                 by PyR@TE in its original form                        #
+#########################################################################
+
+
+# Printing
+
+VerboseLevel : Info
+
+# Default folders
+
+ResultsFolder : results/
+LogFolder : log/
+DisableLogFiles : False
+
+# Computation
+
+DefaultLoopLevel : 1
+CheckGaugeInvariance : True
+PrintComputationTimes : True
+
+RealBasis : adjoint
+
+
+# Output
+
+CreateFolder : True
+CopyModelFile : False
+
+LatexOutput : True
+AbsReplacements : True   #Automatic replacements x*conjugate(x) -> \abs{x}^2
+GroupTheoryInfo : True
+
+MathematicaOutput : True
+MathematicaSolver : True
+
+PythonOutput : True
+
+# User-defined commands to run after the computation
+
+EndCommands : "pdflatex [name].tex, pdflatex [name].tex"

@@ -1,0 +1,670 @@
+\documentclass[12pt]{article}
+\pagestyle{empty}
+
+\usepackage[top=2cm,bottom=2cm,left=3cm,right=2cm,nohead,nofoot]{geometry}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{bbm}
+\usepackage{booktabs}
+\usepackage[]{hyperref}
+\usepackage{autobreak}
+\usepackage{booktabs}
+\usepackage{multirow}
+\setlength{\parindent}{0pt}
+
+\newcommand{\tr}{\mathrm{Tr}}
+\newcommand{\trans}{\mathrm{T}}
+
+\title{SM}
+\author{PyR@TE 3.0}
+\date{7 April 2020, 14:46}
+
+\begin{document}
+    \maketitle
+    \tableofcontents
+    \clearpage
+
+\section{Model}{
+
+\subsection{Gauge groups}
+
+\begin{table}[h]
+\renewcommand{\arraystretch}{1.3}
+\centering
+\begin{tabular}{c@{\hskip .66cm}c@{\hskip .66cm}c@{\hskip .5cm}c}
+\hline
+Name & Type & Abelian & Coupling constant \\ \hline
+U1Y & $U(1)$ & True & $g_{1}$ \\
+SU2L & $SU(2)$ & False & $g_{2}$ \\
+SU3c & $SU(3)$ & False & $g_{3}$ \\ \hline
+\end{tabular}
+\end{table}
+
+\subsection{Fermions}
+
+\begin{table}[h]
+\renewcommand{\arraystretch}{1.15}
+\centering
+\begin{tabular}{c@{\hskip .66cm}c@{\hskip .66cm}c}
+\hline
+Name & Generations & U1Y $\times$ SU2L $\times$ SU3c\\ \hline \\ [-2ex]
+$Q$ & 3 & ($+\frac{1}{6}$, $\mathbf{2}$, $\mathbf{3}$) \\[.2cm]
+$L$ & 3 & ($- \frac{1}{2}$, $\mathbf{2}$, $\mathbf{1}$) \\[.2cm]
+$u_R$ & 3 & ($+\frac{2}{3}$, $\mathbf{1}$, $\mathbf{3}$) \\[.2cm]
+$d_R$ & 3 & ($- \frac{1}{3}$, $\mathbf{1}$, $\mathbf{3}$) \\[.2cm]
+$e_R$ & 3 & ($-1$, $\mathbf{1}$, $\mathbf{1}$) \\[.1cm] \hline
+\end{tabular}
+\end{table}
+
+\subsection{Scalars}
+
+\begin{table}[h]
+\renewcommand{\arraystretch}{1.15}
+\centering
+\begin{tabular}{c@{\hskip .66cm}c@{\hskip .66cm}ccc}
+\hline
+Name & Complex & Expression & Generations & U1Y $\times$ SU2L $\times$ SU3c\\ \hline \\ [-2ex]
+$H$ & True & $\frac{1}{\sqrt{2}} \left(\Pi + i\, \Sigma\right)$ & 1 & ($+\frac{1}{2}$, $\mathbf{2}$, $\mathbf{1}$) \\[.1cm] \hline
+\end{tabular}
+\end{table}
+
+\section{Lagrangian}
+
+\subsection{Definitions}
+{\allowdisplaybreaks
+\begin{align*}
+\tilde{H}_{i} &= \epsilon_{i,j} H^{\dagger}_{j}\\
+\end{align*}\subsection{Yukawa couplings}
+{\allowdisplaybreaks
+\begin{align*}
+\begin{autobreak}
+-\mathcal{L}_Y = 
+
++ Y_u{}_{f_1,f_2} \tilde{H}_{i} \overline{Q}_{f_{1},i,a} {u_R}_{f_{2},a}
+
++ Y_d{}_{f_1,f_2} \overline{Q}_{f_{1},i,a} H_{i} {d_R}_{f_{2},a}
+
++ Y_e{}_{f_1,f_2} \overline{L}_{f_{1},i} H_{i} {e_R}_{f_{2}}
+ + \text{h.c.}
+\end{autobreak}
+\end{align*}
+}\subsection{Quartic couplings}
+{\allowdisplaybreaks
+\begin{align*}
+\begin{autobreak}
+-\mathcal{L}_Q = 
+
++ \lambda H^{\dagger}_{i} H_{i} H^{\dagger}_{i_{1}} H_{i_{1}}
+\end{autobreak}
+\end{align*}
+}\subsection{Scalar mass couplings}
+{\allowdisplaybreaks
+\begin{align*}
+\begin{autobreak}
+-\mathcal{L}_{sm} = 
+
++ \mu H^{\dagger}_{i} H_{i}
+\end{autobreak}
+\end{align*}
+}
+
+\section{Renormalization Group Equations}
+\subsection{Convention}
+\begin{equation*}
+\beta\left(X\right) \equiv \mu \frac{d X}{d \mu}\equiv\frac{1}{\left(4 \pi\right)^{2}}\beta^{(1)}(X)+\frac{1}{\left(4 \pi\right)^{4}}\beta^{(2)}(X)
+\end{equation*}
+\subsection{Definitions and substitutions}
+\begin{equation*}
+Y_u=\begin{pmatrix}0 & 0 & 0\\0 & 0 & 0\\0 & 0 & y_t\end{pmatrix} \quad,\quad Y_d=\begin{pmatrix}0 & 0 & 0\\0 & 0 & 0\\0 & 0 & y_b\end{pmatrix} \quad,\quad Y_e=\begin{pmatrix}0 & 0 & 0\\0 & 0 & 0\\0 & 0 & y_\tau\end{pmatrix}
+\end{equation*}
+
+
+\subsection{Gauge couplings}
+{\allowdisplaybreaks
+
+\begin{align*}
+\begin{autobreak}
+\beta^{(1)}(g_{1}) =\frac{41}{10} g_{1}^{3}
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(2)}(g_{1}) =
+
++ \frac{199}{50} g_{1}^{5}
+
++ \frac{27}{10} g_{1}^{3} g_{2}^{2}
+
++ \frac{44}{5} g_{1}^{3} g_{3}^{2}
+
+-  \frac{17}{10} g_{1}^{3} \left|{y_t}\right|^{2}
+
+-  \frac{1}{2} g_{1}^{3} \left|{y_b}\right|^{2}
+
+-  \frac{3}{2} g_{1}^{3} \left|{y_\tau}\right|^{2}
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(1)}(g_{2}) =- \frac{19}{6} g_{2}^{3}
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(2)}(g_{2}) =
+
++ \frac{9}{10} g_{1}^{2} g_{2}^{3}
+
++ \frac{35}{6} g_{2}^{5}
+
++ 12 g_{2}^{3} g_{3}^{2}
+
+-  \frac{3}{2} g_{2}^{3} \left|{y_t}\right|^{2}
+
+-  \frac{3}{2} g_{2}^{3} \left|{y_b}\right|^{2}
+
+-  \frac{1}{2} g_{2}^{3} \left|{y_\tau}\right|^{2}
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(1)}(g_{3}) =-7 g_{3}^{3}
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(2)}(g_{3}) =
+
++ \frac{11}{10} g_{1}^{2} g_{3}^{3}
+
++ \frac{9}{2} g_{2}^{2} g_{3}^{3}
+
+- 26 g_{3}^{5}
+
+- 2 g_{3}^{3} \left|{y_t}\right|^{2}
+
+- 2 g_{3}^{3} \left|{y_b}\right|^{2}
+\end{autobreak}
+\end{align*}
+}
+
+\subsection{Yukawa couplings}
+{\allowdisplaybreaks
+
+\begin{align*}
+\begin{autobreak}
+\beta^{(1)}(y_t) =
+
++ \frac{9}{2} y_t \left|{y_t}\right|^{2}
+
++ y_t \left|{y_\tau}\right|^{2}
+
++ \frac{3}{2} y_t \left|{y_b}\right|^{2}
+
+-  \frac{17}{20} g_{1}^{2} y_t
+
+-  \frac{9}{4} g_{2}^{2} y_t
+
+- 8 g_{3}^{2} y_t
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(2)}(y_t) =
+
+- 12 y_t \left|{y_t}\right|^{4}
+
+-  \frac{1}{4} y_t \left|{y_b}\right|^{4}
+
+-  \frac{9}{4} y_t \left|{y_\tau}\right|^{4}
+
+-  \frac{11}{4} y_t \left|{y_b}\right|^{2} \left|{y_t}\right|^{2}
+
++ \frac{5}{4} y_t \left|{y_b}\right|^{2} \left|{y_\tau}\right|^{2}
+
+-  \frac{9}{4} y_t \left|{y_t}\right|^{2} \left|{y_\tau}\right|^{2}
+
+- 12 \lambda y_t \left|{y_t}\right|^{2}
+
++ 6 \lambda^{2} y_t
+
++ \frac{393}{80} g_{1}^{2} y_t \left|{y_t}\right|^{2}
+
++ \frac{225}{16} g_{2}^{2} y_t \left|{y_t}\right|^{2}
+
++ 36 g_{3}^{2} y_t \left|{y_t}\right|^{2}
+
++ \frac{15}{8} g_{1}^{2} y_t \left|{y_\tau}\right|^{2}
+
++ \frac{15}{8} g_{2}^{2} y_t \left|{y_\tau}\right|^{2}
+
++ \frac{7}{80} g_{1}^{2} y_t \left|{y_b}\right|^{2}
+
++ \frac{99}{16} g_{2}^{2} y_t \left|{y_b}\right|^{2}
+
++ 4 g_{3}^{2} y_t \left|{y_b}\right|^{2}
+
++ \frac{1187}{600} g_{1}^{4} y_t
+
+-  \frac{9}{20} g_{1}^{2} g_{2}^{2} y_t
+
++ \frac{19}{15} g_{1}^{2} g_{3}^{2} y_t
+
+-  \frac{23}{4} g_{2}^{4} y_t
+
++ 9 g_{2}^{2} g_{3}^{2} y_t
+
+- 108 g_{3}^{4} y_t
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(1)}(y_b) =
+
++ \frac{3}{2} y_b \left|{y_t}\right|^{2}
+
++ \frac{9}{2} y_b \left|{y_b}\right|^{2}
+
++ y_b \left|{y_\tau}\right|^{2}
+
+-  \frac{1}{4} g_{1}^{2} y_b
+
+-  \frac{9}{4} g_{2}^{2} y_b
+
+- 8 g_{3}^{2} y_b
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(2)}(y_b) =
+
+-  \frac{11}{4} y_b \left|{y_b}\right|^{2} \left|{y_t}\right|^{2}
+
+-  \frac{1}{4} y_b \left|{y_t}\right|^{4}
+
++ \frac{5}{4} y_b \left|{y_t}\right|^{2} \left|{y_\tau}\right|^{2}
+
+- 12 y_b \left|{y_b}\right|^{4}
+
+-  \frac{9}{4} y_b \left|{y_\tau}\right|^{4}
+
+-  \frac{9}{4} y_b \left|{y_b}\right|^{2} \left|{y_\tau}\right|^{2}
+
+- 12 \lambda y_b \left|{y_b}\right|^{2}
+
++ 6 \lambda^{2} y_b
+
++ \frac{91}{80} g_{1}^{2} y_b \left|{y_t}\right|^{2}
+
++ \frac{99}{16} g_{2}^{2} y_b \left|{y_t}\right|^{2}
+
++ 4 g_{3}^{2} y_b \left|{y_t}\right|^{2}
+
++ \frac{237}{80} g_{1}^{2} y_b \left|{y_b}\right|^{2}
+
++ \frac{225}{16} g_{2}^{2} y_b \left|{y_b}\right|^{2}
+
++ 36 g_{3}^{2} y_b \left|{y_b}\right|^{2}
+
++ \frac{15}{8} g_{1}^{2} y_b \left|{y_\tau}\right|^{2}
+
++ \frac{15}{8} g_{2}^{2} y_b \left|{y_\tau}\right|^{2}
+
+-  \frac{127}{600} g_{1}^{4} y_b
+
+-  \frac{27}{20} g_{1}^{2} g_{2}^{2} y_b
+
++ \frac{31}{15} g_{1}^{2} g_{3}^{2} y_b
+
+-  \frac{23}{4} g_{2}^{4} y_b
+
++ 9 g_{2}^{2} g_{3}^{2} y_b
+
+- 108 g_{3}^{4} y_b
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(1)}(y_\tau) =
+
++ 3 y_\tau \left|{y_t}\right|^{2}
+
++ 3 y_\tau \left|{y_b}\right|^{2}
+
++ \frac{5}{2} y_\tau \left|{y_\tau}\right|^{2}
+
+-  \frac{9}{4} g_{1}^{2} y_\tau
+
+-  \frac{9}{4} g_{2}^{2} y_\tau
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(2)}(y_\tau) =
+
+-  \frac{27}{4} y_\tau \left|{y_t}\right|^{2} \left|{y_\tau}\right|^{2}
+
++ \frac{3}{2} y_\tau \left|{y_b}\right|^{2} \left|{y_t}\right|^{2}
+
+-  \frac{27}{4} y_\tau \left|{y_b}\right|^{2} \left|{y_\tau}\right|^{2}
+
+-  \frac{27}{4} y_\tau \left|{y_t}\right|^{4}
+
+-  \frac{27}{4} y_\tau \left|{y_b}\right|^{4}
+
+- 3 y_\tau \left|{y_\tau}\right|^{4}
+
+- 12 \lambda y_\tau \left|{y_\tau}\right|^{2}
+
++ 6 \lambda^{2} y_\tau
+
++ \frac{17}{8} g_{1}^{2} y_\tau \left|{y_t}\right|^{2}
+
++ \frac{45}{8} g_{2}^{2} y_\tau \left|{y_t}\right|^{2}
+
++ 20 g_{3}^{2} y_\tau \left|{y_t}\right|^{2}
+
++ \frac{5}{8} g_{1}^{2} y_\tau \left|{y_b}\right|^{2}
+
++ \frac{45}{8} g_{2}^{2} y_\tau \left|{y_b}\right|^{2}
+
++ 20 g_{3}^{2} y_\tau \left|{y_b}\right|^{2}
+
++ \frac{537}{80} g_{1}^{2} y_\tau \left|{y_\tau}\right|^{2}
+
++ \frac{165}{16} g_{2}^{2} y_\tau \left|{y_\tau}\right|^{2}
+
++ \frac{1371}{200} g_{1}^{4} y_\tau
+
++ \frac{27}{20} g_{1}^{2} g_{2}^{2} y_\tau
+
+-  \frac{23}{4} g_{2}^{4} y_\tau
+\end{autobreak}
+\end{align*}
+}
+
+\subsection{Quartic couplings}
+{\allowdisplaybreaks
+
+\begin{align*}
+\begin{autobreak}
+\beta^{(1)}(\lambda) =
+
++ 24 \lambda^{2}
+
+-  \frac{9}{5} g_{1}^{2} \lambda
+
+- 9 g_{2}^{2} \lambda
+
++ \frac{27}{200} g_{1}^{4}
+
++ \frac{9}{20} g_{1}^{2} g_{2}^{2}
+
++ \frac{9}{8} g_{2}^{4}
+
++ 12 \lambda \left|{y_t}\right|^{2}
+
++ 12 \lambda \left|{y_b}\right|^{2}
+
++ 4 \lambda \left|{y_\tau}\right|^{2}
+
+- 6 \left|{y_t}\right|^{4}
+
+- 6 \left|{y_b}\right|^{4}
+
+- 2 \left|{y_\tau}\right|^{4}
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(2)}(\lambda) =
+
+- 312 \lambda^{3}
+
++ \frac{108}{5} g_{1}^{2} \lambda^{2}
+
++ 108 g_{2}^{2} \lambda^{2}
+
++ \frac{1887}{200} g_{1}^{4} \lambda
+
++ \frac{117}{20} g_{1}^{2} g_{2}^{2} \lambda
+
+-  \frac{73}{8} g_{2}^{4} \lambda
+
+-  \frac{3411}{2000} g_{1}^{6}
+
+-  \frac{1677}{400} g_{1}^{4} g_{2}^{2}
+
+-  \frac{289}{80} g_{1}^{2} g_{2}^{4}
+
++ \frac{305}{16} g_{2}^{6}
+
+- 144 \lambda^{2} \left|{y_t}\right|^{2}
+
+- 144 \lambda^{2} \left|{y_b}\right|^{2}
+
+- 48 \lambda^{2} \left|{y_\tau}\right|^{2}
+
++ \frac{17}{2} g_{1}^{2} \lambda \left|{y_t}\right|^{2}
+
++ \frac{5}{2} g_{1}^{2} \lambda \left|{y_b}\right|^{2}
+
++ \frac{15}{2} g_{1}^{2} \lambda \left|{y_\tau}\right|^{2}
+
++ \frac{45}{2} g_{2}^{2} \lambda \left|{y_t}\right|^{2}
+
++ \frac{45}{2} g_{2}^{2} \lambda \left|{y_b}\right|^{2}
+
++ \frac{15}{2} g_{2}^{2} \lambda \left|{y_\tau}\right|^{2}
+
++ 80 g_{3}^{2} \lambda \left|{y_t}\right|^{2}
+
++ 80 g_{3}^{2} \lambda \left|{y_b}\right|^{2}
+
+-  \frac{171}{100} g_{1}^{4} \left|{y_t}\right|^{2}
+
++ \frac{9}{20} g_{1}^{4} \left|{y_b}\right|^{2}
+
+-  \frac{9}{4} g_{1}^{4} \left|{y_\tau}\right|^{2}
+
++ \frac{63}{10} g_{1}^{2} g_{2}^{2} \left|{y_t}\right|^{2}
+
++ \frac{27}{10} g_{1}^{2} g_{2}^{2} \left|{y_b}\right|^{2}
+
++ \frac{33}{10} g_{1}^{2} g_{2}^{2} \left|{y_\tau}\right|^{2}
+
+-  \frac{9}{4} g_{2}^{4} \left|{y_t}\right|^{2}
+
+-  \frac{9}{4} g_{2}^{4} \left|{y_b}\right|^{2}
+
+-  \frac{3}{4} g_{2}^{4} \left|{y_\tau}\right|^{2}
+
+- 3 \lambda \left|{y_t}\right|^{4}
+
+- 42 \lambda \left|{y_b}\right|^{2} \left|{y_t}\right|^{2}
+
+- 3 \lambda \left|{y_b}\right|^{4}
+
+-  \lambda \left|{y_\tau}\right|^{4}
+
+-  \frac{8}{5} g_{1}^{2} \left|{y_t}\right|^{4}
+
++ \frac{4}{5} g_{1}^{2} \left|{y_b}\right|^{4}
+
+-  \frac{12}{5} g_{1}^{2} \left|{y_\tau}\right|^{4}
+
+- 32 g_{3}^{2} \left|{y_t}\right|^{4}
+
+- 32 g_{3}^{2} \left|{y_b}\right|^{4}
+
++ 30 \left|{y_t}\right|^{6}
+
+- 6 \left|{y_b}\right|^{4} \left|{y_t}\right|^{2}
+
+- 6 \left|{y_b}\right|^{2} \left|{y_t}\right|^{4}
+
++ 30 \left|{y_b}\right|^{6}
+
++ 10 \left|{y_\tau}\right|^{6}
+\end{autobreak}
+\end{align*}
+}
+
+\subsection{Scalar mass couplings}
+{\allowdisplaybreaks
+
+\begin{align*}
+\begin{autobreak}
+\beta^{(1)}(\mu) =
+
+-  \frac{9}{10} g_{1}^{2} \mu
+
+-  \frac{9}{2} g_{2}^{2} \mu
+
++ 12 \lambda \mu
+
++ 6 \mu \left|{y_t}\right|^{2}
+
++ 6 \mu \left|{y_b}\right|^{2}
+
++ 2 \mu \left|{y_\tau}\right|^{2}
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(2)}(\mu) =
+
++ \frac{1671}{400} g_{1}^{4} \mu
+
++ \frac{9}{8} g_{1}^{2} g_{2}^{2} \mu
+
+-  \frac{145}{16} g_{2}^{4} \mu
+
++ \frac{72}{5} g_{1}^{2} \lambda \mu
+
++ 72 g_{2}^{2} \lambda \mu
+
+- 60 \lambda^{2} \mu
+
++ \frac{17}{4} g_{1}^{2} \mu \left|{y_t}\right|^{2}
+
++ \frac{5}{4} g_{1}^{2} \mu \left|{y_b}\right|^{2}
+
++ \frac{15}{4} g_{1}^{2} \mu \left|{y_\tau}\right|^{2}
+
++ \frac{45}{4} g_{2}^{2} \mu \left|{y_t}\right|^{2}
+
++ \frac{45}{4} g_{2}^{2} \mu \left|{y_b}\right|^{2}
+
++ \frac{15}{4} g_{2}^{2} \mu \left|{y_\tau}\right|^{2}
+
++ 40 g_{3}^{2} \mu \left|{y_t}\right|^{2}
+
++ 40 g_{3}^{2} \mu \left|{y_b}\right|^{2}
+
+- 72 \lambda \mu \left|{y_t}\right|^{2}
+
+- 72 \lambda \mu \left|{y_b}\right|^{2}
+
+- 24 \lambda \mu \left|{y_\tau}\right|^{2}
+
+-  \frac{27}{2} \mu \left|{y_t}\right|^{4}
+
+- 21 \mu \left|{y_b}\right|^{2} \left|{y_t}\right|^{2}
+
+-  \frac{27}{2} \mu \left|{y_b}\right|^{4}
+
+-  \frac{9}{2} \mu \left|{y_\tau}\right|^{4}
+\end{autobreak}
+\end{align*}
+}
+
+\subsection{Vacuum-expectation values}
+{\allowdisplaybreaks
+
+\textbf{Definitions:}
+\begin{align*}
+	H \; : \; \frac{1}{\sqrt{2}}{\Pi}_{2} &\rightarrow \frac{1}{\sqrt{2}}\left({\Pi}_{2} + v\right)
+\end{align*}
+
+\textbf{Gauge fixing:}\\
+\begin{equation*}
+\xi \rightarrow 1
+\end{equation*}
+\textbf{RGEs:}
+
+\begin{align*}
+\begin{autobreak}
+\beta^{(1)}(v) =
+
++ \frac{3}{5} g_{1}^{2} v
+
++ 3 g_{2}^{2} v
+
+- 3 v \left|{y_t}\right|^{2}
+
+- 3 v \left|{y_b}\right|^{2}
+
+-  v \left|{y_\tau}\right|^{2}
+\end{autobreak}
+\end{align*}
+\begin{align*}
+\begin{autobreak}
+\beta^{(2)}(v) =
+
+-  \frac{1221}{800} g_{1}^{4} v
+
++ \frac{9}{16} g_{1}^{2} g_{2}^{2} v
+
++ \frac{199}{32} g_{2}^{4} v
+
+-  \frac{103}{40} g_{1}^{2} v \left|{y_t}\right|^{2}
+
+-  \frac{43}{40} g_{1}^{2} v \left|{y_b}\right|^{2}
+
+-  \frac{81}{40} g_{1}^{2} v \left|{y_\tau}\right|^{2}
+
+-  \frac{63}{8} g_{2}^{2} v \left|{y_t}\right|^{2}
+
+-  \frac{63}{8} g_{2}^{2} v \left|{y_b}\right|^{2}
+
+-  \frac{21}{8} g_{2}^{2} v \left|{y_\tau}\right|^{2}
+
+- 20 g_{3}^{2} v \left|{y_t}\right|^{2}
+
+- 20 g_{3}^{2} v \left|{y_b}\right|^{2}
+
++ \frac{27}{4} v \left|{y_t}\right|^{4}
+
+-  \frac{3}{2} v \left|{y_b}\right|^{2} \left|{y_t}\right|^{2}
+
++ \frac{27}{4} v \left|{y_b}\right|^{4}
+
++ \frac{9}{4} v \left|{y_\tau}\right|^{4}
+
+- 6 \lambda^{2} v
+\end{autobreak}
+\end{align*}
+}
+\clearpage
+
+\appendix
+\section{Group theoretical information}
+\subsection{Gauge groups}
+
+\begin{table}[h]
+\renewcommand{\arraystretch}{1.1}
+\centering
+\begin{tabular}{@{}ccccccc@{}}
+\toprule
+\multirow{2}{*}{Group} & \multirow{2}{*}{Lie algebra} & \multirow{2}{*}{Dim.} & \multirow{2}{*}{Rank} & \multicolumn{3}{c}{Representations}       \\ \cmidrule(l){5-7}
+                       &                              &                       &                       & Name / Dim. & Dynkin labels & Type        \\ \midrule
+\multirow{2}{*}{SU2} & \multirow{2}{*}{A1} & \multirow{2}{*}{3} & \multirow{2}{*}{1} & $\mathbf{2}$ & [1] & Pseudo-real\\
+ &  &  &  & $\overline{\mathbf{2}}$ & [1, True] & Pseudo-real\\\bottomrule
+\multirow{2}{*}{SU3} & \multirow{2}{*}{A2} & \multirow{2}{*}{8} & \multirow{2}{*}{2} & $\mathbf{3}$ & [1, 0] & Complex\\
+ &  &  &  & $\overline{\mathbf{3}}$ & [0, 1] & Complex\\\bottomrule
+\end{tabular}
+\end{table}
+
+\end{document}

@@ -1,0 +1,119 @@
+# YAML 1.1
+---
+Author: Lohan Sartore
+Date: 07.04.2020
+Name: SU5
+Groups: {SU5: SU5}
+
+#################################
+# Fermions assumed weyl spinors #
+#################################
+
+Fermions: {
+    q5: {Gen: 3, Qnb:{ SU5 : -5}},
+    q10: {Gen: 3, Qnb:{ SU5: 10}},
+}
+
+################
+# Real Scalars #
+################
+
+RealScalars: {
+    phi24: {Gen: 1, Qnb:{ SU5: 24}},
+}
+
+###################
+# Complex Scalars #
+###################
+
+CplxScalars: {
+   H: {RealFields:[Hr, Hi], Norm: 1/Sqrt(2), Qnb:{ SU5: 5 }},
+}
+
+
+Potential: {
+
+Definitions:{
+    # 
+    tFond : t(SU5, [1,0,0,0]),
+    Sigma[i,j]: tFond[a,i,j]*phi24[a],
+    Tr2 : Sigma[i,j] Sigma[j,i],
+    Tr4 : Sigma[i,j] Sigma[j,k] Sigma[k,l] Sigma[l,i],
+
+    # CGCs
+    Cyuk5 : cgc(SU5, q5, Hbar, q10),
+    Cyuk10 : cgc(SU5, q10, H, q10),
+    # Ctrip : cgc(SU5, phi24, phi24, phi24, 0)
+},
+
+#########################################
+# All particles must be defined above ! #
+#########################################
+
+Yukawas: {
+    Y5 : Cyuk5[i,j,k] q5[i] Hbar[j] q10[k],
+    Y10 : 1/8 * Cyuk10[i,j,k] q10[i] H[j] q10[k],
+},
+
+QuarticTerms: {
+    lambda1 : 1/2*Tr2**2,
+    lambda2 : Tr4,
+    lambda3 : 1/2 (Hbar[i] H[i])**2,
+    lambda4 : Hbar[i] H[i] * Tr2,
+    lambda5 : Hbar[i] Sigma[i,j] Sigma[j,k] H[k]
+},
+
+ScalarMasses: {
+},
+
+TrilinearTerms: {
+    #T : Ctrip[i,j,k] phi24[i] phi24[j] phi24[k],
+    #t2 : Sigma[i,j] Sigma[j,k] Sigma[k,i]
+},
+
+FermionMasses: {
+}
+
+}
+
+Vevs: {
+}
+
+
+Substitutions: {
+    # Gauge coupling
+    g_SU5 : g
+    
+}
+
+Latex: {
+    # Particles
+    
+    q5 : \psi_{\bar{5}},
+    q10: \psi_{10},
+    phi24: \phi_{24},
+    
+    Hr : H_r,
+    Hi : H_i,
+    
+    # Defined quantities
+    
+    tFond : t_{F},
+    Sigma : \Sigma,
+    Tr2 : Tr_2,
+    Tr4 : Tr_4,
+    Cyuk5 : C_{yuk}^5,
+    Cyuk10 : C_{yuk}^{10}
+    
+    # Couplings
+    
+    Y5 : Y_5,
+    Y10 : Y_{10},
+    lambda1 : \lambda_1,
+    lambda2 : \lambda_2,
+    lambda3 : \lambda_3,
+    lambda4 : \lambda_4,
+    lambda5 : \lambda_5,
+    
+}
+

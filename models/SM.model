@@ -1,0 +1,108 @@
+# YAML 1.1
+---
+Author: Lohan Sartore
+Date: 01.04.2020
+Name: SM
+Groups: {U1Y: U1, SU2L: SU2, SU3c: SU3}
+
+#################################
+# Fermions assumed weyl spinors #
+#################################
+
+Fermions: {
+    Q: {Gen: 3, Qnb:{ U1Y: 1/6, SU2L: 2, SU3c: 3}},
+    L: {Gen: 3, Qnb:{ U1Y: -1/2, SU2L: 2, SU3c: 1}},
+    uR: {Gen: 3, Qnb:{ U1Y: 2/3, SU2L: 1, SU3c: 3}},
+    dR: {Gen: 3, Qnb:{ U1Y: -1/3, SU2L: 1, SU3c: 3}},
+    eR: {Gen: 3, Qnb:{ U1Y: -1, SU2L: 1, SU3c: 1}},
+}
+
+################
+# Real Scalars #
+################
+
+RealScalars: {
+}
+
+###################
+# Complex Scalars #
+###################
+
+CplxScalars: {
+    H: {RealFields: [Pi, Sigma], Norm: 1/Sqrt(2), Qnb: {U1Y: 1/2, SU2L: 2, SU3c: 1}},
+}
+
+
+Potential: {
+
+Definitions:{
+    Htilde[i] : Eps[i,j]*Hbar[j]
+},
+
+#########################################
+# All particles must be defined above ! #
+#########################################
+
+Yukawas:{
+    Yu : Qbar[i,a] Htilde[i] uR[a],
+    Yd : Qbar[i,a] H[i] dR[a]
+    Ye : Lbar[i] H[i] eR,
+},
+
+QuarticTerms: {
+    lambda : (Hbar[i] H[i])**2,
+},
+
+ScalarMasses: {
+    mu : Hbar[i] H[i],
+}
+
+}
+
+Vevs: {
+    v: Pi[2]
+}
+
+GaugeParameter : 1
+
+Substitutions: {
+    # Rename the gauge coupling constants
+    g_U1Y : g_1,
+    g_SU2L : g_2,
+    g_SU3c : g_3,
+    
+    # Possibly define GUT normalizations
+    g_1 : sqrt(5/3) * g_1,
+    
+    # Substitutions for Yukawa matrices
+    Yu : [0, 0, 'yt'],
+    Yd : [0, 0, 'yb'],
+    Ye : [0, 0, 'ytau']
+}
+
+Latex: {
+    # Particles
+    
+    uR : u_R,
+    dR : d_R,
+    eR : e_R,
+    
+    Pi : \Pi,
+    Sigma : \Sigma,
+    
+    Htilde : \tilde{H},
+    
+    # Couplings
+    
+    Yu : Y_u,
+    Yd : Y_d,
+    Ye : Y_e,
+    
+    lambda : \lambda,
+    mu : \mu,
+    
+    yt : y_t,
+    yb : y_b,
+    ytau: y_\tau
+}
+

@@ -1,0 +1,104 @@
+# YAML 1.1
+---
+Author: Lohan Sartore
+Date: 07.04.2020
+Name: SM_B-L
+Groups: {U1Y: U1, U1BL: U1, SU2L: SU2, SU3c: SU3}
+
+
+##############################
+#Fermions assumed weyl spinors
+##############################
+
+Fermions: {
+    Q: {Gen: 3, Qnb:{U1BL: 1/3, U1Y: 1/6, SU2L: 2, SU3c: 3}},
+    L: {Gen: 3, Qnb:{U1BL: -1, U1Y: -1/2, SU2L: 2, SU3c: 1}},
+    uR: {Gen: 3, Qnb:{U1BL: 1/3, U1Y: 2/3, SU2L: 1, SU3c: 3}},
+    dR: {Gen: 3, Qnb:{U1BL: 1/3, U1Y: -1/3, SU2L: 1, SU3c: 3}},
+    eR: {Gen: 3, Qnb:{U1BL: -1, U1Y: -1, SU2L: 1, SU3c: 1}},
+    nuR: {Gen: 3, Qnb:{U1BL: -1, U1Y: 0, SU2L: 1, SU3c: 1}},
+}
+
+#############
+#Real Scalars
+#############
+
+RealScalars: {
+}
+
+##########################################################################
+#Complex Scalars : have to be expressed in terms of Real Scalars see above
+##########################################################################
+
+CplxScalars: {
+    H: {RealFields: [Pi, Sigma], Norm: 1/Sqrt(2), Qnb : {U1BL: 0, U1Y: 1/2, SU2L: 2, SU3c: 1}},
+    chi: {RealFields: [chiR, chiI], Norm: 1/Sqrt(2), Qnb : {U1BL: 2, U1Y: 0, SU2L: 1, SU3c: 1}}
+}
+
+Potential: {
+
+Definitions:{
+    Htilde[i] : Eps[i,k] Hbar[k]
+},
+
+#######################################
+# All particles must be defined above !
+#######################################
+
+Yukawas:{
+    Yu  : {Qbar[i,a] Htilde[i] uR[a]},
+    Yd  : Qbar[i,a] H[i] dR[a],
+    Ye  : Lbar[i] H[i] eR,
+    Ynu : Lbar[i] Htilde[i] nuR,
+    YN  : {nuR chi nuR, symmetric, real}
+ },
+
+QuarticTerms: {
+    lambda1 : (Hbar[i] H[i])**2,
+    lambda2 : (chibar chi)**2,
+    lambda3 : Hbar[i] H[i] chibar chi,
+ },
+
+ScalarMasses: {
+}
+}
+
+
+ScalarAnomalous: All
+
+
+Substitutions: {
+    # Rename the gauge coupling constants
+    g_U1Y : g,
+    g_U1BL : gprime,
+    g_12 : gtilde,
+    g_SU2L : g_2,
+    g_SU3c : g_3,
+}
+
+Latex: {
+    gprime : g',
+    gtilde : \tilde{g},
+    
+    uR : u_R,
+    dR : d_R,
+    eR : e_R,
+    nuR : \nu_R,
+    
+    chi : \chi,
+    chiR: \chi_r,
+    chiI: \chi_i,
+    
+    Htilde : \tilde{H},
+
+    Yu : Y_u,
+    Yd : Y_d,
+    Ye : Y_e,
+    Ynu: Y_\nu,
+    YN : Y_N,
+    
+    lambda1 : \lambda_1,
+    lambda2 : \lambda_2,
+    lambda3 : \lambda_3
+}
+
