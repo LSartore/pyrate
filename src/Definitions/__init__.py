@@ -25,14 +25,12 @@ for s in wildSymbs:
 
 
 def splitPow(expr, deep=False):
-    # print("splitPow : ", expr, " ; ", deep)
     if type(expr) == list or type(expr) == tuple:
         coeff = Mul(*[el for el in expr if el.is_number])
         if coeff != 1:
            return [coeff] + splitPow([el for el in expr if not el.is_number], deep=deep)
         else:
            return flatten([splitPow(el, deep=deep) for el in expr if not el.is_number])
-        # return flatten([(el if type(el)!=Pow else (lambda x: x[1]*[x[0]])(el.args)) for el in expr])
     if isinstance(expr, Pow):
         res = expr.args[1]*[expr.args[0]]
         if not deep:
@@ -44,15 +42,11 @@ def splitPow(expr, deep=False):
         return [expr]
     else:
         return [expr]
-    # if isinstance(expr, Symbol):
-    #     return [expr]
-    # else:
-    #     print("\t WHAT HERE ?", expr, type(expr))
 
 
 def replaceKey(dic, oldKey, newKey, newVal = None):
     newDic = {}
-    
+
     if type(newKey) != tuple:
         for k,v in dic.items():
             if k != oldKey:
@@ -66,15 +60,15 @@ def replaceKey(dic, oldKey, newKey, newVal = None):
             else:
                 for i, key in enumerate(newKey):
                     newDic[key] = newVal[i] if newVal is not None else v
-    
+
     return newDic
 
 def insertKey(dic, afterWhich, newKey, newVal):
     newDic = {}
-    
+
     for k,v in dic.items():
         newDic[k] = v
         if k == afterWhich:
             newDic[newKey] = newVal
-    
+
     return newDic

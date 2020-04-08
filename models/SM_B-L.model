@@ -1,7 +1,7 @@
 # YAML 1.1
 ---
 Author: Lohan Sartore
-Date: 07.04.2020
+Date: 01.11.2019
 Name: SM_B-L
 Groups: {U1Y: U1, U1BL: U1, SU2L: SU2, SU3c: SU3}
 
@@ -46,11 +46,11 @@ Definitions:{
 #######################################
 
 Yukawas:{
-    Yu  : {Qbar[i,a] Htilde[i] uR[a]},
+    Yu  : Qbar[i,a] Htilde[i] uR[a],
     Yd  : Qbar[i,a] H[i] dR[a],
     Ye  : Lbar[i] H[i] eR,
     Ynu : Lbar[i] Htilde[i] nuR,
-    YN  : {nuR chi nuR, symmetric, real}
+    YN  : nuR chi nuR
  },
 
 QuarticTerms: {
@@ -64,16 +64,13 @@ ScalarMasses: {
 }
 
 
-ScalarAnomalous: All
-
-
 Substitutions: {
     # Rename the gauge coupling constants
     g_U1Y : g,
     g_U1BL : gprime,
     g_12 : gtilde,
     g_SU2L : g_2,
-    g_SU3c : g_3,
+    g_SU3c : g_3
 }
 
 Latex: {
@@ -90,7 +87,7 @@ Latex: {
     chiI: \chi_i,
     
     Htilde : \tilde{H},
-
+    
     Yu : Y_u,
     Yd : Y_d,
     Ye : Y_e,

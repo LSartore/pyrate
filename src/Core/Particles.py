@@ -24,17 +24,17 @@ class Particle(object):
         self.cplx = False
         self.fromCplx = fromCplx
         self.conj = False
-        
+
         self.indicesRange = {}
         self.indexStructure = []
         self.fullIndexStructure = []
-        
+
         for g, r in self.getIndicesRange(gaugeGroups).items():
             if r > 1:
                 self.indicesRange[g] = r
                 self.indexStructure.append(r)
             self.fullIndexStructure.append(r)
-        
+
         self.indexStructure = tuple(self.indexStructure)
         self.fullIndexStructure = tuple(self.fullIndexStructure)
 
@@ -50,26 +50,26 @@ class Particle(object):
 
     def getQnb(self, dic, gaugeGroups):
         """Get the Qnbs of the particle from the dic. The only thing to do is to transform the DimR notation into DynkinLabels"""
-      
+
         for k,v in dic.items():
             g = gaugeGroups[k]
             # print(k,v, type(v))
-            
+
             if isinstance(v, str):
                 if not g.abelian:
                     loggingCritical(f"Error while reading particle {self.name} : for non-abelian " +
                                     "gauge factors, quantum number must be integers or dynkin labels.")
                     exit()
-                
+
                 v = parse_expr(v.replace('i','I').replace('Sqrt','sqrt'))
-        
+
             if isinstance(v, list):
                 v = tuple(v)
             if not isinstance(v, tuple) and not g.abelian:
                 v = tuple(self.idb.get(g.type, 'dynkinLabels', v))
-            
+
             dic[k] = v
-            
+
         return dic
 
     def getIndicesRange(self, gaugeGroups):
@@ -81,49 +81,37 @@ class Particle(object):
 
         return ranges
 
-    # def isCharged(self, group, Dynkin=False):
-    #     """Check if the particle is charged under the group object"""
-    #     if not (Dynkin):
-    #         return not (self.Qnb[group.name] == int(group.singlet))
-    #     else:
-    #         return not (self.Qnb[group.name] == group.Dynksinglet)
-
     def antiParticle(self):
         antiP = copy(self)
         antiP._name = Symbol(str(self._name)+'bar')
         antiP.conj = True
         antiP.Qnb = {}
-        
+
         for gName, qnb in self.Qnb.items():
             g = self.groups[gName]
-            
+
             if not g.abelian:
                 antiP.Qnb[gName] = self.idb.get(g.type, 'conjugate', qnb)
             else:
                 antiP.Qnb[gName] = -1 * qnb
-        # antiP.Qnb = {gName: Conjugate(irr, self.groupFromName[gName]._absname, self.idb) 
-        #                     for gName,irr in self.Qnb.items()}
-        
-        # antiP.Q = -1*self.Q
 
         return antiP
-    
+
 class ComplexScalar(Particle):
     def __init__(self, name, dic, Groups, idb):
         self._name = Symbol(name)
         self.realFields = [Particle(n, dic, Groups, idb, self) for n in dic['RealFields']]
         self.realComponents = [1, I]
-        
+
         # call the particle constructor
         self.norm = dic['Norm']
         dic['Gen'] = 1
         self.idb = idb
         Particle.__init__(self, name, dic, Groups, self.idb, False)
-        self.cplx = True  
-        # call the particle constructor
+        self.cplx = True
 
     def antiParticle(self):
         antiP = Particle.antiParticle(self)
         antiP.realComponents = [1,-I]
-        
+
         return antiP

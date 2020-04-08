@@ -43,7 +43,7 @@ def timer(func):
         t = time.time()
         ret = func(*args, **kwargs)
         print(func.__name__, f" executed in {time.time()-t:.3f} s.")
-        
+
         return ret
     return inner
 
@@ -59,27 +59,27 @@ class CartanMatrix(object):
     def __init__(self, *args):
         self._translation = {'SU': 'A', 'SP': 'C', 'SO': ('B', 'D')}
         self._classicalLieAlgebras = ['A', 'B', 'C', 'D']
-        
+
         if len(args) == 2:
             name, Id = args
             name = name.upper()
         elif len(args) == 1:
             Id = reg.search(r'\d+$', args[0]).group()
             name, Id = args[0].replace(Id, '').upper(), int(Id)
-        
+
         self._validateAlgebra(name, Id)
         self.cartan = self._constructCartanMatrix()
-    
-    
+
+
     def _validateAlgebra(self, name, Id):
         err = CartanMatrix.AlgebraNameError
         self._fullName = name + str(Id)
         self._id = Id
 
-        if name not in self._classicalLieAlgebras: 
+        if name not in self._classicalLieAlgebras:
             if name in self._translation:
                 self._name = self._translation[name]
-                
+
                 if name == 'SU':
                     if self._id < 2:
                         raise err("For SU[n], 'n' must be >= 2")
@@ -98,7 +98,7 @@ class CartanMatrix(object):
                     if self._id % 2 != 0:
                         raise err("For SP[n], 'n' must be even")
                     self._id //= 2
-                
+
             # Exceptional algebras
             else:
                 self._name = name
@@ -119,23 +119,23 @@ class CartanMatrix(object):
                     errorStr += '\t- G2\n'
                     errorStr += '\t- F4\n'
                     errorStr += '\t- E6, E7, E8'
-                    
+
                     raise err(errorStr)
         else:
             if self._id <= 0:
                 exit("Id must be a positive integer")
             elif name == 'D' and self._id == 1:
                 exit("For 'D' algebra, Id must be >= 1")
-            
+
             self._name = name
-            
-            
+
+
 
     def _constructCartanMatrix(self):
         fillUp = eval('self._fillUpFunction' + self._name)
-        
+
         return sMat(self._id, self._id, lambda i, j: fillUp(i, j))
-        
+
     def _fillUpFunctionA(self, i, j):
         if i == j:
             return 2
@@ -164,7 +164,7 @@ class CartanMatrix(object):
         if (i,j) == (self._id - 3, self._id - 1):
             return -1
         return self._fillUpFunctionA(i, j)
-    
+
     def _fillUpFunctionE(self, i, j):
         if (i,j) == (self._id - 2, self._id - 1):
             return 0
@@ -175,22 +175,22 @@ class CartanMatrix(object):
         if (i,j) == (self._id - 1, 2):
             return -1
         return self._fillUpFunctionA(i, j)
-    
+
     def _fillUpFunctionF(self, i, j):
         if (i,j) == (1, 2):
             return -2
         return self._fillUpFunctionA(i, j)
-    
+
     def _fillUpFunctionG(self, i, j):
         if (i,j) == (0, 1):
             return -3
         return self._fillUpFunctionA(i, j)
-        
+
 
 class LieAlgebra(object):
     """
     This is the central class implmenting all the method that one can perform on the lie algebra
-    
+
     Constructor : (cartanMatrix) or constructor of CartanMatrix
     """
 
@@ -206,49 +206,49 @@ class LieAlgebra(object):
         self.cminv = self.cm.inv()  # inverse of the Cartan matrix
         self.ncm = matrix2numpy(self.cm)  # numpy version of the Cartan Matrix
         self.ncminv = matrix2numpy(self.cminv)  # numpy version of the inverse of the Cartan matrix
-        
+
         self._matD = self._matrixD()  # D matrix
         self._smatD = self._specialMatrixD()  # Special D matrix
-        
+
         self._cmID = np.dot(self.ncminv, self._matD)  # matrix product of the inverse Cartan matrix and D matrix
         self._cmIDN = self._cmID / np.max(self._matD)  # same as cmID but normalized to the max of matD
-        
+
         self.proots = self._positiveRoots()  # compute the positive roots
         self._deltaTimes2 = self.proots.sum(axis=0) # sum the positive roots
-        
+
         self._rho = self._sumPositiveCoRoots()
-        
+
         self._dimR = {}
-        
+
         self.adjoint = self._getAdjoint()
         # self.fond = self._getFond()
         self.dimAdj = self._getDimAdj()
         self.longestWeylWord = self._longestWeylWord()
-        
+
         # store the matrices for speeding up multiple calls
         self._repMinimalMatrices = {}
         self._repMatrices = {}
         self._dominantWeightsStore = {}
         self._invariantsStore = {}
         self._struc = []
-        
+
         self.a, self.b, self.c, self.d, self.e = map(IndexedBase, ['a', 'b', 'c', 'd', 'e'])
         self.f, self.g, self.h, self.i = map(IndexedBase, ['f', 'g', 'h', 'i'])
         self._symblist = [self.a, self.b, self.c, self.d, self.e]
         self._symbdummy = [self.f, self.g, self.h, self.i]
         self.p, self.q = map(Wild, ['p', 'q'])
         self.pp = Wild('pp', exclude=[IndexedBase])
-        
+
         # create an Sn object for all the manipulation on the  Sn  group
         self.Sn = Sn()
         # create a MathGroup object for the auxiliary functions
         self.math = MathGroup()
-    
+
         # which reps need to be translated to real basis is a property of the algebra
-        
+
         self._realBasisDic = {}
         self._computeReal = False
-    
+
     def _matrixD(self):
         """
         Returns a diagonal matrix with the values <root i, root i>
@@ -281,7 +281,7 @@ class LieAlgebra(object):
                     result[i - 1, k - 1 + 2] = j
                     k += 3
         return matrix2numpy(result)
-    
+
     def _findM(self, ex, el, ind):
         aux1 = cp.copy(el[ind - 1])
         aux2 = cp.copy(el)
@@ -324,34 +324,16 @@ class LieAlgebra(object):
         r = self._positiveRoots()
         cr = [2*el / self._simpleProduct([el], [el], self._cmID) for el in r]
         return cr
-    
+
     def _sumPositiveCoRoots(self):
         return sum(self._positiveCoRoots())/2
-    
+
     def _getAdjoint(self):
         # returns the adjoint of the gauge group
         return self._tolist(self.proots[-1])
-    
+
     def _getDimAdj(self):
         return self.dimR(self.adjoint)
-        # if self.cartan._name == 'A':
-        #     return (self._n + 1) ** 2 - 1
-        # elif self.cartan._name == 'D':
-        #     return self._n * (2 * self._n - 1)
-        # elif self.cartan._name == 'B':
-        #     return self._n * (2 * self._n + 1)
-        # elif self.cartan._name == 'C':
-        #     return self._n * (2 * self._n + 1)
-        # else:
-        #     exit("Not implemented yet: `{}`".format(self.cartan._name))
-
-    # def _getFond(self):
-    #     if self.cartan._name in ['A', 'B', 'D', 'C']:
-    #         fond = np.zeros((1, self._n), dtype=int)
-    #         fond[0, 0] = 1
-    #     else:
-    #         exit("Lie Algebra not implemented yet: `{}`".format(self.cartan._name))
-    #     return fond
 
     def dynkinIndex(self, rep):
         """
@@ -361,24 +343,23 @@ class LieAlgebra(object):
 
     def structureConstants(self, factor=1):
         # About 100 times faster than the old function for SU6 and SO10
-        
+
         if self._struc != []:
             return self._struc
-        
+
         d = self.dimAdj
         fondRep = self.repsUpToDimN(self.dimAdj)[1]
         mat_fond = self.repMatrices(fondRep)
         srep = self.dynkinIndex(fondRep)
-        
+
         def trAcommBC(A,B,C):
         # Compute Tr(A*[B,C]) in an efficient manner, using matrix sparsity
         # = A[i,j]B[j,k]C[k,i] - A[i,j]C[j,k]B[k,i]
-        
+
             res = 0
-            
             Brows, Bcols = {}, {}
             Crows, Ccols = {}, {}
-            
+
             for k,v in B._smat.items():
                 if k[0] not in Brows:
                     Brows[k[0]] = {}
@@ -386,7 +367,7 @@ class LieAlgebra(object):
                     Bcols[k[1]] = {}
                 Brows[k[0]][k[1]] = v
                 Bcols[k[1]][k[0]] = v
-            
+
             for k,v in C._smat.items():
                 if k[0] not in Crows:
                     Crows[k[0]] = {}
@@ -394,7 +375,7 @@ class LieAlgebra(object):
                     Ccols[k[1]] = {}
                 Crows[k[0]][k[1]] = v
                 Ccols[k[1]][k[0]] = v
-                    
+
             for (i,j), va in A._smat.items():
                 if j in Brows and i in Ccols:
                     for k in set(Brows[j]).intersection(Ccols[i]):
@@ -402,11 +383,11 @@ class LieAlgebra(object):
                 if j in Crows and i in Bcols:
                     for k in set(Crows[j]).intersection(Bcols[i]):
                         res -= va*Crows[j][k]*Bcols[i][k]
-            
+
             return res
-        
+
         struc = []
-        
+
         for i in range(d):
             f_i = sMat(d,d,{})
             for j in range(d):
@@ -418,22 +399,22 @@ class LieAlgebra(object):
                         continue
                     f_i[j,k] = -I/srep * trAcommBC(mat_fond[i], mat_fond[j], mat_fond[k]) * factor
             struc.append(f_i)
-        
+
         self._struc = struc
         return struc
-    
+
     def frobeniusSchurIndicator(self, rep):
         if self._nptokey(self.conjugateIrrep(rep)) != tuple(rep):
             return 1
-        
+
         highestWeight = self._dominantWeights(rep)[0][0].ravel()
-        p = self._simpleProduct([self._rho], [highestWeight], self._cmID) 
+        p = self._simpleProduct([self._rho], [highestWeight], self._cmID)
         indic = exp(2*I*pi*p)
-        
+
         if indic == 1:
             return 0
         return indic
-        
+
     def _longestWeylWord(self):
         # returns the longest Weyl word: from the Lie manual see Susyno
         weight = [-1] * self._n
@@ -445,7 +426,7 @@ class LieAlgebra(object):
             weight = self._reflectWeight(weight, iel + 1)
             result.insert(0, iel + 1)
         return result
-    
+
     def _reflectWeight(self, weight, i):
         """
         Reflects a given weight. WARNING The index i is from 1 to n
@@ -456,7 +437,7 @@ class LieAlgebra(object):
             if self._smatD[i - 1, ii - 1] != 0:
                 result[self._smatD[i - 1, ii - 1] - 1] += weight[i - 1]
         return result
-    
+
     def _weylOrbit(self, weight):
         """
         Creates the weyl orbit i.e. the system of simple root
@@ -502,7 +483,7 @@ class LieAlgebra(object):
         # Factor of 2 ensures is due to the fact that SimpleProduct is defined such that Max[<\[Alpha],\[Alpha]>]=1 (considering all positive roots), but we would want it to be =2
         return Rational(self.dimR(irrep), self.dimR(self.adjoint)) * 2 * self._simpleProduct(irrep, irrep + 2 * delta,
                                                                                              self._cmID)
-    
+
     def casimir(self, irrep):
         """
         Returns the casimir of a given irrep
@@ -527,14 +508,14 @@ class LieAlgebra(object):
         delta = Rational(1, 2) * self._deltaTimes2
         if (self.cartan._name == 'A' or self.cartan._name == 'B' or self.cartan._name == 'C') and self.cartan._id == 1:
             delta = np.array([delta])
-        result = np.prod([self._simpleProduct([self.proots[i - 1]], irrep + delta, self._cmID) / 
+        result = np.prod([self._simpleProduct([self.proots[i - 1]], irrep + delta, self._cmID) /
                           self._simpleProduct([self.proots[i - 1]], [delta], self._cmID)
                              for i in range(1, len(self.proots) + 1)], axis=0)
-        
+
         result = round(result)
         self._dimR[keydimR] = result
         return result
-    
+
     def _conjugacyClass(self, irrep):
         if not (type(irrep) == np.ndarray):
             irrep = np.array(irrep)
@@ -644,11 +625,11 @@ class LieAlgebra(object):
 
             result.sort(key=cmp_to_key(sortList))
             return result
-    
+
     ############################
     # Generate representations #
     ############################
-    
+
     def _repsUpToDimNAuxMethod(self, weight, digit, max, reap):
         waux = cp.deepcopy(weight)
         waux[digit] = 0
@@ -658,22 +639,22 @@ class LieAlgebra(object):
             else:
                 self._repsUpToDimNAuxMethod(waux, digit + 1, max, reap)
             waux[digit] += 1
-    
+
     def repsUpToDimN(self, maxdim):
         """ Returns the list of irreps of dim less or equal to maxdim """
         reap = []
         self._repsUpToDimNAuxMethod(np.zeros((1, self._n))[0], 0, maxdim, reap)
-        
+
         def sortByDimension(x):
             dim = self.dimR(x)
             rep = self._representationIndex(np.array([x]))
             conj = self._conjugacyClass(x)
             return tuple(flatten([dim, rep, conj]))
-        
+
         reap.sort(key = sortByDimension)
-        
+
         return reap
-    
+
     def conjugateIrrep(self, irrep, u1in=False):
         """
         returns the conjugated irrep
@@ -688,27 +669,12 @@ class LieAlgebra(object):
             return [res, u1]
         else:
             return res
-        
-        
+
+
     ###########################
     # Representation matrices #
     ###########################
-    
-    def _goToRealBasis(self, rep, realBasis):
-        """ Returns whether a given rep should be rotated to a real basis """
-        
-        if realBasis is False:
-            realBasis = None
-        if realBasis is True:
-            realBasis = 'all'
-        
-        if realBasis is None:
-            return False
-        if realBasis == 'adjoint':
-            return tuple(rep) == tuple(self.adjoint)
-        if realBasis == 'all':
-            return tuple(rep) == tuple(self.adjoint) or self.frobeniusSchurIndicator(rep) == 0
-        
+
     def repMinimalMatrices(self, maxW):
         """
         1) The output of this function is a list of sets of 3 matrices:
@@ -723,7 +689,7 @@ class LieAlgebra(object):
         4) Also, unlike RepMatrices, the matrices given by this function are not Hermitian and therefore they do not conform with the usual requirements of model building in particle physics.
             However, for some applications, they might be all that is needed.
         """
-        
+
         # check whether it s not been calculated already
         if type(maxW) == np.ndarray:
             tag = self._nptokey(maxW)
@@ -735,7 +701,7 @@ class LieAlgebra(object):
 
         # auxiliary function for the repMatrices method base on the Chevalley-Serre relations
         cmaxW = self.conjugateIrrep(self._tolist(maxW))
-        
+
         if self._cmp(self._tolist(maxW), self._tolist(cmaxW)) in [-1, 0] and not (np.all(cmaxW == maxW)):
             return [[-1 * el[1], -1 * el[0], -1 * el[2]] for el in
                     self.repMinimalMatrices(cmaxW)]
@@ -745,7 +711,7 @@ class LieAlgebra(object):
             for i in range(len(listw)):
                 dim[self._nptokey(listw[i][0])] = listw[i][1]
             up[self._nptokey(listw[0][0])] = sMat(1, self._n)
-            
+
             for element in range(1, len(listw)):
                 matrixT = [[]]
                 for j in range(self._n):
@@ -767,14 +733,14 @@ class LieAlgebra(object):
                                         col = aux1*aux2
                                     else:
                                         col = col.append(aux1*aux2, axis=ax)
-                                        
+
                                 else:
                                     tmp = aux1*aux2 + eye(dim1, listw[element][0][i] + self.ncm[i, i])
                                     if col == [[]]:
                                         col = tmp
                                     else:
                                         col = col.append(tmp, axis=ax)
-                                        
+
                             else:
                                 if i != j:
                                     if col == [[]]:
@@ -792,13 +758,13 @@ class LieAlgebra(object):
                             matrixT = col.transpose()
                         else:
                             matrixT = matrixT.append(col.transpose(), axis=0)
-                            
-                
+
+
                 if matrixT == [[]]:
                     matrix = sMat(1, 1)
                 else:
                     matrix = matrixT.transpose()
-                
+
                 aux1 = sum([self._indic(dim, self._nptokey(listw[element][0] + self.ncm[i])) for i in range(self._n)])
                 aux2 = self._indic(dim, self._nptokey(listw[element][0]))
                 cho = self.math._decompositionTypeCholesky(matrix)
@@ -832,7 +798,7 @@ class LieAlgebra(object):
                     aux2 = up[key2] if key2 in up else [[]] * self._n
                     aux2[index - 1] = (aux3[posbegin - 1:posend]).transpose()
                     up[key2] = aux2
-            
+
             # Put the collected pieces together and build the 3n matrices: hi,ei,fi
             begin, end = {self._nptokey(listw[0][0]): 1}, {self._nptokey(listw[0][0]): listw[0][1]}
             for element in range(1, len(listw)):
@@ -846,7 +812,7 @@ class LieAlgebra(object):
                 aux6, aux7, aux8 = ( sMat(aux2, aux2),   # e[i]
                                      sMat(aux2, aux2),   # f[i]
                                      sMat(aux2, aux2) )  # h[i]
-                
+
                 for element in range(len(listw)):
                     key = self._nptokey(listw[element][0] + self.ncm[i])
                     key2 = self._nptokey(listw[element][0])
@@ -865,7 +831,7 @@ class LieAlgebra(object):
                 matrixF.append(aux7)
                 matrixH.append(aux8)
             aux1 = [[matrixE[i], matrixF[i], matrixH[i]] for i in range(self._n)]
-            
+
             self._repMinimalMatrices[tag] = aux1
             return aux1
 
@@ -875,7 +841,7 @@ class LieAlgebra(object):
         1) The matrices {M_i} given by this method are in conformity with the usual requirements in particle physics: \!\(
             M_a^\Dagger = M_a ; Tr(M_a M_b = S(rep) \Delta_ab; Sum_a M_a M_a = C(rep) 1.
         """
-        
+
         # check if its been calculated already
         if isinstance(maxW, np.ndarray):
             tag = self._nptokey(maxW)
@@ -890,7 +856,7 @@ class LieAlgebra(object):
                 rep = self.repMinimalMatrices(maxW)
             else:
                 rep = [rep]
-            
+
             dimG = 2 * len(self.proots) + len(self.ncm)
             dimR = self.dimR(maxW.tolist()[0])
             sR = Rational(self.casimir(self._tolist(maxW)) * dimR, dimG)
@@ -914,23 +880,23 @@ class LieAlgebra(object):
                 # Change from the operators T+, T- to Tx,Ty
                 listE[i] = aux + listF[i]
                 listF[i] = aux - listF[i]
-                
+
                 # Control the normalization of the Tx,Ty matrices with the trace condition
                 listE[i] = listE[i] * ( sqrt(sR) / sqrt( (listE[i]*listE[i]).trace() ) )
                 listF[i] = listF[i] * ( sqrt(sR) / sqrt( (listF[i]*listF[i]).trace() ) )
-            
+
             matrixCholesky = np.dot(self.ncminv, self._matD)  # See the casimir expression in a book on lie algebras
             aux = (sMat(matrixCholesky).cholesky()).transpose()  # get the actual cholesky decomposition from sympy
             listH = [reduce(operator.add, [listH[j] * aux[i, j] for j in range(self._n)]) for i in range(self._n)]
             # Up to multiplicative factors, Tz are now correct. We fix again the normalization with the trace condition
             listH = [listH[i] * (sqrt(sR) / sqrt( (listH[i]*listH[i]).trace() )) for i in range(self._n)]
             listTotal = sum([listE, listF, listH], [])
-        
+
             self._repMatrices[tag] = listTotal
-        
+
         # Now that either the repMats are in the dic for sure, handle the keywords args
         ret = [el for el in self._repMatrices[tag]]
-        
+
         if self._goToRealBasis(tag, realBasis):
             # Rotate to real basis if needed
             if conj:
@@ -938,7 +904,7 @@ class LieAlgebra(object):
 
             realMat = self._realBasisRotation(tag)
             realMatAdj = realMat.adjoint()
-            
+
             for i, el in enumerate(ret):
                 ret[i] = realMatAdj*el*realMat
 
@@ -949,7 +915,7 @@ class LieAlgebra(object):
                     ret[i] = -el.transpose()
             else:
                 print("Warning in repMatrices: conjugation is only meant for real and pseudo-real representations. Skipping.")
-        
+
         return ret
 
 
@@ -957,18 +923,18 @@ class LieAlgebra(object):
     ################
     # Rep products #
     ################
-    
+
     def reduceRepProduct(self, repslist):
         """
         Reduces a direct product of representation to its irreducible parts
         """
         if len(repslist) == 1:
             return [[repslist, 1]]
-        
+
         # order the list by dimension
         orderedlist = sorted(repslist, key=lambda x: self.dimR(x))
         n = len(orderedlist)
-        
+
         result = self._reduceRepProductBase2(orderedlist[n - 2], orderedlist[n - 1])
         for i in range(2, n):
             result = self._reduceRepProductBase1(orderedlist[n - i - 1], result)
@@ -977,7 +943,7 @@ class LieAlgebra(object):
     def _reduceRepProductBase1(self, rep1, listReps):
         res = sum([[(ell[0], el[1] * ell[1]) for ell in self._reduceRepProductBase2(rep1, el[0])] for el in listReps],
                   [])
-        
+
         final = []
         togather = cp.deepcopy(res)
         while togather != []:
@@ -992,7 +958,7 @@ class LieAlgebra(object):
 
     def _reduceRepProductBase2(self, w1, w2):
         l1 = self._dominantWeights(w1)
-        
+
         delta = np.ones(self._n, dtype=int)
         dim = {}
         allIrrep = []
@@ -1018,26 +984,6 @@ class LieAlgebra(object):
     ###############################
     #  Computation of invariants  #
     ###############################
-        
-    # This is a test function to be removed later
-    def toMathematica(self, inv):
-        s = str(inv).replace('**','^')
-        
-        while s.find('sqrt') != -1:
-            i = s.find('sqrt')
-            j = s.find(')', i)
-            
-            sqrtS = s[i:j+1]
-            
-            s = s.replace(sqrtS, sqrtS.replace('sqrt', 'Sqrt').replace('(','[').replace(')',']'))
-                          
-        if s[0] == '[' and s[-1] == ']':
-            s = '{' + s[1:-1] + '}'
-            
-        s = 'py = ' + s +';\n\n'
-        print( s )
-
-
 
     def invariants(self, reps, conj=[], skipSymmetrize=False, pyrateNormalization=False, realBasis=None):
         """
@@ -1050,38 +996,38 @@ class LieAlgebra(object):
 
         if conj == []:
             conj = [False]*len(reps)
-            
+
         if len(reps) > len(conj):
             conj = list(conj) + [False]*(len(reps)-len(list(conj)))
             print("Warning : length of conjugations is lower than length of reps.")
             print("\tAssuming conj =", conj)
-            
+
         elif len(reps) < len(conj):
             conj = conj[:len(reps)]
             print("Warning : length of conjugations is larger than length of reps.")
             print("\tAssuming conj =", conj)
-        
+
         # If some real reps are to be rotated later, disable the 'conj' keyword which is useless
         if realBasis is not None:
             conj = [el if not self._goToRealBasis(reps[i], realBasis) else False for i,el in enumerate(conj)]
-        
+
         originalReps = tuple([tuple(el) for el in reps])
         originalCjs = tuple(conj)
-        
+
         # Sort the input according to (rep, conj)
         ordering = sorted(range(len(originalReps)), key=lambda x: (self.dimR(reps[x]), tuple(reps[x]), conj[x]))
-        
+
         reps = [originalReps[i] for i in ordering]
         conj = [originalCjs[i] for i in ordering]
-        
+
         # Final permutations (= inverse of 'ordering' permutation)
         perm = [ordering.index(i) for i in range(len(reps))]
-        
+
         storeKey = tuple([(r,c) for r,c in zip(reps, conj)])
         if storeKey in self._invariantsStore:
             # The invariant was computed earlier
             invs, maxinds = self._invariantsStore[storeKey]
-            
+
             if invs == []:
                 return []
         else:
@@ -1091,7 +1037,7 @@ class LieAlgebra(object):
             elif len(reps) == 3:
                 cjs = False
                 permThree = [0,1,2]
-                
+
                 if (conj[0] and conj[1] and not (conj[2])) or (not (conj[0]) and not (conj[1]) and conj[2]):
                     cjs = True
                 if (conj[0] and not (conj[1]) and conj[2]) or (not (conj[0]) and conj[1] and not (conj[2])):
@@ -1100,7 +1046,7 @@ class LieAlgebra(object):
                 if (not (conj[0]) and conj[1] and conj[2]) or (conj[0] and not (conj[1]) and not (conj[2])):
                     cjs = True
                     permThree = [2,1,0]
-                
+
                 invs, maxinds = self._invariants3Irrep([reps[permThree[i]] for i, rep in enumerate(reps)], cjs)
                 invs = [el.permute(permThree) for el in invs]
                 maxinds = [maxinds[permThree[i]] for i,m in enumerate(maxinds)]
@@ -1108,11 +1054,11 @@ class LieAlgebra(object):
                 invs, maxinds = self._invariants4Irrep([], reps, conj)
             else:
                 raise TypeError("Error, only 2, 3 or 4 irrep should be passed.")
-                
+
             if invs == []:
                 self._invariantsStore[storeKey] = (invs, maxinds)
                 return []
-            
+
             # Compute the normalization factor related the dimensions of the irreps
             repDims = 1
             for rep, cj in zip(reps, conj):
@@ -1120,62 +1066,25 @@ class LieAlgebra(object):
                     rep = self.conjugateIrrep(rep)
                 repDims *= self.dimR(rep)
             repDims = sqrt(repDims)
-            
+
             # Normalize the invariants
             invs = self._normalizeInvariants(invs, repDims)
-            
+
             # Store the invariants
             self._invariantsStore[storeKey] = (invs, maxinds)
 
         if not skipSymmetrize:
             invs = self._symmetrizeInvariants(reps, invs, maxinds, conj)
-            
+
         if realBasis is not None:
             invs = self._rotateInvariants(reps, realBasis, invs, conj, maxinds)
-            
+
         if pyrateNormalization:
             invs = self._pyrateNormalization(invs)
 
         # Reorder the fields before returning the result
         ret = [el.permute(perm) for el in invs]
         return ret
-    
-    
-    def _rotateInvariants(self, reps, realBasis, invs, conj, maxinds):
-        """ Rotate invariants to real basis """
-        
-        toReal = [self._goToRealBasis(el, realBasis) for el in reps]
-        
-        if self._computeReal or not any(toReal):
-            return invs
-        
-        # Build the newInvs dic
-        newInvs = []
-        for i, el in enumerate(invs):
-            newInvs.append(sTensor(*el.dim, forceSub=True))
-            for k,v in el.dic.items():
-                newInvs[i][k] = v
-        
-        for i, real in enumerate(toReal):
-            if real:
-                subs = {}
-                rotMat = self._realBasisRotation(reps[i])
-                for k,v in rotMat._smat.items():
-                    subFrom = tuple([k[0] if p==i else None for p in range(4)])
-                    subTo = tuple([k[1] if p==i else None for p in range(4)])
-                    
-                    if subFrom not in subs:
-                        subs[subFrom] = sTensor(*[maxinds[p] if p==i else None for p in range(4)])
-                    
-                    if not conj[i]:
-                        subs[subFrom][subTo] = v
-                    else:
-                        subs[subFrom][subTo] = conjugate(v)
-
-                newInvs = [el.sub(subs, vb=True) for j, el in enumerate(newInvs)]
-        
-        return newInvs
-
 
     def _invariants2Irrep(self, reps, cjs):
         """
@@ -1197,7 +1106,7 @@ class LieAlgebra(object):
             array1[self._nptokey(w1[i][0])] = w1[i][1]
         for i in range(len(w2)):
             array2[self._nptokey(w2[i][0])] = w2[i][1]
-            
+
         aux1 = []
         for i in range(len(w1)):
             if self._indic(array2, self._nptokey(-w1[i][0])) != 0:
@@ -1232,12 +1141,12 @@ class LieAlgebra(object):
                 aux2 = aux1
             else:
                 aux2 = aux2.values()
-                
+
             dim2 = [0]
             for k, val in enumerate(aux2):
                 dim2.append(dim2[k] + self._indic(array1, self._nptokey(val[0]))*
                                       self._indic(array2, self._nptokey(val[1])))
-                
+
             b2, e2 = {}, {}
             for k, val in enumerate(aux2):
                 key = tuple([self._nptokey(el) for el in val])
@@ -1250,45 +1159,45 @@ class LieAlgebra(object):
             for j in range(len(aux1)):
                 i1, i2 = (self._indic(array1, self._nptokey(aux1[j][0] + self.ncm[i])),
                           self._indic(array2, self._nptokey(aux1[j][1] + self.ncm[i])))
-                
+
                 if i1 != 0:
                     aux3 = aux1[j]
                     aux4 = [aux1[j][0] + self.ncm[i], aux1[j][1]]
                     kaux4 = tuple([self._nptokey(el) for el in aux4])
                     kaux3 = tuple([self._nptokey(el) for el in aux3])
-                    
+
                     slice1 = slice(self._indic(b2, kaux4) - 1, self._indic(e2, kaux4))
                     slice2 = slice(self._indic(b1, kaux3) - 1, self._indic(e1, kaux3))
-                    
+
                     m1 = self._blockW(aux1[j][0] + self.ncm[i], aux1[j][0], w1, r1[i][0])
                     m2 = eye(self._indic(array2, self._nptokey(aux1[j][1])))
-                    
+
                     matrixE[slice1, slice2] = m1.kroneckerProduct(m2)
-                    
+
                 if i2 != 0:
                     aux3 = aux1[j]
                     aux4 = [aux1[j][0], aux1[j][1] + self.ncm[i]]
                     kaux4 = tuple([self._nptokey(el) for el in aux4])
                     kaux3 = tuple([self._nptokey(el) for el in aux3])
-                    
+
                     slice1 = slice(self._indic(b2, kaux4) - 1, self._indic(e2, kaux4))
                     slice2 = slice(self._indic(b1, kaux3) - 1, self._indic(e1, kaux3))
-                    
+
                     m1 = eye(self._indic(array1, self._nptokey(aux1[j][0])))
                     m2 = self._blockW(aux1[j][1] + self.ncm[i], aux1[j][1], w2, r2[i][0])
-                    
+
                     matrixE[slice1, slice2] = m1.kroneckerProduct(m2)
-                    
+
             if bigMatrix == [] and matrixE != []:
                 bigMatrix = matrixE
 
             elif bigMatrix != [] and matrixE != []:
                 bigMatrix = bigMatrix.append(matrixE, axis=0)
-                
-        
+
+
         if len(bigMatrix) == 0:
             return [], [0, 0, 0]
-        
+
         dim1 = [0]
         dim2 = [0]
         for i in range(len(w1)):
@@ -1299,16 +1208,16 @@ class LieAlgebra(object):
             b1[self._nptokey(w1[i][0])] = dim1[i]
         for i in range(len(w2)):
             b2[self._nptokey(w2[i][0])] = dim2[i]
-        
-        
-        aux4 = bigMatrix.nullSpace2()
-        
+
+
+        aux4 = bigMatrix.nullSpace()
+
         # let's construct the invariant combination from the null space solution
         # declare the symbols for the output of the invariants
         expr = []
         resTensor = []
         maxInds = [0, 0]
-        
+
         for i0, nsDic in enumerate(aux4.values()):
             expr.append(0)
             resTensor.append(sTensor(*[self.dimR(r) for r in reps]))
@@ -1316,25 +1225,25 @@ class LieAlgebra(object):
             for i in range(len(aux1)):
                 r1, r2 = (self._indic(array1, self._nptokey(aux1[i][0])),
                           self._indic(array2, self._nptokey(aux1[i][1])))
-                
+
                 bi1, bi2 = (b1[self._nptokey(aux1[i][0])],
                             b2[self._nptokey(aux1[i][1])])
-                
+
                 for j1 in range(r1):
                     aInd = bi1 + j1
                     if aInd > maxInds[0]:
                         maxInds[0] = aInd
-                        
+
                     for j2 in range(r2):
                         bInd = bi2 + j2
                         if bInd > maxInds[1]:
                             maxInds[1] = bInd
-                                
+
                         if count in nsDic:
                             resTensor[i0][aInd, bInd] = nsDic[count]
-                            
+
                         count += 1
-        
+
         return resTensor, maxInds
 
 
@@ -1345,7 +1254,7 @@ class LieAlgebra(object):
         w1, w2, w3 = self._weights(reps[0]), self._weights(reps[1]), self._weights(reps[2])
         reps = [np.array([el]) for el in reps if type(el) != np.array]
         r1, r2, r3 = [cp.deepcopy(self.repMinimalMatrices(rep)) for rep in reps]
-        
+
         if cjs:
             for i in range(len(w3)):
                 w3[i][0] = - w3[i][0]
@@ -1377,11 +1286,11 @@ class LieAlgebra(object):
             key = tuple([self._nptokey(el) for el in aux1[i]])
             b1[key] = dim1[i] + 1
             e1[key] = dim1[i + 1]
-        
+
         bigMatrix = []
         for i in range(self._n):
             aux2 = {}
-            
+
             for j in range(len(aux1)):
                 if self._indic(array1, self._nptokey(aux1[j][0] + self.ncm[i])) != 0:
                     val = [aux1[j][0] + self.ncm[i], aux1[j][1], aux1[j][2]]
@@ -1398,18 +1307,18 @@ class LieAlgebra(object):
                     key = tuple([self._nptokey(el) for el in val])
                     if key not in aux2:
                         aux2[key] = val
-                        
+
             if len(w1) == 1 and len(w2) == 1 and len(w3) == 1:  # Special care is needed if all reps are singlets
                 aux2 = aux1
             else:
                 aux2 = aux2.values()
-                
+
             dim2 = [0]
             for k, val in enumerate(aux2):
                 dim2.append(dim2[k] + self._indic(array1, self._nptokey(val[0]))*
                                       self._indic(array2, self._nptokey(val[1]))*
                                       self._indic(array3, self._nptokey(val[2])))
-            
+
             b2, e2 = {}, {}
             for k, val in enumerate(aux2):
                 key = tuple([self._nptokey(el) for el in val])
@@ -1424,50 +1333,50 @@ class LieAlgebra(object):
                 i1, i2, i3 = (self._indic(array1, self._nptokey(aux1[j][0] + self.ncm[i])),
                               self._indic(array2, self._nptokey(aux1[j][1] + self.ncm[i])),
                               self._indic(array3, self._nptokey(aux1[j][2] + self.ncm[i])))
-                
+
                 if i1 != 0:
                     aux3 = aux1[j]
                     aux4 = [aux1[j][0] + self.ncm[i], aux1[j][1], aux1[j][2]]
                     kaux4 = tuple([self._nptokey(el) for el in aux4])
                     kaux3 = tuple([self._nptokey(el) for el in aux3])
-                    
+
                     slice1 = slice(self._indic(b2, kaux4) - 1, self._indic(e2, kaux4))
                     slice2 = slice(self._indic(b1, kaux3) - 1, self._indic(e1, kaux3))
-                    
+
                     m1 = self._blockW(aux1[j][0] + self.ncm[i], aux1[j][0], w1, r1[i][0])
                     m2 = eye(self._indic(array2, self._nptokey(aux1[j][1])))
                     m3 = eye(self._indic(array3, self._nptokey(aux1[j][2])))
-                    
+
                     matrixE[slice1, slice2] = m1.kroneckerProduct(m2).kroneckerProduct(m3)
-                    
+
                 if i2 != 0:
                     aux3 = aux1[j]
                     aux4 = [aux1[j][0], aux1[j][1] + self.ncm[i], aux1[j][2]]
                     kaux4 = tuple([self._nptokey(el) for el in aux4])
                     kaux3 = tuple([self._nptokey(el) for el in aux3])
-                    
+
                     slice1 = slice(self._indic(b2, kaux4) - 1, self._indic(e2, kaux4))
                     slice2 = slice(self._indic(b1, kaux3) - 1, self._indic(e1, kaux3))
-                    
+
                     m1 = eye(self._indic(array1, self._nptokey(aux1[j][0])))
                     m2 = self._blockW(aux1[j][1] + self.ncm[i], aux1[j][1], w2, r2[i][0])
                     m3 = eye(self._indic(array3, self._nptokey(aux1[j][2])))
-                    
+
                     matrixE[slice1, slice2] = m1.kroneckerProduct(m2).kroneckerProduct(m3)
-                    
+
                 if i3 != 0:
                     aux3 = aux1[j]
                     aux4 = [aux1[j][0], aux1[j][1], aux1[j][2] + self.ncm[i]]
                     kaux4 = tuple([self._nptokey(el) for el in aux4])
                     kaux3 = tuple([self._nptokey(el) for el in aux3])
-                    
+
                     slice1 = slice(self._indic(b2, kaux4) - 1, self._indic(e2, kaux4))
                     slice2 = slice(self._indic(b1, kaux3) - 1, self._indic(e1, kaux3))
-                    
+
                     m1 = eye(self._indic(array1, self._nptokey(aux1[j][0])))
                     m2 = eye(self._indic(array2, self._nptokey(aux1[j][1])))
                     m3 = self._blockW(aux1[j][2] + self.ncm[i], aux1[j][2], w3, r3[i][0])
-                    
+
                     matrixE[slice1, slice2] = m1.kroneckerProduct(m2).kroneckerProduct(m3)
 
             if bigMatrix == [] and matrixE != []:
@@ -1477,7 +1386,7 @@ class LieAlgebra(object):
 
         if len(bigMatrix) == 0:
             return [], [0, 0, 0]
-        
+
         dim1 = [0]
         dim2 = [0]
         dim3 = [0]
@@ -1495,25 +1404,12 @@ class LieAlgebra(object):
         for i in range(len(w3)):
             b3[self._nptokey(w3[i][0])] = dim3[i]
 
-        
-        
-        aux4 = bigMatrix.nullSpace2()
-        
-        # Backward compatibility for old nullspace functions
-        # To be removed later
-        
-        # d = {}
-        # for i,l in enumerate(aux4):
-        #     ll = {}
-        #     for j, el in enumerate(l):
-        #         ll[j] = el
-        #     d[i] = ll
-        
-        # aux4 = d
-        
+
+        aux4 = bigMatrix.nullSpace()
+
         resTensor = []
         maxInds = [0, 0, 0]
-        
+
         for i0, nsDic in enumerate(aux4.values()):
             resTensor.append(sTensor(*[self.dimR(r) for r in reps]))
             count = 0
@@ -1521,31 +1417,31 @@ class LieAlgebra(object):
                 r1, r2, r3 = (self._indic(array1, self._nptokey(aux1[i][0])),
                               self._indic(array2, self._nptokey(aux1[i][1])),
                               self._indic(array3, self._nptokey(aux1[i][2])))
-                
-                bi1, bi2, bi3 = (b1[self._nptokey(aux1[i][0])], 
+
+                bi1, bi2, bi3 = (b1[self._nptokey(aux1[i][0])],
                                  b2[self._nptokey(aux1[i][1])],
                                  b3[self._nptokey(aux1[i][2])])
-                
+
                 for j1 in range(r1):
                     aInd = bi1 + j1
                     if aInd > maxInds[0]:
                         maxInds[0] = aInd
-                        
+
                     for j2 in range(r2):
                         bInd = bi2 + j2
                         if bInd > maxInds[1]:
                             maxInds[1] = bInd
-    
+
                         for j3 in range(r3):
                             cInd = bi3 + j3
                             if cInd > maxInds[2]:
                                 maxInds[2] = cInd
-                            
+
                             if count in nsDic:
                                 resTensor[i0][aInd, bInd, cInd] = nsDic[count]
-                                
+
                             count += 1
-                            
+
         return resTensor, maxInds
 
     def _invariants4Irrep(self, otherStuff, reps, cjs):
@@ -1559,39 +1455,39 @@ class LieAlgebra(object):
 
             aux1 = self.invariants(reps, cjs, skipSymmetrize=True, realBasis=None)
             subs = len(otherStuff)*(None,) + (0, 1, 2)
-                
+
             # do the permutations
             aux1 = [el.permute(subs) for el in aux1]
             aux2 = otherStuff[0]
-            
+
             for i, el in enumerate(aux1):
                 for j, elem in enumerate(aux2):
                     tp = el.sub(elem)
                     result.append(tp)
-            
+
             return result
 
         trueReps = [tuple(self.conjugateIrrep(el)) if cjs[iel] else el for iel, el in enumerate(reps)]
-        
+
         # find the irreps in the product of the first two representations
         aux1 = [el[0] for el in self.reduceRepProduct([trueReps[0], trueReps[1]])]
         # conjugate them
         aux1 = [self.conjugateIrrep(el) for el in aux1]
         # do the same for the rest of the irreps
         aux2 = [el[0] for el in self.reduceRepProduct([el for el in trueReps[2:]])]
-        
+
         # get the intersection and sort it by (dimension, reverse[DynkinLabels])
         aux1 = sorted([list(elem) for
                        elem in list(set([tuple(el) for el in aux1]).intersection(set([tuple(el) for el in aux2])))],
                       key=lambda x: (self.dimR(x), x[::-1]))
-        
+
         for i in range(len(aux1)):
             # Fix from Susyno v3.7
             aux2 = self._irrepInProduct([reps[0], reps[1], aux1[i]], cjs=[cjs[0], cjs[1], True])
             # aux2 = self._irrepInProduct([reps[0], reps[1], aux1[i]], cjs=[cjs[0], cjs[1], False])
-            
+
             subs = len(otherStuff)*(None,) + (0, 1)
-            
+
             aux2 = [[inv.permute(subs) for inv in el] for el in aux2]
             aux3 = [(None,)*(len(otherStuff)+1) + (el,) + (None,)*(2-len(otherStuff)) for el in range(self.dimR(aux1[i]))]
             aux2 = [{el1: el2 for el1, el2 in zip(aux3, elem)} for elem in aux2]
@@ -1599,31 +1495,48 @@ class LieAlgebra(object):
             # warning otherstuff should not be appended in this scope
             otherStuffcp = cp.deepcopy(otherStuff)
             otherStuffcp.append(aux2)
-            
+
             tp1 = reps[2:]
             tp1.insert(0, aux1[i])
             # do some type conversion
             tp1 = [list(el) for el in tp1]
             tp2 = cjs[2:]
             tp2.insert(0, True)
-            
+
             res = self._invariants4Irrep(otherStuffcp, tp1, tp2)
 
             for resTensor in res:
                 resTensor.dim = [self.dimR(el) for el in reps]
-                    
+
             result.append(res)
 
         return flatten(result, cls=list), [self.dimR(el) for el in reps]
 
 
-        
+    def _irrepInProduct(self, reps, cjs=[]):
+        """
+        calculate the combination of rep1xrep2 that transform as rep3
+        """
+        if cjs == []:
+            cjs = [False] * len(reps)
+
+        # Fix from Susyno v3.6
+        cjs[2] = not(cjs[2])
+
+        aux = self.invariants(reps, cjs, skipSymmetrize=True, realBasis=None)
+
+        vector = set()
+        for inv in aux:
+            vector = vector.union(inv.subDics[2].keys())
+        vector = sorted(vector)
+
+        return [[inv.subTensors[(None,None,v,None)] for v in vector] for inv in aux]
 
 
     def _pyrateNormalization(self, tensor):
         # Normalize the invariants in a simpler way
         # For that we look at the first element in the invariants and divide by its value
-        
+
         def minKey(inv):
             absMin = (0,)*inv.rank+(None,)*(4-inv.rank)
             if absMin in inv.dic:
@@ -1632,20 +1545,20 @@ class LieAlgebra(object):
 
         for inv in tensor:
             firstEl = inv.dic[minKey(inv)]
-            
+
             for k,v in inv.dic.items():
                 # inv[k] = simplify(v/firstEl)
                 inv[k] = v/firstEl
-        
+
         return tensor
-    
+
     def _normalizeInvariants(self, invs, repDims, pyNorm=False):
         """ Normalize the invariants according to sqrt(Prod_n Dim(rep_n)).
             Note that it also orthogonalize them!! """
-        
+
         N = len(invs)
         aux = sMat(N, N)
-        
+
         for i, el1 in enumerate(invs):
             for j, el2 in enumerate(invs):
                 # The resulting matrix is symmetric
@@ -1653,69 +1566,156 @@ class LieAlgebra(object):
                     aux[i, j] = (el1*el2).sum()
                 else:
                     aux[i, j] = aux[j, i]
-        
+
         aux = self.math._decompositionTypeCholesky(aux)
-        
+
         # for k,v in aux._smat.items():
         #     aux[k] = expand(v)
-        
+
         aux = aux.inv() * sqrt(repDims)
-        
+
         for k,v in list(aux._smat.items()):
             aux[k] = expand(v)
-        
+
         # Finally perform matrix multiplication aux*invs
         normalizedInvs = [0]*N
         for i in range(N):
             normalizedInvs[i] = aux[i,0]*invs[0]
-            
+
             for j, tensor in enumerate(invs[1:]):
                 normalizedInvs[i] += aux[i,j+1]*tensor
 
         return normalizedInvs
-    
-    
-    def _irrepInProduct(self, reps, cjs=[]):
-        """
-        calculate the combination of rep1xrep2 that transform as rep3
-        """
-        if cjs == []:
-            cjs = [False] * len(reps)
-        
-        # Fix from Susyno v3.6
-        cjs[2] = not(cjs[2])
-        
-        aux = self.invariants(reps, cjs, skipSymmetrize=True, realBasis=None)
-        
-        vector = set()
-        for inv in aux:
-            vector = vector.union(inv.subDics[2].keys())
-        vector = sorted(vector)
-        
-        return [[inv.subTensors[(None,None,v,None)] for v in vector] for inv in aux]
-        
+
+
+    def _goToRealBasis(self, rep, realBasis):
+        """ Returns whether a given rep should be rotated to a real basis """
+
+        if realBasis is False:
+            realBasis = None
+        if realBasis is True:
+            realBasis = 'all'
+
+        if realBasis is None:
+            return False
+        if realBasis == 'adjoint':
+            return tuple(rep) == tuple(self.adjoint)
+        if realBasis == 'all':
+            return tuple(rep) == tuple(self.adjoint) or self.frobeniusSchurIndicator(rep) == 0
+
+    def _realBasisRotation(self, rep):
+        tag = tuple(rep)
+
+        if self.frobeniusSchurIndicator(rep) == 1:
+            print(f"Representation {rep} is complex.")
+            return
+        if self.frobeniusSchurIndicator(rep) == -1:
+            print(f"Representation {rep} is pseudo-real.")
+            return
+
+        if tag in self._realBasisDic:
+            return self._realBasisDic[tag]
+
+        # Lock
+        self._computeReal = True
+
+        if tag != tuple(self.adjoint):
+            inv = self.invariants([rep, rep], skipSymmetrize=True)
+            mat = sMat(self.dimR(rep), self.dimR(rep), {k[:2]:v for k,v in inv[0].dic.items()})
+
+            taka = mat.takagi()
+            if tag not in self._realBasisDic:
+                self._realBasisDic[tag] = taka
+
+            self._computeReal = False
+            return taka
+
+        # For adjoint rep, make sure that (T_adj^i)_jk = -f[i,j,k]
+        struc = self.structureConstants()
+        adjRepMat = self.repMatrices(self.adjoint)
+
+        bigMatrix = []
+        idMat = eye(self.dimAdj)
+
+        for i, mat in enumerate(adjRepMat):
+            tmp = mat.kroneckerProduct(idMat) - I*idMat.kroneckerProduct(struc[i])
+
+            if bigMatrix == []:
+                bigMatrix = tmp
+            else:
+                bigMatrix = bigMatrix.append(tmp, axis=0)
+
+        vecForm = bigMatrix.nullSpace()[0]
+        norm = sum([el*conjugate(el) for el in vecForm.values()])
+
+        rotMat = sMat(self.dimAdj, self.dimAdj)
+
+        for k,v in vecForm.items():
+            rotMat[k//self.dimAdj, k%self.dimAdj] = v*sqrt(self.dimAdj/norm)
+
+        if tag not in self._realBasisDic:
+            self._realBasisDic[tag] = rotMat
+
+        self._computeReal = False
+
+        return rotMat
+
+    def _rotateInvariants(self, reps, realBasis, invs, conj, maxinds):
+        """ Rotate invariants to real basis """
+
+        toReal = [self._goToRealBasis(el, realBasis) for el in reps]
+
+        if self._computeReal or not any(toReal):
+            return invs
+
+        # Build the newInvs dic
+        newInvs = []
+        for i, el in enumerate(invs):
+            newInvs.append(sTensor(*el.dim, forceSub=True))
+            for k,v in el.dic.items():
+                newInvs[i][k] = v
+
+        for i, real in enumerate(toReal):
+            if real:
+                subs = {}
+                rotMat = self._realBasisRotation(reps[i])
+                for k,v in rotMat._smat.items():
+                    subFrom = tuple([k[0] if p==i else None for p in range(4)])
+                    subTo = tuple([k[1] if p==i else None for p in range(4)])
+
+                    if subFrom not in subs:
+                        subs[subFrom] = sTensor(*[maxinds[p] if p==i else None for p in range(4)])
+
+                    if not conj[i]:
+                        subs[subFrom][subTo] = v
+                    else:
+                        subs[subFrom][subTo] = conjugate(v)
+
+                newInvs = [el.sub(subs) for j, el in enumerate(newInvs)]
+
+        return newInvs
 
     def _symmetrizeInvariants(self, reps, invs, maxinds, cjs):
         if len(invs) <= 1:
             return invs
-        
+
         #Remove duplicate reps
         aux1 = []
         for el in reps:
             if el not in aux1:
                 aux1.append(el)
-        
+
         #Positions of the reps
         aux2 = [[ix for ix, x in enumerate(reps) if x == y] for y in aux1]
-        
+
         cjs = np.array(cjs)
         # collect the position of the False and True cjs
         aux3 = [[[np.array(el)[pos] for pos in [ix for ix, x in enumerate(cjs[el]) if x]],
                  [np.array(el)[pos] for pos in [ix for ix, x in enumerate(cjs[el]) if not (x)]]]
                 for el in aux2]
-        
+
         fakeConjugationCharges = np.zeros(len(reps), dtype=int)
-        
+
         for i in range(len(aux3)):
             fakeConjugationCharges[aux3[i][0]] = len(aux3[i][1])
             fakeConjugationCharges[aux3[i][1]] = len(aux3[i][0])
@@ -1724,35 +1724,34 @@ class LieAlgebra(object):
         representations = [self.conjugateIrrep(representations[i], u1in=True) if cjs[i] else representations[i] for i in
                            range(len(representations))]
         representations = [(tuple(el[0]),el[1]) for el in representations] #force the conjugated irreps to be tuples for tally below
-        
+
         if (len(self.math.tally(representations)) == len(representations)):
             return invs
-        
+
         symmetries = self.permutationSymmetryOfInvariants(representations, u1in=True)
         flattenedInvariants, columns = self.flattenInvariants(invs, maxinds)
-        
+
         maxRank = 0
         columnsToTrack = []
-        
+
         for i, c in enumerate(columns):
             aux = flattenedInvariants[:, columnsToTrack + [c]].rank()
-            # if aux > maxRank and flattenedInvariants[0, c].find(I) == set():
             if aux > maxRank:
                 columnsToTrack.append(c)
                 maxRank = aux
-                
+
                 if aux == len(invs):
                     break
-        flattenedInvariants = flattenedInvariants[:, columnsToTrack]        
-        
+        flattenedInvariants = flattenedInvariants[:, columnsToTrack]
+
         try:
             invRef = flattenedInvariants.pinv()
         except:
             exit("impossible to calculate the pseudo inverse in `symmetrizeInvariants`.")
-        
+
         # [END] Don't handle the complete invariants: just find a minimum set of entries which reveal the linear independence of the invariants
         # [START]Generate the Sn transformation matrices of the invariants under permutations of each set of equal representations
-        
+
         permuteInvs12 = []
         permuteInvs12n = []
 
@@ -1761,7 +1760,7 @@ class LieAlgebra(object):
             if len(groupOfIndices) > 1:
                 aux = np.arange(len(representations), dtype=int)
                 aux[groupOfIndices[[0, 1]]] = aux[groupOfIndices[[0, 1]]][::-1]
-                
+
                 perm = [el[0] for el in sorted([(iel, el) for iel, el in enumerate(aux)], key=lambda x: x[1])]
                 p = [inv.permute(perm) for inv in invs]
                 p = self.flattenInvariants(p, maxinds)[0][:, columnsToTrack]
@@ -1769,13 +1768,13 @@ class LieAlgebra(object):
 
                 aux = np.arange(len(representations), dtype=int)
                 aux[groupOfIndices] = aux[self.math._rotateleft(groupOfIndices, 1, numpy=True)]
-                
-                
+
+
                 perm = [el[0] for el in sorted([(iel, el) for iel, el in enumerate(aux)], key=lambda x: x[1])]
                 p = [inv.permute(perm) for inv in invs]
                 p = self.flattenInvariants(p, maxinds)[0][:, columnsToTrack]
                 permuteInvs12n.append(p)
-        
+
         refP12 = [el * invRef for el in permuteInvs12]
         refP12n = [el * invRef for el in permuteInvs12n]
 
@@ -1806,26 +1805,26 @@ class LieAlgebra(object):
                         aux3 = tmp
                     else:
                         aux3 = aux3[0]
-                        
+
                     aux0.append([aux2, aux3])
 
             aux4 = [x.kroneckerProduct(y, simplify=True).transpose() for x, y in zip([ell[0] for ell in aux0], refP12)]
             aux5 = [x.kroneckerProduct(y, simplify=True).transpose() for x, y in zip([ell[1] for ell in aux0], refP12n)]
-            
+
             aux4 = aux4 + aux5
             bigMatrix = aux4[0] - eye(aux4[0].shape[0])
-            
+
             for i in range(1, len(aux4)):
                 bigMatrix = bigMatrix.append(aux4[i] - eye(aux4[i].shape[0]), axis=0)
 
             aux4 = [self.math._inverseFlatten(el, [len(aux0[0][0]), refP12[0].shape[0]])
-                                          for el in bigMatrix.nullSpace2(vecForm=True)]
-            
-            
+                                          for el in bigMatrix.nullSpace(vecForm=True)]
+
+
             aux4 = flatten(aux4, cls=list)
-            
+
             aux4 = GramSchmidt(aux4, True)
-            
+
             if newStates == []:
                 newStates = aux4[0]
                 for el in aux4[1:]:
@@ -1833,16 +1832,16 @@ class LieAlgebra(object):
             else:
                 for el in aux4:
                     newStates = newStates.append(el, axis=1)
-        
+
         result = [0]*len(invs)
-        
+
         # Performing matrix multiplication transpose(newStates)*invs
         for k,v in newStates._smat.items():
             if result[k[1]] == 0:
                 result[k[1]] = v*invs[k[0]]
             else:
                 result[k[1]] += v*invs[k[0]]
-            
+
         return result
 
 
@@ -1851,16 +1850,16 @@ class LieAlgebra(object):
 
         for m in maxinds:
             nMax *= (1+m)
-        
+
         mat = sMat(len(invs), nMax)
-        
+
         def posFuc(tup):
             p = 0
             for i, m in enumerate(maxinds):
                 p *= (m+1)
                 p += tup[i]
             return int(p)
-        
+
         nonZeroCols = dict()
         for i, inv in enumerate(invs):
             for k, v in inv.dic.items():
@@ -1870,9 +1869,9 @@ class LieAlgebra(object):
                     nonZeroCols[p] = 1
                 else:
                     nonZeroCols[p] += 1
-            
+
         return mat, sorted(nonZeroCols, key=lambda x:nonZeroCols[x])
-        
+
 
 
     def permutationSymmetryOfInvariants(self, listofreps, u1in=False):
@@ -1925,7 +1924,7 @@ class LieAlgebra(object):
     def _plethysms(self, weight, partition):
         n = sum(partition)
         kList = list(self.math._partitionInteger(n))
-        
+
         summing = []
         for i in range(len(kList)):
             factor = 1 / factorial(n) * self.Sn.snClassOrder(kList[i]) * self.Sn.snClassCharacter(partition, kList[i])
@@ -1998,7 +1997,7 @@ class LieAlgebra(object):
         prov = [[list(el[0]), el[1]] for el in prov]
         prov = [el for el in prov if not (el[1] == 0)]
         return prov
-    
+
 
     def _blockW(self, w1, w2, listW, repMat):
         """
@@ -2014,71 +2013,12 @@ class LieAlgebra(object):
             e[key] = dim[i + 1]
         aux1 = repMat[b[self._nptokey(w1)] - 1:e[self._nptokey(w1)],
                       b[self._nptokey(w2)] - 1:e[self._nptokey(w2)]]
-        
+
         return aux1
 
-    
-    def _realBasisRotation(self, rep):
-        tag = tuple(rep)
-        
-        if self.frobeniusSchurIndicator(rep) == 1:
-            print(f"Representation {rep} is complex.")
-            return
-        if self.frobeniusSchurIndicator(rep) == -1:
-            print(f"Representation {rep} is pseudo-real.")
-            return
-        
-        if tag in self._realBasisDic:
-            return self._realBasisDic[tag]
-        
-        # Lock
-        self._computeReal = True
-        
-        if tag != tuple(self.adjoint):
-            inv = self.invariants([rep, rep], skipSymmetrize=True)
-            mat = sMat(self.dimR(rep), self.dimR(rep), {k[:2]:v for k,v in inv[0].dic.items()})
-            
-            taka = mat.takagi()
-            if tag not in self._realBasisDic:
-                self._realBasisDic[tag] = taka
-                
-            self._computeReal = False
-            return taka
-        
-        
-        # For adjoint rep, make sure that (T_adj^i)_jk = -f[i,j,k]
-        struc = self.structureConstants()
-        adjRepMat = self.repMatrices(self.adjoint)
-        
-        bigMatrix = []
-        idMat = eye(self.dimAdj)
-        
-        for i, mat in enumerate(adjRepMat):
-            tmp = mat.kroneckerProduct(idMat) - I*idMat.kroneckerProduct(struc[i])
-            
-            if bigMatrix == []:
-                bigMatrix = tmp
-            else:
-                bigMatrix = bigMatrix.append(tmp, axis=0)
-                
-        vecForm = bigMatrix.nullSpace2()[0]
-        norm = sum([el*conjugate(el) for el in vecForm.values()])
-        
-        rotMat = sMat(self.dimAdj, self.dimAdj)
-        
-        for k,v in vecForm.items():
-            rotMat[k//self.dimAdj, k%self.dimAdj] = v*sqrt(self.dimAdj/norm)
-            
-        if tag not in self._realBasisDic:
-            self._realBasisDic[tag] = rotMat
-            
-        self._computeReal = False
-        
-        return rotMat
-        
-        
+
     #  AUXILIARY FUNCTIONS #
-        
+
     # This is a fix for Python3 compatibility (cmp built-in function removed)
     def _cmp(self, a,b):
         if sorted([a,b]) == [a,b]:
@@ -2086,7 +2026,7 @@ class LieAlgebra(object):
         elif a==b:
             return 0
         return 1
-        
+
     def _nptokey(self, array):
         return tuple(array.ravel())
 
@@ -2098,7 +2038,7 @@ class LieAlgebra(object):
             return dic[key]
         else:
             return 0
-        
+
     def _empty(self, array):
         if isinstance(array, list):
             return array == [[]]
@@ -2108,6 +2048,6 @@ class LieAlgebra(object):
             return True
         if isinstance(array, sMat):
             return array._smat == {}
-        
+
         exit("What type of array ?")
-        
+

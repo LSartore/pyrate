@@ -1,5 +1,5 @@
-""" This file is designed to be run from the console. It sends a request to the
-PyLie DB in order to compute some missing info and update it. It is needed to update
+""" This file is designed to be run from the shell. It sends a request to the
+PyLie DB in order to compute some missing info and update it. This procedure is needed to update
 the DB from an external program (such as Mathematica in the context of the FeynRules interface)"""
 
 import sys
@@ -54,5 +54,5 @@ try:
         sys.exit(4)
 except:
     sys.exit(4)
-    
+
 db.close()

@@ -4,7 +4,7 @@ try:
     from sys import exit
     import os
     import time
-    
+
     wd = os.path.abspath(os.path.dirname(__file__))
     os.chdir(wd)
     sys.path.append(os.path.join(wd, 'src'))
@@ -16,17 +16,21 @@ except:
     raise SystemExit("Error while importing one of the modules `sys, os, yaml`")
 
 
+welcomemessage = (
+"""
+============================================================================
 
-welcomemessage = "Pyr@te 3 !" 
-# """\n\n\n\n\t\t==================================================================================\n
-# \t\t\t\tPyR@TE version 2.0.0  released  August 25th 2016\n
-# \t\t\tF. Lyonnet, I. Schienbein,\n
-# \t\t\tand F.Staub, A.Wingerter (version 1)
-# \t\t\tPlease cite: arXiv:1309.7030 and arXiv:1608.07274
-# \t\t==================================================================================\n
-# """
-# print(welcomemessage)
+             PyR@TE version 3.0-beta1  released  April 8th 2020
 
+       L. Sartore,
+
+       F. Lyonnet, I. Schienbein (version 2)
+       and F.Staub, A.Wingerter (version 1)
+    Please cite: arXiv:20xx.xxxxx , arXiv:1608.07274 and arXiv:1309.7030
+
+============================================================================
+""" )
+print(welcomemessage)
 
 try:
     from Logging import loggingInfo
@@ -48,7 +52,6 @@ from RGEsModule import RGEsModule
 from sympy import init_printing
 init_printing(forecolor='White', wrap_line=False, use_unicode=False)
 
-# exit()
 t0 = time.time()
 
 # Create the interactive database instance
@@ -58,19 +61,19 @@ error = False
 # Whatever happens (errors or not) the DB is properly closed
 try:
     idb.load()
-    
+
     # Create the instance of the model
     model = Model(yamlSettings, runSettings, idb)
 
     # Create the instance of the RG module
     RGmodule = RGEsModule(model)
-    
+
     # Fill the information in RGmodule using the Lagrangian expression
     model.expandLagrangian(RGmodule)
-    
+
     # Map the model onto the general Lagrangian form
     model.constructMapping(RGmodule)
-                
+
     # Initialize various gauge and tensor quantities + check gauge invariance
     RGmodule.initialize()
 except:
@@ -91,11 +94,9 @@ model.mapBetaFunctions()
 # Apply the user-defined substitutions (replacements, GUT normalization, ...)
 model.doSubstitutions()
 
-loggingInfo("-> All done in {:.3f} seconds.".format(time.time()-t0), end='\n\n')
-
+loggingInfo(f"-> All done in {time.time()-t0:.3f} seconds.", end='\n\n')
 
 # Now export the results
-
 import Exports
 
 Exports.exports(runSettings, model)

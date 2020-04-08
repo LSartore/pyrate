@@ -12,43 +12,43 @@ class pyLogger():
     noNewLine = False
     gVB = {'vInfo': False, 'vDebug': False, 'vCritical': False}
     logger = None
-    
+
     progressBar = False
     lastMessage = ''
-    
-    pt = 0 # This is the timer for progress bar
-    
+
+    pt = 0 # This is a timer for the progress bar
+
     def init(logger):
         pyLogger.noNewLine = False
-        gVB = {'vInfo': False, 'vDebug': False, 'vCritical': False}
-        
+        pyLogger.gVB = {'vInfo': False, 'vDebug': False, 'vCritical': False}
+
         logging.root.handlers[0].terminator = ''
         pyLogger.logger = logging.LoggerAdapter(logger, None)
         pyLogger.logger.process = pyLogger.process
-    
+
     def process(mess, kwargs):
         end = '\n'
         prefix = '[Log] '
-        
+
         if pyLogger.noNewLine:
             end = ''
         if 'switch' in kwargs and kwargs['switch'] is True:
             prefix = ''
-            
+
         if 'noNewLine' in kwargs:
             if kwargs['noNewLine']:
                 end = ''
             prefix = ''
-        
+
         pyLogger.lastMessage = (prefix + mess + end, len(prefix))
         return pyLogger.lastMessage[0], {}
-    
-    def properPrint(mess, **kwargs):        
+
+    def properPrint(mess, **kwargs):
         if pyLogger.noNewLine and 'Done' not in mess and 'OK' not in mess:
             mess = '\n' + mess
-            
+
         print(mess, end=(kwargs['end'] if 'end' in kwargs else '\n'))
-        
+
         if 'end' in kwargs and '\n' not in kwargs['end']:
             pyLogger.noNewLine = True
         elif pyLogger.noNewLine :
@@ -59,7 +59,7 @@ class pyLogger():
         switch = None
         if pyLogger.gVB['vInfo'] and not('noPrint' in kwargs and kwargs['noPrint']):
             switch = pyLogger.properPrint(mess, **kwargs)
-        
+
         if switch is True:
             kwargs['switch'] = True
         pyLogger.logger.info(mess, **kwargs)
@@ -67,18 +67,18 @@ class pyLogger():
     def debug(mess, **kwargs):
         if pyLogger.gVB['vDebug'] and not('noPrint' in kwargs and kwargs['noPrint']):
             pyLogger.properPrint(mess, **kwargs)
-    
+
         pyLogger.logger.debug(mess)
 
     def critical( mess, **kwargs):
         if pyLogger.gVB['vCritical'] and not('noPrint' in kwargs and kwargs['noPrint']):
             pyLogger.properPrint(mess, **kwargs)
-    
+
         pyLogger.logger.critical(mess)
-    
+
     def setVerbose(tup):
         pyLogger.gVB = {k:tup[i] for i, k in enumerate(('vInfo', 'vDebug', 'vCritical'))}
-        
+
     def initVerbose(RunSettings):
         pyLogger.gVB = {k:RunSettings[k] for k in ('vInfo', 'vDebug', 'vCritical')}
 
@@ -107,11 +107,11 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
         decimals    - Optional  : positive number of decimals in percent complete (Int)
         bar_length  - Optional  : character length of bar (Int)
     """
-    
+
     # Depending on the verbose level, do or do not print progress
     if pyLogger.gVB['v' + verbose] == False:
         return
-    
+
     if pyLogger.pt == 0:
         pyLogger.pt = time.time()
     if iteration == total:
@@ -124,7 +124,7 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
     bar = '#' * filled_length + ' ' * (bar_length - filled_length)
 
     sys.stdout.write('\r%s |%s| %s%s %s' % (prefix, bar, percents, '%', suffix)),
-    
+
     if logProgress:
         previous_length = int(round(bar_length * (iteration-1) / float(total)))
         if pyLogger.progressBar is False:
@@ -141,4 +141,3 @@ def print_progress(iteration, total, prefix='', suffix='', decimals=1, bar_lengt
     if iteration == total:
         sys.stdout.write('\n')
         pyLogger.pt = 0
-        

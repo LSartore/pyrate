@@ -14,17 +14,14 @@ class PythonExport():
         if self._Name[0].isdigit():
             self._Name = '_' + self._Name
         self.model = model
-        
+
         self.string = ""
         self.stringRun = ""
-        
-        # Printer.model = model
+
         # BetaFunc definition
         self.betaFactor = model.betaFactor
         self.betaExponent = str(model.betaExponent(Symbol('n')))
-        
-        # self.handleExplicit(model)
-        
+
         self.translation = {'GaugeCouplings': 'Gauge Couplings',
                             'Yukawas': 'Yukawa Couplings',
                             'QuarticTerms': 'Quartic Couplings',
@@ -32,41 +29,39 @@ class PythonExport():
                             'ScalarMasses': 'Scalar Mass Couplings',
                             'FermionMasses': 'Fermion Mass Couplings',
                             'Vevs': 'Vacuum-expectation Values'}
-        
+
         self.cListNames = {k:v.replace(' ', '') for k,v in self.translation.items()}
         self.cListNames['Vevs'] = 'Vevs'
-        
+
         self.allCouplings = {}
         self.couplingStructure = {}
-        
+
         self.couplingStructure = {pycode(model.allCouplings[k][1]): v for k,v in model.couplingStructure.items()}
-        
+
         self.yukLikeCouplings = {}
-        
+
         self.conjugatedCouplings = {}
         self.cDic = {}
-        
+
         self.inconsistentRGset = (model.NonZeroCouplingRGEs != {} or model.NonZeroDiagRGEs != {})
-        
+
         if self.inconsistentRGset:
             raise TypeError("     -> Error : The RGE set is inconsistent. Please refer to the latex output.")
-        
+
         # Initialize the latex substitutions
         self.latex = {pycode(k):v for k,v in latexSubs.items()}
-        
+
         self.preamble(model)
-        
+
         self.RGsolver(model)
-        
-        
-        self.replacements()
-        
+
+
     def write(self, path):
         tmpDir = os.getcwd()
-        
+
         if not os.path.exists(os.path.join(path, 'PythonOuput')):
             os.makedirs(os.path.join(path, 'PythonOuput'))
-        
+
         # First : write the Python solver module
         fileName = os.path.join(path, 'PythonOuput', self._Name + '.py')
         try:
@@ -74,26 +69,25 @@ class PythonExport():
         except:
             loggingCritical('ERROR while creating the Python output file. Skipping.')
             return
-        
+
         self.file.write(self.string)
         self.file.close()
-        
+
         # Then create and write the run.py file
-        
         os.chdir(os.path.join(path, 'PythonOuput'))
         self.runString(self.model, os.path.join(path, 'PythonOuput'))
         os.chdir(tmpDir)
-        
+
         fileName = os.path.join(path, 'PythonOuput', 'run.py')
         try:
             self.file = open(fileName, 'w')
         except:
             loggingCritical('ERROR while creating the Python run file. Skipping.')
             return
-        
+
         self.file.write(self.stringRun)
         self.file.close()
-        
+
     def preamble(self, model):
         name = 'Model  : ' + model._Name
         auth = 'Author : ' + model._Author
@@ -117,57 +111,57 @@ import matplotlib.pyplot as plt
 
 class Coupling():
     couplings = {}
-    
+
     def __init__(self, name, couplingType, latex=None, shape = (), fromMat=None, cplx=False, init=0, pos=None):
         self.name = name
         self.type = couplingType
-        
+
         if latex is not None:
             self.latex = latex
         else:
             self.latex = self.name
-        
+
         self.shape = shape
         self.is_matrix = ( shape != () )
         self.nb = self.shape[0]*self.shape[1] if self.is_matrix else 1
         self.cplx = cplx
-        
+
         self.initialValue = init if shape == () else np.zeros(shape)
         # self.initialValue = np.random.rand() - .5 if shape == () else np.zeros(shape)
-        
+
         if fromMat is not None:
             self.pos = pos
             self.latex = '{' + fromMat.latex + '}' + self.name.replace(fromMat.name, '')
             return
-        
+
         if couplingType not in self.couplings:
             self.couplings[couplingType] = []
-        
+
         self.pos = sum([c.nb for cList in self.couplings.values() for c in cList])
         self.couplings[couplingType].append(self)
 
     def as_explicit(self, toList=False):
         if not self.is_matrix:
             return self
-        
+
         nameFunc = lambda x: self.name+'_{' + str(1 + x // self.shape[0]) + str(1 + x % self.shape[1]) + '}'
         initFunc = lambda x: list(self.initialValue)[x // self.shape[0]][x % self.shape[1]]
-        arrayFunc = np.vectorize(lambda x: Coupling(nameFunc(x), self.type, fromMat=self, init=initFunc(x), pos=self.pos+x)) 
-        array = arrayFunc(np.reshape(range(self.nb), self.shape)) 
-        
+        arrayFunc = np.vectorize(lambda x: Coupling(nameFunc(x), self.type, fromMat=self, init=initFunc(x), pos=self.pos+x))
+        array = arrayFunc(np.reshape(range(self.nb), self.shape))
+
         if not toList:
             return array
 
         return [*array.flat]
 
 """
-    
+
     def RGsolver(self, model):
         s = '''
 class RGEsolver():
     """ This class contains the RGEs of the model, as well as pre-defined functions
     used to solve and plot them.
-        
+
     The three following arguments may be provided:
         - initialScale:
             The energy scale at which the initial values are given
@@ -176,7 +170,7 @@ class RGEsolver():
 
     The initialScale can be different from tmin and tmax, the only requirement being that the initial value of the
     couplings are all given at the same scale."""
-        
+
     translation = {'GaugeCouplings': 'Gauge Couplings',
                    'Yukawas': 'Yukawa Couplings',
                    'QuarticTerms': 'Quartic Couplings',
@@ -184,38 +178,30 @@ class RGEsolver():
                    'ScalarMasses': 'Scalar Mass Couplings',
                    'FermionMasses': 'Fermion Mass Couplings',
                    'Vevs': 'Vacuum-expectation Values'}
-    
+
     def __init__(self, name, initialScale = 0, tmin = 0, tmax = 20):
         if initialScale < tmin or initialScale > tmax:
             exit(f"The initial running scale must lie in the interval [tmin={tmin}, tmax={tmax}]")
-        
+
         self.name = name
         Coupling.couplings = {}
-        
+
         self.initialScale = initialScale
         self.tmin = tmin
         self.tmax = tmax
-        
+
         self.kappa = lambda n: 1/(4*np.pi)**(''' + self.betaExponent + ''')
-        
+
         self.tList = []
         self.solutions = {}
         '''
-        
+
         s += "self.loops = " + pycode({k:v for k,v in model.loopDic.items() if k in model.toCalculate}, end='\n'+27*' ')
 
         s += self.couplingsDefinition(model)
-            
+
         s += "\n\n        self.couplings = Coupling.couplings\n"
-        
-        # s += "\n\n        self.allCouplings = flatten([c.as_explicit(toList=True) for cList in self.couplings.values() for c in cList])"
-        # s += """\n
-        # for cType, cList in self.couplings.items():
-        #     for c in cList:
-        #         if hasattr(RGEsolver, c.name):
-        #             delattr(RGEsolver, c.name)
-        #         setattr(RGEsolver, c.name, c)\n"""
-                
+
         s += """\n\n
     def extractCouplings(self, couplingsArray, couplingType):
         ret = []
@@ -226,23 +212,23 @@ class RGEsolver():
                 ret.append(np.matrix(np.reshape([couplingsArray[p] for p in range(c.pos, c.pos+c.nb)], c.shape)))
         return ret
         """
-        
+
         s += self.RGEs(model)
-        
+
         s += r'''
-        
+
     def printInitialConditions(self, returnString=False):
         """ This function displays the current running scheme and the initial values of the couplings.
 
         Its output may be copy-pasted 'as-is' by user to modify these parameters before solving the RGEs."""
-        
+
         # Display the running scheme
-        
+
         outputString = "\n# Running scheme :\n\n"
-        
+
         s = f"{self.name}.loops = "
         outputString += s + str(self.loops).replace(', ', ',\n ' + ' '*len(s)) + '\n'
-        
+
         # Display the initial values of the couplings
         for cType, cList in self.couplings.items():
             outputString += f"\n# {self.translation[cType]}\n\n"
@@ -256,18 +242,18 @@ class RGEsolver():
                     sVal += ']\n'
                     s += sVal
                 outputString += s + '\n'
-        
+
         if returnString:
             return outputString
-        
+
         print(outputString)
 '''
-        
+
         s += r'''
     ##################
     # Solve function #
     ##################
-    
+
     def solve(self, step=.1, Npoints=None):
         """ This function performs the actual solving of the system of RGEs, using scipy.ode.
 
@@ -278,24 +264,24 @@ class RGEsolver():
 
         time0 = time.time()
         y0 = flatten([(c.initialValue if not c.is_matrix else [*c.initialValue.flat]) for c in self.allCouplings])
-        
+
         tmin = self.tmin
         tmax = self.tmax
         t0 = self.initialScale
-        
+
         if Npoints is None:
             dt = step
         else:
             dt = (tmax-tmin)/(Npoints-1)
-        
+
         solutions = {}
         for c in self.allCouplings:
             solutions[c.name] = []
         tList = []
-        
+
         solver = ode(self.betaFunction).set_integrator('zvode', method='bdf')
         solver.set_initial_value(y0, t0)
-        
+
         # Solve upwards
         while solver.successful() and solver.t < tmax:
             tList.append(solver.t)
@@ -305,23 +291,23 @@ class RGEsolver():
                     c.cplx = True
                 elif y.imag == 0:
                     y = y.real
-                    
+
                 solutions[c.name].append(y)
-                
+
             solver.integrate(solver.t+dt)
-        
+
         if t0 > tmin:
         # If t0 > tmin, complete the solving going downwards
             solutions2 = {}
             for c in self.allCouplings:
                 solutions2[c.name] = []
             tList2 = []
-            
+
             solver.set_initial_value(y0, t0)
             # Solve downwards
             while solver.successful() and solver.t > tmin:
                 solver.integrate(solver.t-dt)
-                
+
                 tList2.append(solver.t)
                 for i, c in enumerate(self.allCouplings):
                     y = solver.y[i]
@@ -329,19 +315,19 @@ class RGEsolver():
                         c.cplx = True
                     elif y.imag == 0:
                         y = y.real
-                        
+
                     solutions2[c.name].append(y)
-                    
-                
+
+
             # Combine the two regions
             tList = tList2[::-1] + tList
             for c in self.allCouplings:
                 solutions[c.name] = solutions2[c.name][::-1] + solutions[c.name]
-        
+
         self.tList, self.solutions = tList, solutions
-        
+
         print(f"System of RGEs solved in {time.time()-time0:.3f} seconds.")
-    
+
     #################
     # Plot function #
     #################
@@ -350,10 +336,10 @@ class RGEsolver():
               4: [221, 222, 223, 224], 5:[231, 232, 233, 223, 224],
               6: [231, 232, 233, 234, 235, 236],
               7: [241, 242, 243, 244, 231, 232, 233]}
-    
+
     def plot(self, figSize=(600, 600), subPlots=True, which=None, whichNot=None, printLoopLevel=True):
         """ We finally plot the running couplings.
-        
+
         Several options may be given to this function:
             - figSize=(x,y):
                 The figure dimensions in pixels.
@@ -362,21 +348,21 @@ class RGEsolver():
                 produces one figure by coupling type.
             - which=... :
                 The user may want to plot only one or several types of couplings. Usage:
-                
+
                 >>> which='GaugeCouplings'
-                    
+
                 >>> which=('GaugeCouplings', 'QuarticTerms')
-                    
+
             - whichNot=... :
                 Which coupling types are NOT to be plotted. Same usage as which.
             - printLoopLevel=True/False :
                 The loop-levels of the computation are displayed in the title of the plots.
         """
-        
+
         if self.solutions == {}:
             print("The system of RGEs must be solved before plotting the results.")
             return
-            
+
         allCouplingsByType = {cType:[] for cType in self.couplings}
 
         for c in self.allCouplings:
@@ -389,7 +375,7 @@ class RGEsolver():
             which = (which,)
         if type(whichNot) == str:
             whichNot = (whichNot,)
-            
+
         for cType, cList in list(allCouplingsByType.items()):
             toDelete = False
             if cList == []:
@@ -400,10 +386,10 @@ class RGEsolver():
                 toDelete = True
             if toDelete:
                 del allCouplingsByType[cType]
-                
+
         if subPlots:
             plt.figure(figsize=(figSize[0]/80., figSize[0]/80.), dpi=80)
-        
+
         for i, (cType, cList) in enumerate(allCouplingsByType.items()):
             title = self.translation[cType]
             if printLoopLevel:
@@ -414,7 +400,7 @@ class RGEsolver():
             else:
                 plt.subplot(self.subPos[len(allCouplingsByType)][i])
                 plt.title(title)
-            
+
             cNames = []
             for c in cList:
                 if not c.cplx:
@@ -433,17 +419,16 @@ class RGEsolver():
 
         self.string += s
 
-    
+
     def couplingsDefinition(self, model):
         s = ""
-    
-    
+
         substitutedCouplings = [str(k) for subDic in model.substitutions.values() for k in subDic]
-        
+
         for cType in model.toCalculate:
             if 'Anomalous' in cType:
                 continue
-            
+
             self.cDic[cType] = {}
             for k,v in model.allCouplings.items():
                 if v[0] == cType and k not in substitutedCouplings:
@@ -459,21 +444,21 @@ class RGEsolver():
                             lengths = [len(el) for el in candidates]
                             i, maxLen = lengths.index(max(lengths)), max(lengths)
                             lengths.remove(maxLen)
-                            
+
                             if maxLen not in lengths:
                                 self.conjugatedCouplings[k] = candidates[i]
                             else:
-                                loggingCritical(f"Warning in Python export: could not determine the conjugate quantity of {k} automatically." + 
+                                loggingCritical(f"Warning in Python export: could not determine the conjugate quantity of {k} automatically." +
                                                 "\n -> The user will have to modify the output Python file manually.")
-                
+
             s += f"\n\n        # {self.translation[cType]}"
-            
+
             if cType == 'Vevs' and model.gaugeFixing is None:
                 s += "\n        #   For vevs the gauge must be fixed. Let's use for instance the Landau gauge :\n"
                 s += "        self.xi = 0\n"
 
             for c, cName in self.cDic[cType].items():
-                s += f"\n        self.{cName} = Coupling('{cName}', '{cType}'" 
+                s += f"\n        self.{cName} = Coupling('{cName}', '{cType}'"
                 if cName in self.latex:
                     s += ", latex='" + self.latex[cName].replace('\\', '\\\\').replace("'", "\\'") + "'"
                 if isinstance(c, mSymbol):
@@ -481,10 +466,10 @@ class RGEsolver():
                 s += ')'
 
         return s
-    
-    
+
+
     def RGEs(self, model):
-        
+
         s = '''\n
     def betaFunction(self, t, couplingsArray):
         """ This function contains the expression of the various RGEs of the model. It is called by the
@@ -494,19 +479,19 @@ class RGEsolver():
         for cType, dic in self.cDic.items():
             s += "        " + ', '.join(dic.values()) + (',' if len(dic) == 1 else '') + ' = '
             s += f"self.extractCouplings(couplingsArray, '{cType}')\n"
-            
+
             betaInitString += "        b" + ', b'.join(dic.values())
             if len(dic) == 1:
                 betaInitString += ' = 0\n'
             else:
                 betaInitString += f' = {len(dic)}*[0]\n'
-        
+
         s += '\n' + betaInitString
-        
+
         for cType, loopDic in model.couplingRGEs.items():
             if 'Anomalous' in cType:
                 continue
-            
+
             s += '\n'
             for nLoop, RGEdic in loopDic.items():
                 s += f"        if self.loops['{cType}'] >= {nLoop+1}:\n"
@@ -515,32 +500,32 @@ class RGEsolver():
                         continue
                     s += 12*' ' + f'b{pycode(Symbol(c))} += (' + pycode(RGE/self.betaFactor) + ')*self.kappa(' + str(nLoop+1) + ')'
                     s += (f'**{nLoop+1}' if nLoop > 0 else '') + '*np.log(10)\n'
-        
+
         s += '\n        return ['
         s += ', '.join([('b'+v if k not in self.couplingStructure else f'*b{v}.flat') for k,v in self.allCouplings.items()])
         s += ']'
-        
+
         return s
-    
+
     def runString(self, model, path):
         self.stringRun = "import sys\n"
         self.stringRun += f"sys.path.append('{path}')\n\n"
         self.stringRun += "from " + self._Name + " import RGEsolver"
-        
+
         self.stringRun += """\n
 ##############################################
 # First, create an instance of the RGEsolver #
 ##############################################
-        
+
 rge = RGEsolver('rge', tmin=0, tmax=20, initialScale=0)\n"""
-        
+
         # Actually import the generated Python file and create the rge object
         exec(self.stringRun, globals(), globals())
-        
+
         global initialString
         initialString = ""
         exec("initialString = rge.printInitialConditions(returnString=True)", globals(), globals())
-        
+
         self.stringRun += """\n
 ##########################################################
 # We fix the running scheme and initial conditions below #
@@ -548,10 +533,6 @@ rge = RGEsolver('rge', tmin=0, tmax=20, initialScale=0)\n"""
 """
 
         self.stringRun += initialString
-        
-        # self.stringRun += exec("rge.printInitialConditions(returnString=True)")
-        # self.stringRun += rge.printInitialConditions(returnString=True)
-        
         self.stringRun += """\n
 ############################
 # Solve the system of RGEs #
@@ -569,19 +550,13 @@ rge.solve(step = .05)
 rge.plot(subPlots=True, printLoopLevel=True)
 
 """
-        
-    def replacements(self):
-        pass
-    #     for k,v in self.conjugatedCouplings.items():
-    #         self.string = self.string.replace(k, 'Conjugate[' + v + ']')
-
 
 class Printer(PythonCodePrinter):
-    
+
     def __init__(self, end=''):
         PythonCodePrinter.__init__(self)
         self.end  = end
-    
+
     def _print_dict(self, expr):
         s = '{'
         for i,(k,v) in enumerate(expr.items()):
@@ -589,33 +564,33 @@ class Printer(PythonCodePrinter):
             if i < len(expr)-1:
                 s += ', ' + self.end
         s += '}'
-        
+
         return s
-    
+
     def _print_Symbol(self, expr):
         if expr == Symbol('_xiGauge', real=True):
             return 'self.xi'
-        
+
         ret = super(PythonCodePrinter, self)._print_Symbol(expr)
         ret = ret.replace('\\', '')
-        
+
         return ret
-    
+
     def _print_Pi(self, expr):
         return 'np.pi'
-        
+
     def _print_adjoint(self, expr):
         return pycode(expr.args[0]) + '.H'
-    
+
     def _print_transpose(self, expr):
         return pycode(expr.args[0]) + '.transpose()'
-    
+
     def _print_conjugate(self, expr):
         return 'np.conjugate(' + pycode(expr.args[0]) + ')'
-    
+
     def _print_Trace(self, expr):
         return 'np.trace(' + pycode(expr.args[0]) + ')'
-    
+
     def _print_Mul(self, expr):
         if expr.find(conjugate) != set():
         # Substitution x * conjugate(x) -> abs(x)^2
@@ -635,7 +610,7 @@ class Printer(PythonCodePrinter):
                         args.remove(conjugate(k))
                         args.append(Abs(k)**2)
                 expr = Mul(*args)
-        
+
         return super()._print_Mul(expr)
 
 
@@ -661,6 +636,6 @@ def pycode(expr, **settings):
     >>> pycode(tan(Symbol('x')) + 1)
     'math.tan(x) + 1'
     """
-    
+
     return Printer(**settings).doprint(expr)
 

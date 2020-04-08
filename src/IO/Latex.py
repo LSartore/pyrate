@@ -1,8 +1,7 @@
 try:
-    import os
     from sys import exit
     from sympy import (latex, Symbol, Add, adjoint, Mul, Abs, LeviCivita,
-                       Indexed, IndexedBase, pprint, Rational, sympify,
+                       Indexed, IndexedBase, Rational, sympify,
                        Pow, conjugate, expand, flatten)
 
     from sympy.core.numbers import NegativeOne
@@ -12,7 +11,6 @@ try:
     import datetime
 
     from Logging import loggingCritical
-    # from Contraction import getdimName
     from Definitions import mSymbol, splitPow, Trace
 
 except ImportError:
@@ -222,12 +220,10 @@ r""" \\ \hline
             rep = [0]*len(model.gaugeGroups)
             for g, qnb in f.Qnb.items():
                 gPos = list(model.gaugeGroups).index(g)
-                # gType = model.gaugeGroups[g].type
 
                 if model.gaugeGroups[g].abelian:
                     repName = ('+' if qnb > 0 else '') + self.totex(Rational(qnb))
                 else:
-                    # repName = model.idb.get(gType, 'repname', qnb, latex=True)
                     repName = model.gaugeGroups[g].repName(qnb)
 
                     # Fill Dynkin dic
@@ -267,12 +263,10 @@ r""" \\[.1cm] \hline
             rep = [0]*len(model.gaugeGroups)
             for g, qnb in s.Qnb.items():
                 gPos = list(model.gaugeGroups).index(g)
-                # gType = model.gaugeGroups[g].type
 
                 if model.gaugeGroups[g].abelian:
                     repName = ('+' if qnb > 0 else '') + self.totex(Rational(qnb))
                 else:
-                    # repName = model.idb.get(gType, 'repname', qnb, latex=True)
                     repName = model.gaugeGroups[g].repName(qnb)
                 rep[gPos] = '$' + repName + '$'
 
@@ -312,9 +306,6 @@ r""" \\[.1cm] \hline
 
     def handleExplicit(self, model):
         for coupling in model.ExplicitMatrices:
-            # if str(coupling) not in model.allCouplings:
-            #     continue
-
             strForm = False
             if type(coupling) == tuple:
                 coupling = coupling[0]
@@ -374,8 +365,6 @@ r""" \\[.1cm] \hline
             levi = []
             coeff = 1
 
-            # print("Parsing term", expr)
-
             for el in splitPow(expr, deep=True):
                 if el.is_number:
                     coeff *= el
@@ -383,13 +372,19 @@ r""" \\[.1cm] \hline
                     levi.append(el)
                 else:
                     args.append(el)
-            # print("ARgs : ", args)
+
+            base1, base2 = None, None
 
             # Workaround for (x^\dagger)**2 x**2 -> (x^\dagger x)**2
+            # + Workaround for  x^\dagger x^\dagger x x -> (x^\dagger x)**2
             if (len(args) == 2 and isinstance(args[0], Pow) and args[0].args[1] == 2
                                and isinstance(args[1], Pow) and args[1].args[1] == 2):
                 base1, base2 = sorted([str(args[0].args[0]), str(args[1].args[0])])
+            if (lambda a: len(a) == 4 and a[0] == a[1] and a[2] == a[3])(sorted(args, key=lambda x:str(x))):
+                sArgs = sorted(args, key=lambda x: str(x))
+                base1, base2 = str(sArgs[1]), str(sArgs[2])
 
+            if base1 is not None and base2 is not None:
                 if base2 == base1+'bar':
                     if cSymb != 1:
                         new = Symbol(str(cSymb), commutative=False)
@@ -410,6 +405,7 @@ r""" \\[.1cm] \hline
                         return coeff*cSymb*ret
 
                     return ret
+
 
             if isinstance(cSymb, mSymbol):
                 newArgs = [0 for _ in range(len(args))]
@@ -482,8 +478,6 @@ r""" \\[.1cm] \hline
             self.string += "\n\\subsection{Definitions}\n{\\allowdisplaybreaks\n\\begin{align*}\n"
 
             for dName, d in userDefinitions.items():
-                # if dName in model.Particles or dName in ('kd', 'Eps'):
-                #     continue
                 sDef = d.fromDef.replace('[', '_{').replace(']', '}')
                 for k,v in self.latex.items():
                     if str(k) in model.lagrangian.definitions:
@@ -563,7 +557,6 @@ r""" \\[.1cm] \hline
 
 
         self.string += r'\beta\left(X\right) \equiv ' + beta
-        # self.string += r'\equiv' + '+'.join([latex(sympify(f'1/(4*pi)**({n})', evaluate=False))+'\\beta^{('+str(n//2)+')}(X)' for n in [2*(el+1) for el in range(max(model.nLoops))]])
         self.string += r'\equiv' + '+'.join([latex(sympify(f'1/(4*pi)**({model.betaExponent(n)})', evaluate=False))+'\\beta^{('+str(n)+')}(X)' for n in range(1, 1+max(model.nLoops))])
 
         self.string += '\n\\end{equation*}\n'
@@ -641,8 +634,6 @@ r""" \\[.1cm] \hline
                 self.string += r'\begin{center}' + '\n'
                 self.string += '$' + '$, $'.join([(str(c) if str(c) not in self.latex else self.latex[str(c)]) for c in model.NonZeroCouplingRGEs[cType][0]]) + '$ .\n'
                 self.string += r'\end{center}' + '\n'
-                # for c in model.NonZeroCouplingRGEs[cType][0]:
-                #     self.string +=
 
             if cType == 'Vevs':
                 self.string += self.vevs(model)
@@ -652,7 +643,6 @@ r""" \\[.1cm] \hline
                     RGE = dic[n][c]
                     cSymb = model.allCouplings[c][1]
 
-                    # print('\n\n\n   ', cSymb, '\n\n')
                     self.string += "\n\\begin{align*}\n\\begin{autobreak}\n"
                     if type(RGE) != list:
                         self.string += '\\beta^{('+str(n+1)+')}(' + self.totex(cSymb) + ') ='
@@ -667,7 +657,6 @@ r""" \\[.1cm] \hline
                                 totalRGE -= Delta(Symbol('i'), k[0], Symbol('j'), k[1])*(-1*v)
 
                         self.string += self.totex(expand(totalRGE), sort=True, cType=cType)
-                        # self.string += self.totex(RGE[0], sort=True, cType=cType)
 
                     self.string += "\n\\end{autobreak}\n\\end{align*}"
 
@@ -702,11 +691,6 @@ r""" \\[.1cm] \hline
             multiplet = ( indices != [] )
             cplx = ( len(v) > 3 )
 
-            # if cplx:
-            #     sField = self.totex(v[3])
-            # else:
-            #     sField = self.totex(fieldComponent[1])
-
             sField = self.totex(Symbol(str(fieldComponent[1])))
 
             if multiplet:
@@ -719,10 +703,6 @@ r""" \\[.1cm] \hline
                         norm = '\\frac{1}{'+self.totex(v[3].norm.args[1])+'}'
                     else:
                         norm = self.totex(v[3].norm)
-                # if v[4] == 0:
-                #     sField = '\\operatorname{Re}\\left(' + sField + '\\right)'
-                # elif v[4] == 1:
-                #     sField = '\\operatorname{Im}\\left(' + sField + '\\right)'
 
             if norm != '':
                 vevStr = (norm + sField + ' &\\rightarrow ' + norm+ '\\left(' +
@@ -964,13 +944,9 @@ class Printer(LatexPrinter):
         return self.splitEquation(args)
 
     def _print_Mul(self, expr):
-        # if self.baseMul:
-        #     return super()._print_Mul(expr)
-
         if isinstance(expr.args[0], Rational) and abs(expr.args[0]) != 1 and not self.baseMul:
             coeff = Mul(*[el for el in flatten(expr.as_coeff_mul()) if el.is_number])
 
-            # return self._print(expr.args[0]) + self._print((expr/expr.args[0]).doit())
             return self.latex.totex(coeff, baseMul=True) + ' ' + (self._print((expr/coeff).doit()) if expr != coeff else '')
 
         if self.absReplacements and expr.find(conjugate) != set():
@@ -1042,15 +1018,6 @@ class Printer(LatexPrinter):
         else:
             tex = s + '^{' + exp + '\\,*}' + rest
         return tex
-
-
-
-        # tex = r"%s^{*}" % self._print(expr.args[0])
-
-        # if exp is not None:
-        #     return r"{%s}^{%s}" % (tex, exp)
-        # else:
-        #     return tex
 
     def _print_transpose(self, expr):
         matStr = self._print(expr.args[0])
@@ -1152,13 +1119,9 @@ class Printer(LatexPrinter):
         sortedTypes = sorted(priority.items(), key=lambda k: k[1])
         sortedTypes = {k:i for i, (k,_) in enumerate(sortedTypes)}
 
-        # print("SORTED :", sortedTypes)
-
         def sortFunc(term):
             if term.find(Delta) != set():
                 return float("inf"), ()
-            # atoms = flatten([(el if type(el)!=Pow else (lambda x: x[1]*[x[0]])(el.args)) for el in term.args])
-            # atoms = flatten([[[atom]*el.count(atom) for atom in el.atoms()] for el in atoms if not el.is_number])
 
             atoms = []
             for el in [subTerm for subTerm in splitPow(term) if not subTerm.is_number]:
@@ -1169,13 +1132,7 @@ class Printer(LatexPrinter):
                     atoms.append(el)
                 else:
                     atoms.append(list(el.atoms())[0])
-            # atoms = flatten([(splitPow(el.args) if isinstance(el, Trace) else el) for el in splitPow(term) if not el.is_number])
             trace = 'Trace(' in str(term)
-            # print(term, ' :: ', trace)
-            # print(atoms)
-            # flatten([ for el in term.atoms() if not el.is_number])
-            # for el in atoms:
-            #     print(el)
 
             # Remove IdentityMatrices from atoms
             #  + Remove the gauge parameter 'xi' when dealing with vevs
@@ -1185,8 +1142,6 @@ class Printer(LatexPrinter):
 
             if trace:
                 score += .5
-
-            # print(term, atoms, " ; ", score)
 
             sortByCouplingName = []
             for _ in priority:
@@ -1209,9 +1164,9 @@ class Printer(LatexPrinter):
                 tmp = self.latex.totex(el, baseAdd=True).replace('+ -', '-')
 
                 if tmp[0] != '-':
-                    tmp = '+ ' + tmp#.replace('+', '\n\\quad+').replace('-', '\n\\quad-')
+                    tmp = '+ ' + tmp
                 else:
-                    tmp = '- ' + tmp[1:]#.replace('+', '\n\\quad+').replace('-', '\n\\quad-')
+                    tmp = '- ' + tmp[1:]
 
                 tmp = '\n' + tmp
 
@@ -1220,11 +1175,8 @@ class Printer(LatexPrinter):
         return finalStr
 
     def generateCGCexpr(cgcName, cgc):
-        # if cgc.fields == []:
         inds = [Symbol(c) for c in 'ijkl'[:cgc.dim]]
         fields = [IndexedBase(c) for c in 'abcd'[:cgc.dim]]
-        # else:
-        #     fields = [IndexedBase(str(el)) for el in cgc.fields]
 
         cgcName = '{' + cgcName + '}^{' + ','.join([str(i) for i in inds]) + '}'
         cgcName += '\\, ' + ' '.join([str(f)+'_'+str(i) for f,i in zip(fields, inds)])

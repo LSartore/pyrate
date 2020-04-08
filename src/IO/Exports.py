@@ -4,7 +4,7 @@ from Logging import loggingInfo, loggingCritical
 import os
 import sys
 import time
-from subprocess import DEVNULL, STDOUT, check_call, run, CalledProcessError
+from subprocess import DEVNULL, STDOUT, run, CalledProcessError
 
 def exports(runSettings, model):
     loggingInfo("Exporting results...")
@@ -14,7 +14,6 @@ def exports(runSettings, model):
     if runSettings['CreateFolder'] is True:
         path = os.path.join(runSettings['Results'], model._Name)
         if not (os.path.exists(path)):
-            loggingCritical(" CREATING FOLDER " + path)
             os.makedirs(path)
     else:
         path = runSettings['Results']
@@ -90,11 +89,6 @@ def exports(runSettings, model):
         except CalledProcessError as e:
             loggingCritical("An error occurred when running the command. Skipping.")
             loggingCritical(' >> ' + str(e))
-        # try:
-        # check_call(cmd.split(' '), stdout=DEVNULL, stderr=STDOUT, shell=True)#DEVNULL
-        # except BaseException as e:
-        #     loggingCritical("An error occurred when running the command. Skipping.")
-        #     loggingCritical(str(e))
 
     os.chdir(tmpWD)
 

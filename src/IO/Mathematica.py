@@ -13,13 +13,10 @@ class MathematicaExport():
     def __init__(self, model):
         self._Name = model._Name
         self.string = ""
-        
-        # Printer.model = model
+
         # BetaFunc definition
         self.betaFactor = model.betaFactor
-        
-        # self.handleExplicit(model)
-        
+
         self.translation = {'GaugeCouplings': 'Gauge Couplings',
                             'Yukawas': 'Yukawa Couplings',
                             'QuarticTerms': 'Quartic Couplings',
@@ -27,46 +24,44 @@ class MathematicaExport():
                             'ScalarMasses': 'Scalar Mass Couplings',
                             'FermionMasses': 'Fermion Mass Couplings',
                             'Vevs': 'Vacuum-expectation Values'}
-        
+
         self.cListNames = {k:v.replace(' ', '') for k,v in self.translation.items()}
         self.cListNames['Vevs'] = 'Vevs'
-        
+
         self.allCouplings = {}
         self.couplingStructure = {}
-        
+
         self.couplingStructure = {mathematica(model.allCouplings[k][1]): v for k,v in model.couplingStructure.items()}
-        
+
         self.yukLikeCouplings = {}
-        
+
         self.conjugatedCouplings = {}
-        
+
         self.inconsistentRGset = (model.NonZeroCouplingRGEs != {} or model.NonZeroDiagRGEs != {})
-        
+
         anomalous = (model.scalarAnomalous != {} or model.fermionAnomalous != {})
-        
+
         self.preamble(model, anomalous)
-        
+
         self.RGEs(model, anomalous)
-        
+
         if anomalous:
             self.anomalous(model)
-        
+
         if model.runSettings['MathematicaSolver'] is True:
             self.RGsolver(model)
-            
+
         self.replacements()
-        
-        # self.string += "\n\end{document}"
-        
+
     def write(self, fileName):
         try:
             self.file = open(fileName, 'w')
         except:
             exit('ERROR while opening the Mathematica output file')
-        
+
         self.file.write(self.string)
         self.file.close()
-        
+
     def preamble(self, model, anomalous):
         self.string += f"""(* ::Package:: *)\n
 (* ::Text:: *)
@@ -83,7 +78,7 @@ class MathematicaExport():
     def RGEs(self, model, anomalous):
         sec = '1.' if not anomalous else '1.A)'
         s = f"(* ::Subsection:: *)\n(*{sec} RGEs*)\n\n"
-        
+
         if self.inconsistentRGset:
             s += """(* ::Text:: *)
 (*< WARNING : > The RGE set  is inconsistent. Please refer to the .tex output to solve this.*)\n\n"""
@@ -94,11 +89,11 @@ class MathematicaExport():
 \\[Beta][x_] := {mathematica(1/self.betaFactor)}*Sum[If[With[{{j=i}}, ValueQ[\\[Beta][x, j]]] && (!ValueQ[loops[x]] || i <= loops[x]),  1/(4 Pi)^({exponent})*\[Beta][x,i], 0], {{i,{max(model.loopDic.values())}}}]*Log[10];\n"""
 
         substitutedCouplings = [str(k) for subDic in model.substitutions.values() for k in subDic]
-        
+
         for cType in model.toCalculate:
             if 'Anomalous' in cType:
                 continue
-            
+
             cDic = {}
             for k,v in model.allCouplings.items():
                 if v[0] == cType and k not in substitutedCouplings:
@@ -113,19 +108,19 @@ class MathematicaExport():
                             lengths = [len(el) for el in candidates]
                             i, maxLen = lengths.index(max(lengths)), max(lengths)
                             lengths.remove(maxLen)
-                            
+
                             if maxLen not in lengths:
                                 self.conjugatedCouplings[k] = candidates[i]
                             else:
-                                loggingCritical(f"Warning in Mathematica export: could not determine the conjugate quantity of {k} automatically." + 
+                                loggingCritical(f"Warning in Mathematica export: could not determine the conjugate quantity of {k} automatically." +
                                                 "\n -> The user will have to modify the output Mathematica file manually.")
-                
-            s += f"\n\n(* {self.translation[cType]} *)\n\n{self.cListNames[cType]} = " 
+
+            s += f"\n\n(* {self.translation[cType]} *)\n\n{self.cListNames[cType]} = "
             s += '{' + ', '.join([c for c in cDic.values()]) + '};\n'
-            
+
             if model.allRGEs[cType] == {}:
                 continue
-            
+
             if cType == 'Vevs':
                 if model.gaugeFixing is None:
                     s += "\n(* For vevs the gauge must be fixed. Let's use for instance the Landau gauge : *)\n"
@@ -133,107 +128,103 @@ class MathematicaExport():
                 else:
                     s += "\n(* Gauge fixing *)\n"
                     s += f"xiGauge = {mathematica(model.gaugeFixing)};\n"
-                    
-            
+
+
             self.allCouplings[cType] = []
             for nLoop, RGEdic in model.couplingRGEs[cType].items():
-                
+
                 RGEdic = {v:RGEdic[k] for k,v in cDic.items() if k in RGEdic}
                 for k, RGE in RGEdic.items():
                     s += '\n\\[Beta][' + k + f', {nLoop+1}] = '
                     betaFunc = mathematica(RGE, k in self.couplingStructure)
-                    
+
                     # Yukawa singlet workaround : take the trace of the beta-function if needed
                     if k in self.couplingStructure and self.couplingStructure[k] == (1,1) and 'Dot[' in betaFunc:
                         s += 'Tr[' + betaFunc + '];'
                     else:
                         s += betaFunc + ';'
-                    
+
                     if k not in self.allCouplings[cType]:
                         self.allCouplings[cType].append(k)
-                    
+
                 s += '\n'
-            
+
         self.string += s
-        
+
     def anomalous(self, model):
 
         s = f"(* ::Subsection:: *)\n(*1.B) Anomalous dimensions*)\n\n"
-        
+
         maxLoops = max(model.loopDic['FermionAnomalous'], model.loopDic['ScalarAnomalous'])
-        
+
         s += f"""(* \\[Gamma] definition *)
 
 \\[Gamma][x_, y_] := Sum[If[With[{{j=i}}, ValueQ[\\[Gamma][x, y, j]]], 1/(4 Pi)^(2i)*\[Gamma][x,y,i], 0], {{i,{maxLoops}}}];\n\n"""
-        
+
         s += "(* Gauge fixing ? *)\n\n"
-        
+
         if model.gaugeFixing is not None:
             s += f"xi = {mathematica(model.gaugeFixing)};\n\n"
         else:
             s += "xi = \\[Xi];\n\n"
-        
+
         if model.fermionAnomalous != {}:
             s += "\n(* Fermions *)\n"
-            
+
             for k,v in model.fermionAnomalous.items():
                 if model.saveSettings['FermionAnomalous'] == 'All':
                     if all([el[k] == 0 for el in model.couplingRGEs['FermionAnomalous'].values()]):
                         continue
-                
+
                 fields = Printer.extractAnomalousFields(k)
                 gamma = lambda n: f'\\[Gamma][{fields}, {n+1}]'
-                
+
                 for n, RGEdic in model.couplingRGEs['FermionAnomalous'].items():
                     RGE = RGEdic[k]
 
                     s += '\n' + gamma(n) + ' = '
                     betaFunc = mathematica(RGE).replace('xiGauge', 'xi')
-                    
+
                     # Yukawa singlet workaround : take the trace of the beta-function if needed
                     if k in self.couplingStructure and self.couplingStructure[k] == (1,1) and 'Dot[' in betaFunc:
                         s += 'Tr[' + betaFunc + '];'
                     else:
                         s += betaFunc + ';'
-                    
+
                 s += '\n'
             s += '\n'
-        
+
         if model.scalarAnomalous != {}:
             s += "\n(* Scalars *)\n"
-            
+
             for k,v in model.scalarAnomalous.items():
                 if model.saveSettings['ScalarAnomalous'] == 'All':
                     if all([el[k] == 0 for el in model.couplingRGEs['ScalarAnomalous'].values()]):
                         continue
-                
+
                 fields = Printer.extractAnomalousFields(k)
                 gamma = lambda n: f'\\[Gamma][{fields}, {n+1}]'
-                
+
                 for n, RGEdic in model.couplingRGEs['ScalarAnomalous'].items():
                     RGE = RGEdic[k]
 
                     s += '\n' + gamma(n) + ' = '
                     betaFunc = mathematica(RGE).replace('xiGauge', 'xi')
-                    
-                    # # Yukawa singlet workaround : take the trace of the beta-function if needed
-                    # if k in self.couplingStructure and self.couplingStructure[k] == (1,1) and 'Dot[' in betaFunc:
-                    #     s += 'Tr[' + betaFunc + '];'
-                    # else:
+
                     s += betaFunc + ';'
-                    
+
                 s += '\n'
             s += '\n'
         s += '\n'
-        
-        self.string += s 
-        
+
+        self.string += s
+
     def RGsolver(self, model):
         #########################
         ## Initial conditions ###
         # This is printed later #
         #########################
-        
+
         sInit = """
 (* ::Subsection:: *)
 (*3. Actual solving*)
@@ -257,7 +248,7 @@ range = {0, MP};
 """
         for cType, cList in self.allCouplings.items():
             sInit += f"\n(* {self.translation[cType]} *)\n\n"
-            
+
             for i, c in enumerate(cList):
                 if not c in self.couplingStructure or self.couplingStructure[c] == (1,1):
                     sInit += f"init[{c}] = 0;\n"
@@ -267,7 +258,7 @@ range = {0, MP};
                     sInit += f"init[{c}] = {value};\n"
                     if i < len(cList)-1:
                         sInit += '\n'
-                    
+
                     self.yukLikeCouplings[c] = self.couplingStructure[c]
 
         sInit += """
@@ -279,7 +270,7 @@ range = {0, MP};
         for cType in self.allCouplings:
             n = model.loopDic[cType]
             sInit += f"(loops[#] = {n})& /@ {self.cListNames[cType]};\n"
-            
+
         sInit += """
 
 (* Now call the functions defined in section 2*)
@@ -288,12 +279,12 @@ solutions = RGsolve[initialScale, range];
 solutions = DiscardZeroCouplings[range, solutions];
 
 RGplot[range, solutions]"""
-        
-        
+
+
         #######################
         # RG-solving function #
         #######################
-        
+
         s = """(* ::Subsection:: *)
 (*2. Solving and plotting functions*)
 
@@ -312,7 +303,7 @@ RGsolve[initialScale_, range_] := Block[{allCouplings, couplingsToFunction, diff
 \tallEquations = Join[differentialEquations, initialConditions];
 
 \tsolutions = NDSolve[allEquations, allCouplings /. couplingsToFunction, {t, range[[1]], range[[2]]}][[1]];"""
-        
+
         # This part is for spliting the individual components of the matrix couplings
         if self.yukLikeCouplings != {}:
             s += """\n
@@ -326,7 +317,7 @@ RGsolve[initialScale_, range_] := Block[{allCouplings, couplingsToFunction, diff
 \t\t\t\t\t\tSequence @@ Flatten @ Table[coupling[i,j] -> FunctionInterpolation[If[NumericQ[t], function[[i,j]]], {t, range[[1]], range[[2]]}][t], {i, shape[[1]]}, {j, shape[[2]]}],
 \t\t\t\t\t\tcoupling -> function]]& /@ solutions;
 """
-	
+
         s += """
 \tReturn[solutions];\n];
 
@@ -336,13 +327,13 @@ DiscardZeroCouplings[range_, solutions_] := Block[{N, testPoints},
 	testPoints =  Range[range[[1]], range[[2]], (range[[2]] - range[[1]])/N];
 	Return @ Select[solutions, (DeleteDuplicates[#[[2, 0]] /@ testPoints] != {0}) &];
 ];"""
-        
+
         self.string += s
-        
+
         #################
         # Plot function #
         #################
-        
+
         s = """
 (* ::Subsubsection::Closed:: *)
 (*Plot function*)
@@ -355,7 +346,7 @@ ComplexPlot[funcs_, {min_, max_}, legends_, plotRange_] := Block[{cplxPos, newFu
 	newLegends = If[MemberQ[cplxPos, #], Sequence @@ {Re@legends[[#]], Im@legends[[#]]}, legends[[#]]]& /@ Range[Length[funcs]];
 
 	Return @ Plot[Evaluate @ newFuncs, {t, min, max}, PlotLegends->newLegends, PlotRange->plotRange]
- ] 
+ ]
 
 
 RGplot[range_, solutions_] := Block[{selectType, toPlot},
@@ -367,10 +358,10 @@ RGplot[range_, solutions_] := Block[{selectType, toPlot},
             s += '\t\tPrint["### ' + self.translation[cType] + ' ###"];\n'
             s += '\t\tPrint @ ComplexPlot[toPlot[[All, 2]], range, toPlot[[All, 1]], All];\n'
             s += '\t];'
-            
+
         s += "\n];"
         self.string += s
-        
+
         self.string += sInit
 
 
@@ -381,28 +372,28 @@ RGplot[range_, solutions_] := Block[{selectType, toPlot},
 
 
 class Printer(MCodePrinter):
-    
+
     def __init__(self, mat=None):
         MCodePrinter.__init__(self)
         self.mat = mat
-    
+
     def _print_Symbol(self, expr):
         tex = super(MCodePrinter, self)._print_Symbol(expr)
         return tex.replace('{', '').replace('}', '')
-    
+
     def _print_Trace(self, expr):
         return 'Tr[' + mathematica(expr.args[0]) + ']'
-        
+
     def _print_transpose(self, expr):
         return 'Transpose[' + mathematica(expr.args[0]) + ']'
-    
+
     def _print_Pow(self, expr):
         arg, p = expr.args
         if not isinstance(arg, mSymbol) or arg.is_commutative:
             return mathematica(arg)+'^'+mathematica(p)
-        
+
         return '.'.join(p*[mathematica(arg)])
-        
+
     def _print_Mul(self, expr):
         PREC = precedence(expr)
         c, nc = expr.args_cnc()
@@ -413,29 +404,28 @@ class Printer(MCodePrinter):
                 res += '*'
         else:
             res = ''
-            
+
         if nc:
             res += '.'.join(self.parenthesize(a, PREC) for a in nc)
-        
+
         return res
-    
+
     def _print_adjoint(self, expr):
         return 'ConjugateTranspose[' + mathematica(expr.args[0]) + ']'
-    
+
     def extractAnomalousFields(fields):
         newFields = []
-        
+
         for f in fields:
             if not isinstance(f, Indexed):
                 newFields.append(f)
             else:
                 newFields.append(Indexed(str(f.base), *[i+1 for i in f.indices]))
-        
+
         return ', '.join([str(el) for el in newFields])
 
 def mathematica(expr, mat=None):
     ret = Printer(mat).doprint(expr)
     ret = ret.replace('_', '').replace('\\', '')
-    
-    return ret
 
+    return ret
