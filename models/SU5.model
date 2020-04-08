@@ -34,8 +34,8 @@ CplxScalars: {
 Potential: {
 
 Definitions:{
-    # 
-    tFond : t(SU5, [1,0,0,0]),
+    #
+    tFond : t(SU5, 5),
     Sigma[i,j]: tFond[a,i,j]*phi24[a],
     Tr2 : Sigma[i,j] Sigma[j,i],
     Tr4 : Sigma[i,j] Sigma[j,k] Sigma[k,l] Sigma[l,i],
@@ -83,30 +83,30 @@ Vevs: {
 Substitutions: {
     # Gauge coupling
     g_SU5 : g
-    
+
 }
 
 Latex: {
     # Particles
-    
+
     q5 : \psi_{\bar{5}},
     q10: \psi_{10},
     phi24: \phi_{24},
-    
+
     Hr : H_r,
     Hi : H_i,
-    
+
     # Defined quantities
-    
+
     tFond : t_{F},
     Sigma : \Sigma,
     Tr2 : Tr_2,
     Tr4 : Tr_4,
     Cyuk5 : C_{yuk}^5,
     Cyuk10 : C_{yuk}^{10}
-    
+
     # Couplings
-    
+
     Y5 : Y_5,
     Y10 : Y_{10},
     lambda1 : \lambda_1,
@@ -114,6 +114,6 @@ Latex: {
     lambda3 : \lambda_3,
     lambda4 : \lambda_4,
     lambda5 : \lambda_5,
-    
+
 }
 

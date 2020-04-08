@@ -818,7 +818,7 @@ def sEye(n, v=1):
 from sympy import IndexedBase
 
 class sTensor():
-    symbs = [IndexedBase(name) for name in 'abcd']
+    baseSymbs = [IndexedBase(name) for name in 'abcd']
 
     def __init__(self, *dims, dic=None, subTensor=False, forceSub=False):
         self.rank = len([el for el in dims if el is not None])
@@ -826,6 +826,8 @@ class sTensor():
         self.trueDim = tuple([d for d in self.dim if d is not None])
         self.subTensor = subTensor
         self.forceSub = forceSub
+
+        self.symbs = self.baseSymbs
         # print("dim : ", self.dim)
 
         self.nMax = 1
@@ -909,27 +911,36 @@ class sTensor():
         tmp = 1
         for pos,ind in enumerate(key):
             if ind is not None:
-                tmp *= self.symbs[pos][ind+1]
+                tmp *= self.baseSymbs[pos][ind+1]
 
         return tmp
+
+    def setFields(self, fields):
+        if len(fields) != self.rank:
+            print(f"Error : please provide this function with exactly {self.rank} fields.")
+            return
+
+        self.symbs = [IndexedBase(el) for el in fields]
 
     def expr(self):
         expr = 0
 
         for k,v in self.dic.items():
-            tmp = v
+            coeff = v
+            tmp = []
             for pos,ind in enumerate(k):
                 if ind is not None:
-                    tmp *= self.symbs[pos][ind+1]
-            expr += tmp
+                    tmp.append(self.symbs[pos][ind+1])
+            expr += Mul(coeff, *tmp)
+
 
         return expr
 
+    def _repr_latex_(self):
+        return self.expr()._repr_latex_()
 
     def __repr__(self):
         return str(self.expr())
-        return (f"Tensor of rank {self.rank} with dimensions {self.dim}.\n" +
-                f"Density : {len(self.dic)/self.nMax*100:.2f}%")
 
     def __getitem__(self, key):
         # for i, el in enumerate(key):

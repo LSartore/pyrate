@@ -67,12 +67,12 @@ GaugeParameter : 1
 
 Substitutions: {
     # Rename the gauge coupling constants
-    g_U1Y : g_1,
-    g_SU2L : g_2,
-    g_SU3c : g_3,
+    g_U1Y : g1,
+    g_SU2L : g2,
+    g_SU3c : g3,
     
     # Possibly define GUT normalizations
-    g_1 : sqrt(5/3) * g_1,
+    g1 : sqrt(5/3) * g1,
     
     # Substitutions for Yukawa matrices
     Yu : [0, 0, 'yt'],
@@ -94,6 +94,10 @@ Latex: {
     
     # Couplings
     
+    g1 : g_1,
+    g2 : g_2,
+    g3 : g_3,
+
     Yu : Y_u,
     Yd : Y_d,
     Ye : Y_e,

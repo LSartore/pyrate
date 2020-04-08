@@ -1,12 +1,11 @@
 import sys
-sys.path.append('/home/lohan/ownCloud/PyR@TE_3/Doc/SM/PythonOuput')
 
 from SM import RGEsolver
 
 ##############################################
 # First, create an instance of the RGEsolver #
 ##############################################
-        
+
 rge = RGEsolver('rge', tmin=0, tmax=20, initialScale=0)
 
 
@@ -24,9 +23,9 @@ rge.loops = {'GaugeCouplings': 2,
 
 # Gauge Couplings
 
-rge.g_1.initialValue = 0
-rge.g_2.initialValue = 0
-rge.g_3.initialValue = 0
+rge.g1.initialValue = 0
+rge.g2.initialValue = 0
+rge.g3.initialValue = 0
 
 # Yukawa Couplings
 

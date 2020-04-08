@@ -2,7 +2,7 @@
 <html>
 <head><meta charset="utf-8" />
 
-<title>example</title>
+<title>CGCs</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
@@ -13077,14 +13077,32 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h1 id="PyR@TE-3-:-Example/Documentation-notebook">PyR@TE 3 : Example/Documentation notebook<a class="anchor-link" href="#PyR@TE-3-:-Example/Documentation-notebook">&#182;</a></h1>
+<h1 id="Using-Clebsch-Gordan-coefficients">Using Clebsch-Gordan coefficients<a class="anchor-link" href="#Using-Clebsch-Gordan-coefficients">&#182;</a></h1>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Before anything else, let's make sure that we are working in PyR@TE's directory.</p>
+<p>Writing a Lagrangian term using its mathematical expression with contracted indices may not be possible in some situtations. This will often be the case when working with large gauge groups (<em>i.e.</em> GUTs) or higher-dimensional representations of some common gauge groups (<em>e.g.</em> sextets under $SU(3)$).</p>
+<p>The module <strong>PyLie</strong>, introduced in PyR@TE 2, was designed to handle various group theory related computations. One of its useful functionalities is to compute the Clebsch-Gordan coefficients for an arbitrary set of 2, 3, or 4 representations of a given Lie algebra. These coefficients contain information on the way to contract gauge multiplets in order to yield gauge invariant quantities.</p>
+<p>Altough a lot of efforts were put in the improvement of the performances of this module in PyR@TE 3, the computation of gauge invariants may be in some cases quite time-consuming. Therefore, in the same spirit as in PyR@TE 2, a database was designed to store the results of these computations, allowing PyR@TE to access them at any later time without computing them again. A dedicated module was written to interact with PyLie and its database in a simple and intuitive way. The next section of this notebook exlpains how to interact with PyLie ; the CGCs themselves are discussed a bit later.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Interacting-with-PyLie's-database">Interacting with PyLie's database<a class="anchor-link" href="#Interacting-with-PyLie's-database">&#182;</a></h2><p><strong>Disclaimer</strong>: PyLie's functions as well as available functions to interact with PyLie's database are still ongoing improvements and changes. This notebook will therefore be updated in the future.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>First, let's get into PyLie's main directory (located in <code>/src/PyLie</code> from PyR@TE's directory) :</p>
 
 </div>
 </div>
@@ -13094,7 +13112,7 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[&nbsp;]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">cd</span> .../PyR@TE_3/
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">cd</span> .../PyR@TE_3/src/PyLie
 </pre></div>
 
     </div>
@@ -13105,14 +13123,7 @@ div#notebook {
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="1.-The-model-file">1. The model file<a class="anchor-link" href="#1.-The-model-file">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Let's first take a look at the Standard Model model-file in <code>models/SM.model</code>, and explain each part of it.</p>
+<p>Let's import the PyLieDB class and load the database (DB) with the <code>.load()</code> function. When we are done working with the DB, we must systematically close it using the <code>.close()</code> method.</p>
 
 </div>
 </div>
@@ -13122,259 +13133,27 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[2]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;models/SM.model&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">PyLieDB</span> <span class="kn">import</span> <span class="n">PyLieDB</span>
+
+<span class="c1"># Create an instance of the Database object</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">PyLieDB</span><span class="p">()</span>
+
+<span class="c1"># Make sure it is closed first</span>
+<span class="n">db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="c1"># Load it</span>
+<span class="n">db</span><span class="o">.</span><span class="n">load</span><span class="p">()</span>
 </pre></div>
 
     </div>
 </div>
 </div>
 
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre># YAML 1.1
----
-Author: Lohan Sartore
-Date: 01.04.2020
-Name: SM
-Groups: {U1Y: U1, SU2L: SU2, SU3c: SU3}
-
-#################################
-# Fermions assumed weyl spinors #
-#################################
-
-Fermions: {
-    Q: {Gen: 3, Qnb:{ U1Y: 1/6, SU2L: 2, SU3c: 3}},
-    L: {Gen: 3, Qnb:{ U1Y: -1/2, SU2L: 2, SU3c: 1}},
-    uR: {Gen: 3, Qnb:{ U1Y: 2/3, SU2L: 1, SU3c: 3}},
-    dR: {Gen: 3, Qnb:{ U1Y: -1/3, SU2L: 1, SU3c: 3}},
-    eR: {Gen: 3, Qnb:{ U1Y: -1, SU2L: 1, SU3c: 1}},
-}
-
-################
-# Real Scalars #
-################
-
-RealScalars: {
-}
-
-###################
-# Complex Scalars #
-###################
-
-CplxScalars: {
-    H: {RealFields: [Pi, Sigma], Norm: 1/Sqrt(2), Qnb: {U1Y: 1/2, SU2L: 2, SU3c: 1}},
-}
-
-
-Potential: {
-
-Definitions:{
-    Htilde[i] : Eps[i,j]*Hbar[j]
-},
-
-#########################################
-# All particles must be defined above ! #
-#########################################
-
-Yukawas:{
-    Yu : Qbar[i,a] Htilde[i] uR[a],
-    Yd : Qbar[i,a] H[i] dR[a]
-    Ye : Lbar[i] H[i] eR,
-},
-
-QuarticTerms: {
-    lambda : (Hbar[i] H[i])**2,
-},
-
-ScalarMasses: {
-    mu : Hbar[i] H[i],
-}
-
-}
-
-Vevs: {
-    v: Pi[2]
-}
-
-GaugeParameter : 1
-
-Substitutions: {
-    # Rename the gauge coupling constants
-    g_U1Y : g1,
-    g_SU2L : g2,
-    g_SU3c : g3,
-    
-    # Possibly define GUT normalizations
-    g1 : sqrt(5/3) * g1,
-    
-    # Substitutions for Yukawa matrices
-    Yu : [0, 0, &#39;yt&#39;],
-    Yd : [0, 0, &#39;yb&#39;],
-    Ye : [0, 0, &#39;ytau&#39;]
-}
-
-Latex: {
-    # Particles
-    
-    uR : u_R,
-    dR : d_R,
-    eR : e_R,
-    
-    Pi : \Pi,
-    Sigma : \Sigma,
-    
-    Htilde : \tilde{H},
-    
-    # Couplings
-    
-    g1 : g_1,
-    g2 : g_2,
-    g3 : g_3,
-
-    Yu : Y_u,
-    Yd : Y_d,
-    Ye : Y_e,
-    
-    lambda : \lambda,
-    mu : \mu,
-    
-    yt : y_t,
-    yb : y_b,
-    ytau: y_\tau
-}
-
-
-</pre>
-</div>
-</div>
-
-</div>
-</div>
-
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Gauge-groups-&amp;-Particle-content-:-GaugeGroups,-Fermions,-RealScalars,-CplxScalars">Gauge groups &amp; Particle content : <code>GaugeGroups</code>, <code>Fermions</code>, <code>RealScalars</code>, <code>CplxScalars</code><a class="anchor-link" href="#Gauge-groups-&amp;-Particle-content-:-GaugeGroups,-Fermions,-RealScalars,-CplxScalars">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>The overall syntax is similar to the one in PyR@TE 2. A first difference is that quotation marks are not needed anymore around the various names and quantities.</p>
-<p>For gauge groups : <code>Groups: {groupName: group, groupName2: group, ...}</code></p>
-<p>For fermions, we specify the number of generations as well as the quantum numbers under each of the gauge group factors.</p>
-<p>For real scalars (none here), we only need to specify the quantum numbers, either with <code>S:{Qnb:{ U1Y: x, SU2L: y, SU3c: z}}</code> or <code>S:{U1Y: x, SU2L: y, SU3c: z}</code>.</p>
-<p>Complex scalars need to be explicitely defined as the sum of a real and imaginary component. These are defined using the keyword <code>RealFields: [re, im]</code>. A value for the norm must be provided as well. In our case, the SM higgs doublet is decomposed as :<br>
-\begin{equation*}
-    H = \frac{1}{\sqrt{2}}\left(\Pi + i\,\Sigma\right)
-\end{equation*}</p>
-<p>Note that the value of the norm has an impact on the final expression of the beta-functions.</p>
-<p><strong>Important remark :</strong> A difference with PyR@TE 2 is that the anti-particles do not need to be defined in the model file. Anti-particles are automatically defined (except for real scalars, of course) and can be accessed appending 'bar' to the name of the corresponding particle:
-<code>Q -&gt; Qbar</code>, <code>H -&gt; Hbar</code> and so on.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="Writing-the-Lagrangian-:--Potential">Writing the Lagrangian :  <code>Potential</code><a class="anchor-link" href="#Writing-the-Lagrangian-:--Potential">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>As in PyR@TE 2, the Lagrangian is defined in the <code>Potential</code> section. However, the way the user has to write the Lagrangian has been widely improved in PyR@TE 3, in order to make the syntax as much intuitive and user-friendly as possible. There are two main new features :</p>
-<ol>
-<li>The various terms are written explicitely, using their mathematical expression and the summation convention for repeated indices.</li>
-<li>A new section <code>Definitions</code> was introduced to define auxiliary quantities useful to write the Lagrangian.  </li>
-</ol>
-<p>In our case, we defined the conjugated higgs field (used in the expression of the up-type quark Yukawa coupling) $\tilde{H}^i \equiv \epsilon^{i j} H^*_j$ using the following input : <code>Htilde[i] : Eps[i,k]*Hbar[k]</code>. Note that <code>Eps</code> followed by $n$ indices is internally interpreted as the Levi-Civita tensor of rank $n$.</p>
-<p>Now we are ready to define the various terms of the SM Lagrangian. For instance, in the <code>Yukawas</code> section, the up-type Yukawa couplings are written <code>Yu : Qbar[i,a] Htilde[i] uR[a]</code>, where <code>i</code> is a $SU(2)$ index ranging from 1 to 2, and <code>a</code> is the $SU(3)$ color index, ranging from 1 to 3.</p>
-<p>Similarly, the Higgs quartic term is defined as <code>lambda : (Hbar[i] H[i])**2</code>. This is a short-hand for the equivalent formulation <code>lambda : Hbar[i] H[i] Hbar[j] H[j]</code>.</p>
-<p>The order of the various indices is based on the order in which the non-abelian gauge factors were defined. Here we recall that the groups were defined as <code>Groups: {U1Y: U1, SU2L: SU2, SU3c: SU3}</code>, so the indices of <code>Q</code> and <code>Qbar</code> must be <code>[i_SU2L, j_SU3C]</code>. Any inconsistency will be detected by PyR@TE and an appropriate error will be raised (<em>e.g.</em> if we are trying to sum two indices of different nature or if the same index appears more than twice).</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="[NEW]-VeVs-running">[NEW] VeVs running<a class="anchor-link" href="#[NEW]-VeVs-running">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Another new feature is the running of vacuum-expectation values. This is done in the optional section <code>Vevs</code>. The only info to give is the name of the vev and the scalar component it is associated with. In the SM case, the vev is conventionally developped by the second component of the Higgs doublet, and is taken real. Therefore we write <code>v: Pi[2]</code>, where <code>Pi</code> was defined earlier as the real component of the complex Higgs field.</p>
-<p>Since vevs break gauge invariance, the result will be gauge-dependant. The RGEs are computed in a general $R_\xi$ gauge, but the user can fix the gauge (<em>i.e.</em> give a value to $\xi$) using the keyword <code>GaugeParameter</code>. Here we chose for instance the Feynman gauge $\xi=1$.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="[NEW]-Substitutions">[NEW] Substitutions<a class="anchor-link" href="#[NEW]-Substitutions">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>A new section <code>Substitutions</code> was introduced, where we may ask PyR@TE to substitute some quantities with others <strong>after</strong> the computation of the RGEs is done. There are several ways to take advantage of this new section :</p>
-<ol>
-<li><strong>Renaming some couplings</strong>: This is useful for gauge coupling constants, whose names are automatically set to <code>g_[groupName]</code> (<em>e.g.</em> <code>g_SU2L</code>), and may pollute a bit the latex output. We can rename <code>g_SU2L</code> to <code>g2</code> simply by writing <code>g_SU2L: g2</code>.</li>
-<li><strong>Apply a GUT normalization</strong>: The syntax in this case is <em>e.g.</em> <code>g1 : sqrt(5/3) * g1</code>. It is important that the same coupling appears in the left- and right- hand sides. We do not define any new coupling, but simply ask for the substitution $g_1 \rightarrow \sqrt{5/3}\, g_1$ to be performed. In the output latex file, the information that we used some GUT normalization will appear.</li>
-<li><strong>Use assumptions on the structure of Yukawa matrices</strong>: In the case of the SM, it is frequent to neglect the off-diagonal components of the Yukawa couplings. It is also frequent to neglect all components but the 3rd generation diagonal coupling. This can be done in the <code>Substitutions</code> section. The explicit Yukawa matrices are given in the form of a Python list of lists. For instance, we can define : <code>Yu: [['y_up', 0, 0], [0, 'y_c', 0], [0, 0, 'y_t']]</code>, or, equivalently, <code>Yu: ['y_up', 'y_c', 'y_t']</code>. It is important to note that the new couplings defined in the right-hand side (<code>y_up</code>, <code>y_c</code>, <code>y_t</code>) are put inside quotation marks. Doing so, we indicate to PyR@TE that these couplings must be defined now, since they weren't defined earlier in the model file. If we wanted to neglect all couplings but the top quark's, we would have written <code>Yu: [0, 0, 'y_t']</code>.<br>
-<strong>Important remark</strong>: Setting a coupling to 0 at some energy scale does <strong>not</strong> prevent it to be radiatively generated at any other energy scale. In other words, some component of a Yukawa matrix which was set to 0 in <code>Substitutions</code> can have a non-zero beta-function. In this case, some warning will be displayed in the output latex file so the user is aware of the situation. In the case of the SM, setting the off-diagonal components of all Yukawa matrices to 0 is stable along the RG flow, as well as selecting only the third generation Yukawa couplings.</li>
-<li><strong>Define new couplings</strong>: We may for instance want to obtain the beta-functions in terms of the gauge "structure constants" $\alpha_i \equiv g_i^2/(4\pi)$. In this case we may simply define them using <em>e.g.</em> <code>alpha1 : g1**2/(4 pi)</code>. PyR@TE will internally take care of computing the RGEs of <code>alpha1</code> based on that of <code>g1</code>, then substituting <code>g1**2</code> with <code>alpha1 * (4 pi)</code> in every beta function.</li>
-</ol>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="[NEW]-Latex-substitutions">[NEW] Latex substitutions<a class="anchor-link" href="#[NEW]-Latex-substitutions">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>The last section <code>Latex</code> is where we define the Latex expression of all the quantities defined in the model file. This is optional but will definitely help get a nice-looking latex output.<br>
-In principle, for couplings whose names are simple Latex expressions (for instance <code>g_1</code> or <code>Y_u</code>), the substitution ($g_1$ and $Y_u$) will be performed automatically. However, these automatic replacements may sometimes lead to some unexpected behavior. Therefore, we recommand to avoid the use of Latex names and special characters in the definition of the couplings, and to explicitely define the Latex substitutions in this dedicated section of the model file. This way the user has full control on the Latex ouput.</p>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="2.-Running-PyR@TE">2. Running PyR@TE<a class="anchor-link" href="#2.-Running-PyR@TE">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>As in PyR@TE 2, PyR@TE is run from the command line. In a shell you will have to type <code>python3 pyR@TE.py [-args]</code>, where <code>python3</code> should be replaced if needed by the correct command or path to a Python3 (&ge; v3.6) executable which is correcty linked to PyR@TE's needed dependencies (Sympy 1.5, numpy, ...).</p>
-<p>The number of possible arguments was reduced compared to the previous version. On the other hand, a configuration file was added where the user can adjust the settings of PyR@TE. Let's take a look at this file, which is called <code>default.settings</code> and can be found in PyR@TE's main repository :</p>
+<p>The content of the DB can be printed at any time calling <code>db.visit()</code>, or, equivalently, <code>print(db)</code>. The argument <code>shorter=True</code> can be provided if we do not want to display the whole content of the contained matrices and tensors.</p>
 
 </div>
 </div>
@@ -13384,8 +13163,7 @@ In principle, for couplings whose names are simple Latex expressions (for instan
 <div class="prompt input_prompt">In&nbsp;[3]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;default.settings&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">visit</span><span class="p">(</span><span class="n">shorter</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13402,51 +13180,125 @@ In principle, for couplings whose names are simple Latex expressions (for instan
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>#########################################################################
-#           This is the default settings file for PyR@TE 3.             #
-# Feel free to adjust these settings depending on your usage of PyR@TE. #
-#########################################################################
-#     Note : if missing, this file will be automatically generated      #
-#                 by PyR@TE in its original form                        #
-#########################################################################
+<pre>Content of the DB (unzipped size = 61.39kB):
 
+E8
+   /adjointrep : [0 0 0 0 0 0 1 0]
+   /cartanmatrix
+      /k : [[0 0]
+            [0 1]
+            [1 0]
+            ...
+            [6 6]
+            [7 2]
+            [7 7]]
+      /s : [8 8]
+      /v : [b&#39;2&#39; b&#39;-1&#39; b&#39;-1&#39; ... b&#39;2&#39; b&#39;-1&#39; b&#39;2&#39;]
+   /dimension : 248
+   /fullname : E8
+   /name : E8
+   /rank : 8
 
-# Printing
+G2
+   /adjointrep : [1 0]
+   /cartanmatrix
+      /k : [[0 0]
+            [0 1]
+            [1 0]
+            [1 1]]
+      /s : [2 2]
+      /v : [b&#39;2&#39; b&#39;-3&#39; b&#39;-1&#39; b&#39;2&#39;]
+   /dimension : 14
+   /fullname : G2
+   /name : G2
+   /rank : 2
 
-VerboseLevel : Info
+SO10
+   /adjointrep : [0 1 0 0 0]
+   /cartanmatrix
+      /k : [[0 0]
+            [0 1]
+            [1 0]
+            ...
+            [3 3]
+            [4 2]
+            [4 4]]
+      /s : [5 5]
+      /v : [b&#39;2&#39; b&#39;-1&#39; b&#39;-1&#39; ... b&#39;2&#39; b&#39;-1&#39; b&#39;2&#39;]
+   /dimension : 45
+   /fullname : SO10
+   /name : D5
+   /rank : 5
 
-# Default folders
+SU2
+   /adjointrep : [2]
+   /cartanmatrix
+      /k : [[0 0]]
+      /s : [1 1]
+      /v : [b&#39;2&#39;]
+   /dimension : 3
+   /dynkinlabels
+      /2 : [1]
+   /fullname : SU2
+   /invariants
+      /((1,),(1,));10;1;00
+   /name : A1
+   /rank : 1
+   /repmatrices
+      /(1,);0;0
+   /structureconstants
+      /k : [[0 1 2]
+            [0 2 1]
+            [1 0 2]
+            [1 2 0]
+            [2 0 1]
+            [2 1 0]]
+      /s : [3 3 3]
+      /v : [b&#39;1&#39; b&#39;-1&#39; b&#39;-1&#39; b&#39;1&#39; b&#39;1&#39; b&#39;-1&#39;]
 
-ResultsFolder : results/
-LogFolder : log/
-DisableLogFiles : False
+SU3
+   /adjointrep : [1 1]
+   /cartanmatrix
+      /k : [[0 0]
+            [0 1]
+            [1 0]
+            [1 1]]
+      /s : [2 2]
+      /v : [b&#39;2&#39; b&#39;-1&#39; b&#39;-1&#39; b&#39;2&#39;]
+   /dimension : 8
+   /dynkinlabels
+      /-3 : [0 1]
+      /15 : [[2 1]
+             [4 0]]
+   /fullname : SU3
+   /name : A2
+   /rank : 2
+   /repmatrices
+      /(1,0);0;0
 
-# Computation
-
-DefaultLoopLevel : 1
-CheckGaugeInvariance : True
-PrintComputationTimes : True
-
-RealBasis : adjoint
-
-
-# Output
-
-CreateFolder : True
-CopyModelFile : False
-
-LatexOutput : True
-AbsReplacements : True   #Automatic replacements x*conjugate(x) -&gt; \abs{x}^2
-GroupTheoryInfo : True
-
-MathematicaOutput : True
-MathematicaSolver : True
-
-PythonOutput : True
-
-# User-defined commands to run after the computation
-
-EndCommands : &#34;pdflatex [name].tex, pdflatex [name].tex&#34;
+SU5
+   /adjointrep : [1 0 0 1]
+   /cartanmatrix
+      /k : [[0 0]
+            [0 1]
+            [1 0]
+            ...
+            [2 3]
+            [3 2]
+            [3 3]]
+      /s : [4 4]
+      /v : [b&#39;2&#39; b&#39;-1&#39; b&#39;-1&#39; b&#39;2&#39; b&#39;-1&#39; b&#39;-1&#39; b&#39;2&#39; b&#39;-1&#39; b&#39;-1&#39; b&#39;2&#39;]
+   /dimension : 24
+   /dynkinlabels
+      /-5 : [0 0 0 1]
+      /10 : [0 1 0 0]
+      /5 : [1 0 0 0]
+   /fullname : SU5
+   /invariants
+      /((0,0,0,1),(0,0,0,1),(0,1,0,0));000;1;000
+      /((0,1,0,0),(1,0,0,0),(0,1,0,0));000;1;000
+   /name : A4
+   /rank : 4
 </pre>
 </div>
 </div>
@@ -13458,145 +13310,14 @@ EndCommands : &#34;pdflatex [name].tex, pdflatex [name].tex&#34;
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="Default-settings">Default settings<a class="anchor-link" href="#Default-settings">&#182;</a></h4>
+<h3 id="Getting-information-from-the-DB">Getting information from the DB<a class="anchor-link" href="#Getting-information-from-the-DB">&#182;</a></h3>
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Let us explain some of the settings. The settings in boldface may be overriden with the command-line arguments, as these are <em>default</em> settings:</p>
-<ul>
-<li><code>VerboseLevel</code>: can be set to <code>Critical</code> to display only errors and warning messages. The recommanded option is <code>Info</code> since it displays a lot of useful info about the progression of the computation.</li>
-<li><strong><code>ResultsFolder</code></strong>: The default folder in which the results are saved.</li>
-<li><code>LogFolder</code>: The default folder in which the log files are saved, if enabled.</li>
-<li><strong><code>DefaultLoopLevel</code></strong>: The loop-level up to which the RGEs are computed. Possible values for this settings will be discussed below.</li>
-<li><strong><code>CheckGaugeInvariance</code></strong>: Can be disabled from the command line. It is recommended to always check the gauge invariance of a newly written model once, and after each modification of the potential !</li>
-<li><code>RealBasis</code>: Possible values are <code>None</code> (or <code>False</code>) ; <code>adjoint</code> and <code>all</code>. This will rotate the gauge generators of real representations to some real basis, where the generators are purely imaginary and antisymmetric. For adjoint representations it will also ensure that the identity $(T_a)^i_j = -i\,f_{a\ j}^{\ i}$ is satisfied. Settings this parameter to at least <code>adjoint</code> is recommended, since it helps fit the usual conventions used in Particle physics. Setting it to <code>all</code> will rotate all real representations to a real basis.</li>
-<li><code>CreateFolder</code>: Create a folder with the name of the model (<em>e.g.</em> "<code>SM/</code>") to store all output files. If <code>False</code> all the files will be put directly in the results folder.</li>
-<li><code>CopyModelFile</code>: copy the model file and put in in the result folder, to keep a trace of how the model file looked like at the time of the computation.</li>
-<li><strong><code>[Latex/Mathematica/Python]Output</code></strong>: These can be enable/disabled individually using command line arguments.</li>
-<li><code>GroupTheoryInfo</code>: Add some info about the Lie groups and their representations in the latex output. Also displays the explicit form of the Clebsch-Gordan coefficients used in the expression of the Lagrangian (if any).</li>
-<li><code>EndCommands</code>: Shell commands to be executed after the computation and the exports are done. Useful to convert the .tex file in a pdf on-the-go. The expression <code>[name]</code> will be systematically replaced by the name of the model. The commands must be put inside double quotation marks <code>"</code> and separated with a comma <code>,</code>. Here we compile the .tex file twice.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h4 id="Command-line-arguments">Command-line arguments<a class="anchor-link" href="#Command-line-arguments">&#182;</a></h4>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<table>
-<thead><tr>
-<th>Full name</th>
-<th>Short-hand</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--Model</code></td>
-<td><code>-m</code></td>
-<td>Specify the path to the .model file</td>
-</tr>
-<tr>
-<td><code>--Loops</code></td>
-<td><code>-l</code></td>
-<td>Specify the loop-level of the RGE computation (override the default setting)</td>
-</tr>
-<tr>
-<td><code>--Results</code></td>
-<td><code>-res</code></td>
-<td>Specify the results folder (override the default setting)</td>
-</tr>
-<tr>
-<td><code>Quiet</code></td>
-<td><code>-q</code></td>
-<td>Only display warnings and error messages (override the default setting)</td>
-</tr>
-<tr>
-<td><code>--no-KinMix</code></td>
-<td><code>-no-kin</code></td>
-<td>Disables the effects of abelian kinetic mixing</td>
-</tr>
-</tbody>
-</table>
-<p>The following arguments are used to enable / disable some behavior. They have the priority over the default settings.</p>
-<table>
-<thead><tr>
-<th>Full name</th>
-<th>Short-hand</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>--CheckGaugeInvariance</code></td>
-<td><code>-gi</code></td>
-<td></td>
-</tr>
-<tr>
-<td><code>--no-CheckGaugeInvariance</code></td>
-<td><code>-no-gi</code></td>
-<td></td>
-</tr>
-<tr>
-<td><code>--LatexOutput</code></td>
-<td><code>-tex</code></td>
-</tr>
-<tr>
-<td><code>--no-LatexOutput</code></td>
-<td><code>-no-tex</code></td>
-</tr>
-<tr>
-<td><code>--MathematicaOutput</code></td>
-<td><code>-math</code></td>
-</tr>
-<tr>
-<td><code>--no-MathematicaOutput</code></td>
-<td><code>-no-math</code></td>
-</tr>
-<tr>
-<td><code>--PythonOutput</code></td>
-<td><code>-py</code></td>
-<td></td>
-</tr>
-<tr>
-<td><code>--no-PythonOutput</code></td>
-<td><code>-no-py</code></td>
-<td></td>
-</tr>
-</tbody>
-</table>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>The loop level can be set in several different ways.</p>
-<ul>
-<li>With an integer $n$ : set the loop level to $n$ for all types of couplings (if possible).</li>
-<li>With a python list : <strong>[x,y,z,...]</strong>. The order of the types of couplings is <strong>[Gauge couplings, Yukawas, quartic terms, Trilinear terms, scalar masses, fermion masses, vevs]</strong>.<br>
-The list may contain 3, 6 or 7 elements. For instance, <code>-l [3, 2, 1]</code> will set the running scheme to 3-loop gauge / 2-loop Yukawa / 1-loop quartics. If not provided, the trilinear scalar mass and vev terms will take the loop-level values of the quartics, and the fermion masses that of the Yukawas.<br>
-Finally, a loop-level of 0 means that the RGEs will not be computed for this kind of couplings.</li>
-<li>With the keyword <code>max</code>, <em>i.e.</em> <code>-l max</code>, to indicate that the computation must be performed at the highest available loop order for each coupling.</li>
-</ul>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>Now let's actually run PyR@TE to compute the 2-loop RGEs of the Standard Model. We will ask the result output folder to be created in this notebook's location : <code>doc/</code>.</p>
+<p>Before discussing the CGCs, let us try and get some information about the gauge groups. Here and after, the standard way to ask some DB some information is the method <code>.get(Group, Type of info, [Arguments, [Keyword arguments]])</code>. If the information is not already present in the DB, it will be automatically computed and stored.</p>
 
 </div>
 </div>
@@ -13606,7 +13327,82 @@ Finally, a loop-level of 0 means that the RGEs will not be computed for this kin
 <div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="o">%</span><span class="k">run</span> pyR@TE.py -m models/SM.model -l 2 -res doc/
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SU2 dimension : &#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU2&#39;</span><span class="p">,</span> <span class="s1">&#39;dimension&#39;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SO10 dimension: &#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SO10&#39;</span><span class="p">,</span> <span class="s1">&#39;dimension&#39;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SU3 rank : &#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU3&#39;</span><span class="p">,</span> <span class="s1">&#39;rank&#39;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SU5 adjoint representation :&#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU5&#39;</span><span class="p">,</span> <span class="s1">&#39;adjoint&#39;</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;E8 dimension and rank : &#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;E8&#39;</span><span class="p">,</span> <span class="s1">&#39;dimension&#39;</span><span class="p">),</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;E8&#39;</span><span class="p">,</span> <span class="s1">&#39;rank&#39;</span><span class="p">)))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;G2 cartan matrix :&#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;G2&#39;</span><span class="p">,</span> <span class="s1">&#39;cartan&#39;</span><span class="p">))</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n\n</span><span class="s1">SU2 structure constants:&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU2&#39;</span><span class="p">,</span> <span class="s1">&#39;structureConstants&#39;</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>SU2 dimension :  3
+SO10 dimension:  45
+SU3 rank :  2
+SU5 adjoint representation : [1, 0, 0, 1]
+E8 dimension and rank :  (248, 8)
+G2 cartan matrix : Matrix([[2, -3], [-1, 2]])
+
+
+SU2 structure constants:
+[Matrix([
+[0,  0, 0],
+[0,  0, 1],
+[0, -1, 0]]), Matrix([
+[0, 0, -1],
+[0, 0,  0],
+[1, 0,  0]]), Matrix([
+[ 0, 1, 0],
+[-1, 0, 0],
+[ 0, 0, 0]])]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Gauge-generators">Gauge generators<a class="anchor-link" href="#Gauge-generators">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Another useful information is the expression of the generators of a given representation of a gauge group. We will refer to them as 'representation matrices'.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Load sympy&#39;s printing system in order to get good-looking output</span>
+<span class="kn">from</span> <span class="nn">sympy</span> <span class="kn">import</span> <span class="n">init_session</span>
+
+<span class="n">init_session</span><span class="p">(</span><span class="n">quiet</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 
     </div>
@@ -13624,66 +13420,6 @@ Finally, a loop-level of 0 means that the RGEs will not be computed for this kin
 
 <div class="output_subarea output_stream output_stdout output_text">
 <pre>
-============================================================================
-
-             PyR@TE version 3.0-beta1  released  April 8th 2020
-
-       L. Sartore,
-
-       F. Lyonnet, I. Schienbein (version 2)
-       and F.Staub, A.Wingerter (version 1)
-    Please cite: arXiv:20xx.xxxxx , arXiv:1608.07274 and arXiv:1309.7030
-
-============================================================================
-
-Loading the YAML file: PyR@TE_3/models/SM.model ... Done.
-Loading the model ... Done.
-Expanding the Lagrangian ...
-     |####################| 100.0%  (0.072 seconds)
-Mapping the model onto the general Lagrangian ...
-     |####################| 100.0%  (0.011 seconds)
-Initializing tensor quantities... Done. (1.959 seconds)
-Checking gauge invariance ... All OK ! (2.383 seconds)
-Computing the RGES ...
-     -&gt; GaugeCouplings
-         -&gt; 1-loop
-         |##########| 100.0%  (0.004 seconds)
-         -&gt; 2-loop
-         |##########| 100.0%  (0.016 seconds)
-     -&gt; Yukawas
-         -&gt; 1-loop
-         |##########| 100.0%  (0.018 seconds)
-         -&gt; 2-loop
-         |##########| 100.0%  (0.379 seconds)
-     -&gt; QuarticTerms
-         -&gt; 1-loop
-         |##########| 100.0%  (0.027 seconds)
-         -&gt; 2-loop
-         |##########| 100.0%  (0.539 seconds)
-     -&gt; ScalarMasses
-         -&gt; 1-loop
-         |##########| 100.0%  (0.003 seconds)
-         -&gt; 2-loop
-         |##########| 100.0%  (0.150 seconds)
-     -&gt; Vevs
-         -&gt; 1-loop
-         |##########| 100.0%  (0.001 seconds)
-         -&gt; 2-loop
-         |##########| 100.0%  (0.009 seconds)
-    ... Done
-Re-combining the RGES ...
-     |####################| 100.0%  (0.267 seconds)
-Applying substitutions ...
--&gt; All done in 6.989 seconds.
-
-Exporting results...
-	Exporting to Latex... Done.
-	Exporting to Mathematica... Done.
-	Exporting to Python... Done.
-Running user-defined commands : 
-	-&gt; &#39;pdflatex SM.tex&#39;
-	-&gt; &#39;pdflatex SM.tex&#39;
-End of the run.
 </pre>
 </div>
 </div>
@@ -13695,92 +13431,7 @@ End of the run.
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<h2 id="3.-PyR@TE-Output">3. PyR@TE Output<a class="anchor-link" href="#3.-PyR@TE-Output">&#182;</a></h2>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="1.-Latex-Output">1. Latex Output<a class="anchor-link" href="#1.-Latex-Output">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[5]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">IFrame</span>
-<span class="c1"># The path given to IFrame uses the notebook directory as the current working dir.</span>
-<span class="n">IFrame</span><span class="p">(</span><span class="s2">&quot;SM/SM.pdf&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">800</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">800</span><span class="p">)</span>
-
-<span class="c1"># If this command is not working, please just go and check the .pdf output manually</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt output_prompt">Out[5]:</div>
-
-
-
-<div class="output_html rendered_html output_subarea output_execute_result">
-
-        <iframe
-            width="800"
-            height="800"
-            src="SM/SM.pdf"
-            frameborder="0"
-            allowfullscreen
-        ></iframe>
-        
-</div>
-
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="2.-Mathematica-output">2. Mathematica output<a class="anchor-link" href="#2.-Mathematica-output">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>(If you do not have Mathematica installed in your machine, this output type is probably not of great interest)</p>
-<p>The Mathematica output is a .m file, which contains :</p>
-<ol>
-<li>The expression of the beta-functions of all the couplings of the model</li>
-<li>An easy-to-use differential equation solver to run the various couplings. The user needs to provide : the min and max energy scales, the initial scale and the value of the coupling at this initial scale. Running the solver will run the couplings between the min and max scale and plot the results for all the couplings which do not vanish identically over the energy range.</li>
-</ol>
-
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<h3 id="3.-Python-output">3. Python output<a class="anchor-link" href="#3.-Python-output">&#182;</a></h3>
-</div>
-</div>
-</div>
-<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
-</div><div class="inner_cell">
-<div class="text_cell_render border-box-sizing rendered_html">
-<p>When enabled, the python output consists in two files : <code>[name].py</code> (here <code>SM.py</code>) and <code>run.py</code>. These two file are put in a subfolder called <code>PythonOutput</code>. The first one contains classes where the couplings and RGEs are defined, as well as RGE solving and plotting functions. In principle the user should not need to modify the content of this file. The second file is used to call the functions defined in the former. Let's take a look at it and import its content within this notebook :</p>
+<p>The standard way to get representation matrices is to call <code>.get(Group, 'repMatrices', [representation])</code> where <code>[representation]</code> refers to the dynkin labels of a given representation of the group. If you are not used to Dynkin labels but rather to the common Particle Physics notation based on the dimension of the representation (<em>e.g.</em> $\mathbf{2}$ or $\bar{\mathbf{3}}$), you may call the method <code>.get(Group, 'labels', [representation])</code> :</p>
 
 </div>
 </div>
@@ -13790,8 +13441,8 @@ End of the run.
 <div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;doc/SM/PythonOuput/run.py&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SU2 2-dimensional rep : &#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU2&#39;</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;SU3 conjugated 3-dimensional rep : &#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU3&#39;</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">3</span><span class="p">))</span>
 </pre></div>
 
     </div>
@@ -13808,70 +13459,8 @@ End of the run.
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>import sys
-
-from SM import RGEsolver
-
-##############################################
-# First, create an instance of the RGEsolver #
-##############################################
-
-rge = RGEsolver(&#39;rge&#39;, tmin=0, tmax=20, initialScale=0)
-
-
-##########################################################
-# We fix the running scheme and initial conditions below #
-##########################################################
-
-# Running scheme :
-
-rge.loops = {&#39;GaugeCouplings&#39;: 2,
-             &#39;Yukawas&#39;: 2,
-             &#39;QuarticTerms&#39;: 2,
-             &#39;ScalarMasses&#39;: 2,
-             &#39;Vevs&#39;: 2}
-
-# Gauge Couplings
-
-rge.g1.initialValue = 0
-rge.g2.initialValue = 0
-rge.g3.initialValue = 0
-
-# Yukawa Couplings
-
-rge.yt.initialValue = 0
-rge.yb.initialValue = 0
-rge.ytau.initialValue = 0
-
-# Quartic Couplings
-
-rge.lambda_.initialValue = 0
-
-# Scalar Mass Couplings
-
-rge.mu.initialValue = 0
-
-# Vacuum-expectation Values
-
-rge.v.initialValue = 0
-
-
-############################
-# Solve the system of RGEs #
-############################
-
-rge.solve(step = .05)
-
-# Another way to call rge.solve() :
-# rge.solve(Npoints = 500)
-
-####################
-# Plot the results #
-####################
-
-rge.plot(subPlots=True, printLoopLevel=True)
-
-
+<pre>SU2 2-dimensional rep :  [1]
+SU3 conjugated 3-dimensional rep :  [0, 1]
 </pre>
 </div>
 </div>
@@ -13883,24 +13472,7 @@ rge.plot(subPlots=True, printLoopLevel=True)
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>To load the file in the notebook, we used the command <code>%load 'doc/SM/PythonOuput/run.py'</code> below. The following steps are performed :</p>
-<ol>
-<li><strong>Load the solver</strong>, and provide it with a name (must be the same as the name of the solver, here <code>'rge'</code>) ; min and max energy scales ; and an initial scale at which the couplings will take their initial values.</li>
-<li><strong>Set the loop-levels</strong> (setting them to higher values than the loop-level of the PyR@TE run will have no effect)</li>
-<li><strong>Set the initial values</strong></li>
-<li><strong>Solve the RGEs</strong> : The function <code>solve</code> can take either the argument <code>step</code> which defines the precision of the iterative differential solver (in units of Log10(GeV)) <strong>or</strong> the argument <code>Npoints</code>, which gives the number of integration points.</li>
-<li>Finally, <strong>plot the results</strong>. Here are the options taken by the plot() function, along with their default values:<ul>
-<li><code>figSize=(600, 600)</code> : The figure dimensions in pixels.</li>
-<li><code>subPlots=True</code> : If True, plot all the various couplings in the same window, with one subplot per type of coupling. If False, produce one figure by coupling type.</li>
-<li><code>which=None</code> : The user may want to plot only one or several types of couplings. Usage:  <blockquote><p><code>which='GaugeCouplings'</code><br>
-<code>which=('GaugeCouplings', 'QuarticTerms')</code></p>
-</blockquote>
-</li>
-<li><code>whichNot=None</code> : Which coupling types are NOT to be plotted. Same usage as which.</li>
-<li><code>printLoopLevel=True/False</code> : The loop-levels of the computation are displayed in the title of the plots.</li>
-</ul>
-</li>
-</ol>
+<p>Note that it may happen that several representations have the same dimension :</p>
 
 </div>
 </div>
@@ -13910,10 +13482,30 @@ rge.plot(subPlots=True, printLoopLevel=True)
 <div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">pi</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU3&#39;</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">,</span> <span class="mi">15</span><span class="p">)</span>
 </pre></div>
 
     </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[7]:</div>
+
+
+
+
+<div class="output_latex output_subarea output_execute_result">
+$\displaystyle \left[ \left[ 2, \  1\right], \  \left[ 4, \  0\right]\right]$
+</div>
+
+</div>
+
 </div>
 </div>
 
@@ -13921,7 +13513,7 @@ rge.plot(subPlots=True, printLoopLevel=True)
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>Let's provide the solver with realistic initial conditions :</p>
+<p>Now let's ask for the generators of the representations $\mathbf{2}$ of $SU(2)$ and $\mathbf{3}$ of $SU(3)$ :</p>
 
 </div>
 </div>
@@ -13931,70 +13523,7 @@ rge.plot(subPlots=True, printLoopLevel=True)
 <div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># %load &#39;doc/SM/PythonOuput/run.py&#39;</span>
-<span class="kn">import</span> <span class="nn">sys</span>
-
-<span class="kn">from</span> <span class="nn">SM</span> <span class="kn">import</span> <span class="n">RGEsolver</span>
-
-<span class="c1">##############################################</span>
-<span class="c1"># First, create an instance of the RGEsolver #</span>
-<span class="c1">##############################################</span>
-        
-<span class="n">rge</span> <span class="o">=</span> <span class="n">RGEsolver</span><span class="p">(</span><span class="s1">&#39;rge&#39;</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">initialScale</span><span class="o">=</span><span class="mf">1.9</span><span class="p">)</span>
-
-
-<span class="c1">##########################################################</span>
-<span class="c1"># We fix the running scheme and initial conditions below #</span>
-<span class="c1">##########################################################</span>
-
-<span class="c1"># Running scheme :</span>
-
-<span class="n">rge</span><span class="o">.</span><span class="n">loops</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;GaugeCouplings&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-             <span class="s1">&#39;Yukawas&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-             <span class="s1">&#39;QuarticTerms&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-             <span class="s1">&#39;ScalarMasses&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-             <span class="s1">&#39;Vevs&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
-
-<span class="c1"># Gauge Couplings</span>
-
-<span class="n">rge</span><span class="o">.</span><span class="n">g1</span><span class="o">.</span><span class="n">initialValue</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mi">128</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="o">-.</span><span class="mi">22</span><span class="p">))</span> <span class="o">*</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">rge</span><span class="o">.</span><span class="n">g2</span><span class="o">.</span><span class="n">initialValue</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mi">128</span> <span class="o">/</span> <span class="o">.</span><span class="mi">22</span><span class="p">)</span>
-<span class="n">rge</span><span class="o">.</span><span class="n">g3</span><span class="o">.</span><span class="n">initialValue</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">pi</span><span class="o">*.</span><span class="mi">12</span><span class="p">)</span>
-
-<span class="c1"># Yukawa Couplings</span>
-
-<span class="n">rge</span><span class="o">.</span><span class="n">yt</span><span class="o">.</span><span class="n">initialValue</span> <span class="o">=</span> <span class="o">.</span><span class="mi">9</span>
-<span class="n">rge</span><span class="o">.</span><span class="n">yb</span><span class="o">.</span><span class="n">initialValue</span> <span class="o">=</span> <span class="o">.</span><span class="mi">03</span>
-<span class="n">rge</span><span class="o">.</span><span class="n">ytau</span><span class="o">.</span><span class="n">initialValue</span> <span class="o">=</span> <span class="o">.</span><span class="mi">01</span>
-
-<span class="c1"># Quartic Couplings</span>
-
-<span class="n">rge</span><span class="o">.</span><span class="n">lambda_</span><span class="o">.</span><span class="n">initialValue</span> <span class="o">=</span> <span class="mf">0.13</span><span class="o">/</span><span class="mi">2</span>
-
-<span class="c1"># Scalar Mass Couplings</span>
-
-
-<span class="n">rge</span><span class="o">.</span><span class="n">mu</span><span class="o">.</span><span class="n">initialValue</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="o">.</span><span class="mi">13</span><span class="p">)</span> <span class="o">*</span> <span class="mi">246</span>
-
-<span class="c1"># Vacuum-expectation Values</span>
-
-<span class="n">rge</span><span class="o">.</span><span class="n">v</span><span class="o">.</span><span class="n">initialValue</span> <span class="o">=</span> <span class="mi">246</span>
-
-
-<span class="c1">############################</span>
-<span class="c1"># Solve the system of RGEs #</span>
-<span class="c1">############################</span>
-
-<span class="n">rge</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">step</span> <span class="o">=</span> <span class="o">.</span><span class="mi">05</span><span class="p">)</span>
-
-<span class="c1"># Another way to call rge.solve() :</span>
-<span class="c1"># rge.solve(Npoints = 500)</span>
-
-<span class="c1">####################</span>
-<span class="c1"># Plot the results #</span>
-<span class="c1">####################</span>
-
-<span class="n">rge</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">figSize</span><span class="o">=</span><span class="p">(</span><span class="mi">1100</span><span class="p">,</span> <span class="mi">1000</span><span class="p">),</span> <span class="n">subPlots</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">printLoopLevel</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU2&#39;</span><span class="p">,</span> <span class="s1">&#39;repMatrices&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="c1"># We expect the Pauli matrices to show up ...</span>
 </pre></div>
 
     </div>
@@ -14007,26 +13536,46 @@ rge.plot(subPlots=True, printLoopLevel=True)
 
 <div class="output_area">
 
-    <div class="prompt"></div>
+    <div class="prompt output_prompt">Out[8]:</div>
 
 
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>System of RGEs solved in 0.080 seconds.
-</pre>
+
+
+<div class="output_latex output_subarea output_execute_result">
+$\displaystyle \left[ \left[\begin{matrix}0 & \frac{1}{2}\\\frac{1}{2} & 0\end{matrix}\right], \  \left[\begin{matrix}0 & - \frac{i}{2}\\\frac{i}{2} & 0\end{matrix}\right], \  \left[\begin{matrix}\frac{1}{2} & 0\\0 & - \frac{1}{2}\end{matrix}\right]\right]$
+</div>
+
+</div>
+
 </div>
 </div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU3&#39;</span><span class="p">,</span> <span class="s1">&#39;repMatrices&#39;</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span> <span class="c1"># We expect the Gell-Mann matrices to show up ...</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
 
 <div class="output_area">
 
-    <div class="prompt"></div>
+    <div class="prompt output_prompt">Out[9]:</div>
 
 
 
 
-<div class="output_png output_subarea ">
-<img src="data:image/png;base64,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MPAscKdz7uHOx8ws5j8uAD7mn1NEeijs9djR1llK+kRERET6xvXA9Wa2ErgNuBbAzBaYWXxGzq/hjfP7QsKyDP/oH5sJLDGzxcDLwNPAg336CUQklMLXpikiIiISQs65dzh0iQacczMSHl8HXNfN6+cCc1MWoIhEllr6REREREREIkwtfSL9zGcffpW12/el5NwjynL50VWn9qjstm3bmD17NsuXL6ekpIRTTz2VrKwsvvnNb6YkNhEJn1TWV9CzOqu+vp4xY8awa9cu0tLSAJg1axYf+tCHuPbaa1MWm4hIsjU3N3PCCSdQUlLCwoULkzrRjFr6RKRLV111FdOnT+ett97i4Ycf5p577mHq1KlHfqGISB+qqKhg6NChLF68GIAFCxawadMmrrnmGnbt2kVbW1vAEYqI9ExWVhYrVqygrq6Ot956K6nnVkufSD/T05a4VHr++efZuHEjs2fPBmDkyJEUFxczdepUdu7cyS233MJTTz3F+vXrA45URILUH+orgOnTp7Nw4UImTJjAzTffzG9+8xvMjGuvvZaf/exnHS2AIiJd6S+9rMBb+qqqqopFixYxefLkpMURqpa+5rZmfv3ur/nbpr8FHYpIpL3++uucdtppHc83bNhALBZj2LBhlJSU8MADDzBhwoQAIwyHXfsO8ItX17N4/a6gQxGJtOnTp/PSSy/x1a9+lcsvv5yamhpeeuklli5dyre+9S3WrTtkKTzpwsZd+/np39axqn5v0KGIDFj3338/y5YtY9GiRUk9b6ha+pxzfHXhV/no6I9y+uDTgw5HJLLKy8t5/PHHaW9vp7W1ldmzZzNlypSgwwqd7Y0HuHX+W9x47hhOGlYcdDgikTV9+nRuuukmKioqOi6UqqurueCCC7jjjjuCDS5EVm9t4Cu/XsI3P3kCYysKgg5HpM/0l14La9as4dvf/jZ33303P/vZz5J67lC19GWnZ5Odls2uZt01F0mlyy67jJycHGpqapg5cyZZWVlccMEFQYcVOlWF2QBs3t0UcCQi0VZdXU17eztz584lO9v73b366qucemr/uJALi/wsry2gsbk14EhEBp729nauuuoq7rrrLmbMmMHixYt7vQD74YQq6QMoyipid9PuoMMQibTW1laefPJJVqxYwZ133snSpUu54oorOo7fcMMNrFixghtuuIHVq1cHGGn/lpeV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H2HHoX08tmh7Ricds5pP+3hs0faMTm15zKp/OkxUMLMRwKNADrATuNQ5tzDQoFqRmQ3Gu9E2Hq/adhXw/Wj/D2pm9wJn4u2gW4BS59zQWNqekZYROIEY2p5mlot35XAVUOIPrnLOTTWzXsDjwCCgGrjGOfduMJF2HLG0j0eiY1b0bk8ds3TMiiSW9vFIdMyK3u2pY9aBH7OiKukTERERERGRloma5p0iIiIiIiLSckr6REREREREYpiSPhERERERkRimpE9ERERERCSGKekTERERERGJYUr6REREREREYpiSPgmEmX1gZrcGHYeIyL7oeCUi0UTHLIlESZ+IiIiIiEgM08vZpd2Z2aPApWGD1jrnBgYTjYhI43S8EpFoomOWNEZJn7Q7M8sC3gTeB+4E6pxzm4ONSkRkbzpeiUg00TFLGpMQdADS+TjndphZDVDqnCsMOh4RkcboeCUi0UTHLGmM7ukTERERERGJYUr6REREREREYpiSPglKDRAfdBAiIs2g45WIRBMds2QvSvokKGuBQ82sn5l1DToYEZEm6HglItFExyzZi5I+CcqdQA6wCpgTcCwiIk3R8UpEoomOWbIXvbJBREREREQkhqmmT0REREREJIYp6RMREREREYlhSvpERERERERimJI+ERERERGRGKakT0REREREJIYp6RMREREREYlhSvpERERERERimJI+ERERERGRGKakT0REREREJIYp6RMREREREYlhSvpERERERERimJI+ERERERGRGKakT0REREREJIYp6RMREREREYlhSvpERERERERimJI+ERERERGRGKakT0REREREJIYp6RMREREREYlhSvpERERERERimJI+ERERERGRGKakT0REREREJIYp6RMREREREYlhSvpERERERERimJI+ERERERGRGKakTw6Imd1qZh8EHUdbMrN3zOy2oOPobMzMmdk0//uxfn9C0HGJSOfVGc55Egwzu9LM1gQdx76Y2R1m9lbQcUjLKemTXczsZjP7wsxKzWyjmT1iZj2CjmtfzKyPH+sGM6s0s3wze9bMegYdW1P8JMaZ2ZAGw4/0h68PKK4EM7vRzOabWYW/L7xmZscHEY/vI6CPc642wBhEJIZE4znPzF4xs2caGfd7M1vQ3jF1ZmaW4p+vj2zhdP80s5kNBj8JTG696Paa5xtm9o9Gxv3R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
-"
->
+<div class="output_latex output_subarea output_execute_result">
+$\displaystyle \left[ \left[\begin{matrix}0 & \frac{1}{2} & 0\\\frac{1}{2} & 0 & 0\\0 & 0 & 0\end{matrix}\right], \  \left[\begin{matrix}0 & 0 & 0\\0 & 0 & \frac{1}{2}\\0 & \frac{1}{2} & 0\end{matrix}\right], \  \left[\begin{matrix}0 & 0 & \frac{i}{2}\\0 & 0 & 0\\- \frac{i}{2} & 0 & 0\end{matrix}\right], \  \left[\begin{matrix}0 & - \frac{i}{2} & 0\\\frac{i}{2} & 0 & 0\\0 & 0 & 0\end{matrix}\right], \  \left[\begin{matrix}0 & 0 & 0\\0 & 0 & - \frac{i}{2}\\0 & \frac{i}{2} & 0\end{matrix}\right], \  \left[\begin{matrix}0 & 0 & - \frac{1}{2}\\0 & 0 & 0\\- \frac{1}{2} & 0 & 0\end{matrix}\right], \  \left[\begin{matrix}\frac{\sqrt{3}}{3} & 0 & 0\\0 & - \frac{\sqrt{3}}{6} & 0\\0 & 0 & - \frac{\sqrt{3}}{6}\end{matrix}\right], \  \left[\begin{matrix}0 & 0 & 0\\0 & \frac{1}{2} & 0\\0 & 0 & - \frac{1}{2}\end{matrix}\right]\right]$
 </div>
 
 </div>
@@ -14038,21 +13587,182 @@ rge.plot(subPlots=True, printLoopLevel=True)
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
-<p>If the user needs to access the numerical values of the running couplings, he/she simply needs to read them from the <code>solutions</code> dictionary. For instance:</p>
+<p>The Pauli matrices did show up in the first case, but the second output does not match the usual expression for the Gell-Mann matrices (altough it looks similar). This brings us to an important remark :<br>
+<br></p>
+<center><span style="font-size:larger;"> The explicit form of the generators of a representation is not uniquely defined. For a given representation, there exists infinitely many sets of gauge generators satisfying the commutation relations of the Lie algebra. Some quantities, such as the CGCs, depend in general on the choice of the generators. </span></center>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Using-Clebsch-Gordan-coefficients-to-build-a-Lagrangian">Using Clebsch-Gordan coefficients to build a Lagrangian<a class="anchor-link" href="#Using-Clebsch-Gordan-coefficients-to-build-a-Lagrangian">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Introductory-example">Introductory example<a class="anchor-link" href="#Introductory-example">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="1.-Compute-the-CGCs">1. Compute the CGCs<a class="anchor-link" href="#1.-Compute-the-CGCs">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Let's begin the discussion with a simple example. We consider two fields transforming respectively in the representations $\bar{\mathbf{2}}$ and $\mathbf{2}$ of $SU(2)$. Somehow, we forgot how to contract these two fields in a gauge singlet (it sure has been a long day). We simply have to get the CGCs for this combination of fields, calling as usual the <code>.get()</code> method with the keyword <code>'invariants'</code> (or equivalently <code>cgc</code>, <code>cgcs</code>, <code>inv</code>, <code>invs</code>) :</p>
 
 </div>
 </div>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">energyValues</span> <span class="o">=</span> <span class="n">rge</span><span class="o">.</span><span class="n">tList</span>
-<span class="n">lambdaValues</span> <span class="o">=</span> <span class="n">rge</span><span class="o">.</span><span class="n">solutions</span><span class="p">[</span><span class="s1">&#39;lambda_&#39;</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU2&#39;</span><span class="p">,</span> <span class="s1">&#39;invariants&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span> <span class="kc">True</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+</pre></div>
 
-<span class="nb">print</span><span class="p">(</span><span class="n">energyValues</span><span class="p">[:</span><span class="mi">20</span><span class="p">],</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">lambdaValues</span><span class="p">[:</span><span class="mi">20</span><span class="p">])</span>
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[10]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[a[1]*b[1] + a[2]*b[2]]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>-- <strong>Remark</strong>: Since $\mathbf{2}$ of $SU(2)$ is a pseudo-real representation, it is equivalent to its conjugate representation $\bar{\mathbf{2}}$ and therefore both have the same Dynkin labels. In this case the conjugate repreentation is obtained by appending <code>True</code> to the list of Dynkin labels.] --</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The output is a list containing only one element ; meaning that there is only one way to get a gauge singlet out of these two fields.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="2.-Use-CGCs-in-the-model-file">2. Use CGCs in the model file<a class="anchor-link" href="#2.-Use-CGCs-in-the-model-file">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We now want to build a Lagrangian using the invariant identified above. Before going further, we note that this invariant can be rewritten in the form</p>
+\begin{equation}
+    I = a_1 b^1 + a_2 b^2 \equiv C^i_{\ j}\, a_i b^j \,.
+\end{equation}<p>This is the general formulation of CGCs that we will use in the model file.</p>
+<p>The first step is to define the tensor <code>C</code>, in the <code>Definitions</code> section of the model file. There are two ways to proceed, using the keyword <code>cgc( ... )</code> :</p>
+<ul>
+<li><code>C : cgc(SU2, [[1], [1,True]], 0)</code> asks PyR@TE to compute the invariant combinations from the product $\bar{\mathbf{2}} \otimes \mathbf{2}$ of $SU(2)$, and to take the first one (<code>0</code> stand for the first element of the Python list). The last argument is optional in this case, since <code>cgc('group', 'reps')</code> will always pick up the first invariant returned by PyLie.</li>
+<li><code>C : cgc(SU2L, Hbar, H)</code> asks PyR@TE the invariant combination of the fields $H^\dagger$ and $H$ under the group named <code>SU2L</code>. This equivalent formulation requires of course that all the quantities were defined earlier in the model file. Here $H$ stands for the Higgs doublet of the Standard Model.  </li>
+</ul>
+<p>Now we can use the tensor <code>C</code> to express the Higgs mass coupling (under <code>ScalarMasses</code> in the model file) : <code>mu : C[i,j] Hbar[i] H[j]</code>.<br>
+We could also have used a different normalization, for instance : <code>mu : 1/2 * C[i,j] Hbar[i] H[j]</code></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="3.-Invariant-combinations-of-fields-carrying-more-than-one-index">3. Invariant combinations of fields carrying more than one index<a class="anchor-link" href="#3.-Invariant-combinations-of-fields-carrying-more-than-one-index">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Things get more complicated when fields carry several indices (i.e. are charged under several non-abelian gauge factors), still the generalization is straightforward. Let us consider the down-type quark Yukawa coupling of the standard model : (flavour indices are kept implicit)</p>
+\begin{equation}
+    -\mathcal{L} \supset Y_d\, \bar{Q}_{i a} H^i d_R^a
+\end{equation}<p>One way of understanding this term is to consider that we are taking the product of three representations of the semi-simple gauge group $SU(2)\times SU(3)$, that is : $(\bar{\mathbf{2}},\bar{\mathbf{3}})\otimes(\mathbf{2}, \mathbf{1})\otimes(\mathbf{1}, \mathbf{3})$. Since the <code>invariants</code> function only works with simple algebras, we will rather consider that two contractions happen simultaneously here: $\bar{\mathbf{2}}\otimes\mathbf{2}\otimes\mathbf{1} = \bar{\mathbf{2}}\otimes\mathbf{2}$ under $SU(2)$ and $\bar{\mathbf{3}}\otimes\mathbf{1}\otimes\mathbf{3} = \bar{\mathbf{3}}\otimes\mathbf{3}$ under $SU(3)$. We must therefore define two invariant tensors to build this term :</p>
+<ul>
+<li><code>C1 : cgc(SU2, [[1,True], [1]])</code></li>
+<li><code>C2 : cgc(SU3, [[0,1], [1,0]])</code></li>
+</ul>
+<p>$\Rightarrow$ <code>Yd : C1[i,j]*C2[a,b]*Qbar[a,i] H[j] dR[b]</code></p>
+<p>Of course, in this example, the invariant tensors are nothing more than Kronecker deltas, so we could as well have written <code>Yd : Qbar[a,i] H[i] dR[a]</code>.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="A-concrete-(and-more-useful)-example">A concrete (and more useful) example<a class="anchor-link" href="#A-concrete-(and-more-useful)-example">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>In the examples above, we had the choice not to use the CGCs, and instead directly contract the various indices. In some other cases, this simple formulation will not allow the user to write a given gauge-invariant combination of fields.</p>
+<p>To illustrate this, let us take the example of $SU(5)$, with the following particle content :</p>
+<ul>
+<li>Two fermions :  $\psi_5 \in \bar{\mathbf{5}}$  and  $\psi_{10} \in \mathbf{10}$</li>
+<li>One complex scalar :  $\phi_5 \in \mathbf{5}$</li>
+</ul>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Introduction-to-the-repProduct-function">Introduction to the <code>repProduct</code> function<a class="anchor-link" href="#Introduction-to-the-repProduct-function">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Two Yukawa couplings can be constructed out of these three fields. To see this, we can use one of PyLie's functions, <code>repProduct</code> :</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 1. What are the dynkin labels of 5, 5bar and 10 ?</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dynkin labels of 5 and 5bar : &quot;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU5&#39;</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="s1">&#39;and&#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU5&#39;</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">,</span> <span class="o">-</span><span class="mi">5</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Dynkin labels of 10 : &quot;</span><span class="p">,</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU5&#39;</span><span class="p">,</span> <span class="s1">&#39;labels&#39;</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
 </pre></div>
 
     </div>
@@ -14069,13 +13779,242 @@ rge.plot(subPlots=True, printLoopLevel=True)
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>[-1.2073675392798577e-15, 0.049999999999998795, 0.0999999999999988, 0.1499999999999988, 0.1999999999999988, 0.24999999999999878, 0.29999999999999877, 0.34999999999999876, 0.39999999999999875, 0.44999999999999873, 0.4999999999999987, 0.5499999999999987, 0.5999999999999988, 0.6499999999999988, 0.6999999999999988, 0.7499999999999989, 0.7999999999999989, 0.849999999999999, 0.899999999999999, 0.9499999999999991] 
-
-[0.24120233521254922, 0.2319185655134477, 0.2231578215711789, 0.2148724324469653, 0.20702154459569874, 0.19956804074478485, 0.19247947383990013, 0.18572711314374704, 0.17928498867368617, 0.17313016628994568, 0.1672419179779195, 0.16160149705166024, 0.15619219836370532, 0.15099864790447054, 0.1460069774352467, 0.1412046233276697, 0.1365799918127543, 0.13212256221141347, 0.12782267591859917, 0.12367140995500571]
+<pre>Dynkin labels of 5 and 5bar :  [1, 0, 0, 0] and [0, 0, 0, 1]
+Dynkin labels of 10 :  [0, 1, 0, 0]
 </pre>
 </div>
 </div>
 
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 2. Let&#39;s first see what comes out of the product 5 * 5bar</span>
+<span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU5&#39;</span><span class="p">,</span> <span class="s1">&#39;repProduct&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]],</span> <span class="n">iLatex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[12]:</div>
+
+
+
+
+<div class="output_latex output_subarea output_execute_result">
+$\displaystyle \mathbf{24}\oplus\mathbf{1}$
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The output means that $\mathbf{5}\otimes\bar{\mathbf{5}} = \mathbf{24} \oplus \mathbf{1}$. The fact that the decomposition contains the trivial representation $\mathbf{1}$ means that we may construct one (and only one) gauge singlet out of the representations $\mathbf{5}$ and $\bar{\mathbf{5}}$.<br>
+Now, playing with the representation $\mathbf{10}$ as well, we find two possible ways of generating the trivial representation :</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 5bar*10*5bar</span>
+<span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU5&#39;</span><span class="p">,</span> <span class="s1">&#39;repProduct&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">]],</span> <span class="n">iLatex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[13]:</div>
+
+
+
+
+<div class="output_latex output_subarea output_execute_result">
+$\displaystyle \mathbf{126}\oplus\mathbf{75}\oplus\mathbf{24}\oplus\mathbf{24}\oplus\mathbf{1}$
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 5*10*10</span>
+<span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU5&#39;</span><span class="p">,</span> <span class="s1">&#39;repProduct&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]],</span> <span class="n">iLatex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[14]:</div>
+
+
+
+
+<div class="output_latex output_subarea output_execute_result">
+$\displaystyle \overline{\mathbf{175}^{'}}\oplus\overline{\mathbf{126}}\oplus\mathbf{75}\oplus\mathbf{75}\oplus\mathbf{24}\oplus\mathbf{24}\oplus\mathbf{1}$
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="Building-the-Yukawa-Lagrangian">Building the Yukawa Lagrangian<a class="anchor-link" href="#Building-the-Yukawa-Lagrangian">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The first term that we may construct is $\psi_5\, \phi_5^\dagger\, \psi_{10}$. Let's try to get the corresponding CGCs :</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU5&#39;</span><span class="p">,</span> <span class="s1">&#39;invariants&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[15]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[a[1]*b[2]*c[1] + a[1]*b[3]*c[2] + a[1]*b[4]*c[3] + a[1]*b[5]*c[4] - a[2]*b[1]*c[1] + a[2]*b[3]*c[5] + a[2]*b[4]*c[6] + a[2]*b[5]*c[7] - a[3]*b[1]*c[2] - a[3]*b[2]*c[5] + a[3]*b[4]*c[8] + a[3]*b[5]*c[9] - a[4]*b[1]*c[3] - a[4]*b[2]*c[6] - a[4]*b[3]*c[8] + a[4]*b[5]*c[10] - a[5]*b[1]*c[4] - a[5]*b[2]*c[7] - a[5]*b[3]*c[9] - a[5]*b[4]*c[10]]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Clearly, we wouldn't have been able to produce this term using index contractions. In the model file we may define the previous invariant as <code>C5 : cgc(SU5, [[0,0,0,1], [0,0,0,1], [0,1,0,0]])</code> then use it in the definition of the Yukawa term : <code>Y5 : C5[i,j,k] * psi5[i] phi5bar[j] psi10[k]</code></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>For the second term, $\psi_{10}\, \phi_5\, \psi_{10}$, we get :</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;SU5&#39;</span><span class="p">,</span> <span class="s1">&#39;invariants&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]])</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[16]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>[a[10]*b[1]*c[5] - a[10]*b[2]*c[2] + a[10]*b[3]*c[1] + a[1]*b[3]*c[10] - a[1]*b[4]*c[9] + a[1]*b[5]*c[8] - a[2]*b[2]*c[10] + a[2]*b[4]*c[7] - a[2]*b[5]*c[6] + a[3]*b[2]*c[9] - a[3]*b[3]*c[7] + a[3]*b[5]*c[5] - a[4]*b[2]*c[8] + a[4]*b[3]*c[6] - a[4]*b[4]*c[5] + a[5]*b[1]*c[10] - a[5]*b[4]*c[4] + a[5]*b[5]*c[3] - a[6]*b[1]*c[9] + a[6]*b[3]*c[4] - a[6]*b[5]*c[2] + a[7]*b[1]*c[8] - a[7]*b[3]*c[3] + a[7]*b[4]*c[2] + a[8]*b[1]*c[7] - a[8]*b[2]*c[4] + a[8]*b[5]*c[1] - a[9]*b[1]*c[6] + a[9]*b[2]*c[3] - a[9]*b[4]*c[1]]</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>And we will add the definition <code>C10 : cgc(SU5, [0,1,0,0], [1,0,0,0], [0,1,0,0]])</code> along with the Yukawa coupling <code>Y10 : C10[i,j,k] psi10[i] phi5[j] psi10[k]</code></p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Close the DB eventually</span>
+<span class="n">db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+    </div>
 </div>
 </div>
 

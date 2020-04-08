@@ -108,7 +108,7 @@ ComplexPlot[funcs_, {min_, max_}, legends_, plotRange_] := Block[{cplxPos, newFu
 	newLegends = If[MemberQ[cplxPos, #], Sequence @@ {Re@legends[[#]], Im@legends[[#]]}, legends[[#]]]& /@ Range[Length[funcs]];
 
 	Return @ Plot[Evaluate @ newFuncs, {t, min, max}, PlotLegends->newLegends, PlotRange->plotRange]
- ] 
+ ]
 
 
 RGplot[range_, solutions_] := Block[{selectType, toPlot},

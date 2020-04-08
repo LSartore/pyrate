@@ -53,7 +53,6 @@ class Particle(object):
 
         for k,v in dic.items():
             g = gaugeGroups[k]
-            # print(k,v, type(v))
 
             if isinstance(v, str):
                 if not g.abelian:
@@ -66,7 +65,14 @@ class Particle(object):
             if isinstance(v, list):
                 v = tuple(v)
             if not isinstance(v, tuple) and not g.abelian:
-                v = tuple(self.idb.get(g.type, 'dynkinLabels', v))
+                dynk = tuple(self.idb.get(g.type, 'dynkinLabels', v))
+                if type(dynk[0]) == list:
+                    loggingCritical(f"Error : more than one representation of the group {g.type} have dimension {dynk} :")
+                    loggingCritical(' -> ' + ', '.join([str(el) for el in dynk[:-1]]) + ' and ' + str(dynk[-1]))
+                    loggingCritical("Please use the Dynkin-labels notation instead to remove the ambihuity.")
+                    exit()
+
+                v = dynk
 
             dic[k] = v
 

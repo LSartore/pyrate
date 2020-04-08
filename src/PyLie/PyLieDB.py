@@ -10,7 +10,7 @@ sys.path.append(wd)
 from PyLie import LieAlgebra, CartanMatrix
 from Math import sMat, sTensor
 
-from sympy import Pow, Rational, sqrt, I
+from sympy import Add, Pow, Rational, sqrt, I, Symbol
 
 import numpy as np
 npStr = np.string_
@@ -65,7 +65,8 @@ class PyLieDB():
 
         self.translations = {
             'conjugate' : self.conjugate,
-            'repname' : self.repName
+            'repname' : self.repName,
+            'repProduct': self.repProduct
             }
 
 
@@ -145,7 +146,7 @@ class PyLieDB():
         self.load()
 
 
-    def visit(self, returnString=False):
+    def visit(self, shorter=False, returnString=False):
         """ Prints (or returns as a string) the content of the DB """
 
         if not returnString and not self.loaded:
@@ -169,27 +170,34 @@ class PyLieDB():
         unit = units[unit]
 
         if not returnString:
-            self.loggingInfo(f"Content of the DB (size = {size:.2f}{unit}):")
+            self.loggingInfo(f"Content of the DB (unzipped size = {size:.2f}{unit}):")
         else:
-            self._s += f"Content of the DB (size = {size:.2f}{unit}):\n"
+            self._s += f"Content of the DB (unzipped size = {size:.2f}{unit}):\n"
 
         def visitFunc(objName, obj):
-
+            skip = False
             slash = objName.rfind('/')
             if slash == -1:
                 slash = 0
 
             rs = ''
-            if isinstance(obj, h5py.Group):
-                rs = '   '*objName.count('/') + objName[slash:]
-                if objName.count('/') == 0:
-                    rs = '\n' + rs
-            elif isinstance(obj, h5py.Dataset):
-                rs = '   '*objName.count('/') + objName[slash:] + ' : '
-                pad = len(rs)
-                rs += str(obj[()])
-                rs = rs.replace('\n', '\n' + ' '*pad)
+            depth = objName.count('/')
 
+            if shorter and depth > 2:
+                skip = True
+            else:
+                if isinstance(obj, h5py.Group):
+                    rs = '   '*depth + objName[slash:]
+                    if objName.count('/') == 0:
+                        rs = '\n' + rs
+                elif isinstance(obj, h5py.Dataset):
+                    rs = '   '*depth + objName[slash:] + ' : '
+                    pad = len(rs)
+                    rs += str(obj[()])
+                    rs = rs.replace('\n', '\n' + ' '*pad)
+
+            if skip:
+                return
             if not returnString:
                 self.loggingInfo(rs)
             else:
@@ -458,8 +466,10 @@ class PyLieDB():
         if isinstance(val, str):
             return val
         if not isinstance(val, npStr):
-            if objType == 'dynkinlabels' and val == -1:
+            if objType == 'dynkinlabels' and type(val) == int and val == -1:
                 return True
+            elif objType == 'dynkinlabels' and isinstance(val, np.ndarray):
+                return val.tolist()
             return int(val)
         else:
             return PyLieDB.sympify(str(val, 'utf-8'))
@@ -502,6 +512,20 @@ class PyLieDB():
 
         if error is not False:
             raise TypeError(error)
+
+
+        # Final enhancements to the result
+        if type(ret) == tuple:
+            ret, objType = ret
+
+            # This is mainly for interactive IPython notebooks
+            if objType == 'invariants' and 'fields' in kwargs:
+                for i, inv in enumerate(ret):
+                    try:
+                        inv.setFields(kwargs['fields'])
+                        ret[i] = inv.expr()
+                    except:
+                        pass
 
         return ret
 
@@ -550,18 +574,18 @@ class PyLieDB():
             if objType in self.basicTranslations:
                 return self.readBasicInfo(algebra, objType)
             if objName is not None:
-                return PyLieDB.parse(self.f[algebra.fn][objType][objName], objType=objType)
+                return PyLieDB.parse(self.f[algebra.fn][objType][objName], objType=objType), objType
             return PyLieDB.parse(self.f[algebra.fn][objType])
         else:
             # Compute the object
             obj = self.compute(algebra, objType, *args, **kwargs)
 
             # Write it in the DB
-            if objType in self.storedTranslations:
+            if objType in self.storedTranslations and obj is not None:
                 self.writeObject(algebra, objType, objName=objName, objVal=obj)
 
             # Return it
-            return obj
+            return obj, objType
 
 
     def compute(self, algebra, objType, *args, **kwargs):
@@ -724,9 +748,10 @@ class PyLieDB():
                     conjSequence += '0'
 
             # Pyrate normalization
-            pyNorm = False
-            if 'pyrateNormalization' in kwargs:
-                pyNorm = kwargs['pyrateNormalization']
+            if 'pyrateNormalization' not in kwargs:
+                # By default, let's apply the PyrateNormalization
+                kwargs['pyrateNormalization'] = True
+            pyNorm = kwargs['pyrateNormalization']
 
             # Real basis
             realBasis = None
@@ -749,7 +774,7 @@ class PyLieDB():
             storeName += ';' + str(int(pyNorm))
             storeName += ';' + RBsequence
 
-            return storeName, (arg,), kwargs
+            return storeName, (arg,), {k:v for k,v in kwargs.items() if k != 'fields'}
 
         if dataType == 'repmatrices':
             # StoreName :
@@ -865,7 +890,7 @@ class PyLieDB():
 
         return algebra.dimR(rep)
 
-    def getDynkinLabels(self, algebra, repDim, multipleReps=False):
+    def getDynkinLabels(self, algebra, repDim):
         if isinstance(repDim, list) or isinstance(repDim, tuple):
             return repDim
 
@@ -894,10 +919,6 @@ class PyLieDB():
                     # Real or pseudo-real
                     conj = conj + [True]
                 return conj
-
-        if not multipleReps:
-            self.loggingCritical(f"Error: algebra {algebra.fn} contains several irreps with dimension {abs(repDim)}:")
-            self.loggingCritical(' -> ' + ', '.join([str(el) for el in reps[:-1]]) + ' and ' + str(reps[-1]))
 
         return reps
 
@@ -931,13 +952,16 @@ class PyLieDB():
             return retType(rep)
         return retType(rep + [True])
 
-    def repName(self, algebra, rep, latex=False):
+    def repName(self, algebra, rep, latex=False, iLatex=False):
         """ Returns the name of the irrep in string/latex format.
         Note that the representation must be in its dynkin-labels form."""
 
+        if iLatex:
+            latex = True
+
         rep = list(rep)
         dimR = self.dimR(algebra, rep)
-        allDynkins = self.getDynkinLabels(algebra, dimR, multipleReps=True)
+        allDynkins = self.getDynkinLabels(algebra, dimR)
 
         if not isinstance(allDynkins[0], list):
             allDynkins = [allDynkins]
@@ -968,8 +992,31 @@ class PyLieDB():
         if conj:
             name = '\\overline{' + name + '}'
 
+        if iLatex:
+            return Symbol(name)
+
         return name
 
+    def repProduct(self, algebra, reps, iLatex=False):
+        ret = algebra.reduceRepProduct(reps)
+
+        if not iLatex:
+            return ret
+
+        else:
+            tmp = sorted(ret, key=lambda x: -1*self.dimR(algebra, x[0]))
+            ret = ''
+
+            for i, el in enumerate(tmp):
+                for j in range(el[1]):
+                    # ret.append(Symbol(self.repName(algebra, el[0], latex=True)))
+                    ret += self.repName(algebra, el[0], latex=True)
+
+                    if i+1 < len(tmp) and j < el[1]:
+                        ret += '\oplus'
+
+            # return Add(*ret, evaluate=False)
+            return Symbol(ret)
 
 
 
