@@ -1,28 +1,32 @@
-# PyR@TE 3
+# PyR@TE 3 (beta-version)
 
 ### New in v3.0:
 
+Quite a lot ! [ToDo]
 
 ### Dependencies :
+
+- Python &ge; 3.6
+- PyYAML &ge; 
+- Sympy &ge; 1.5
+- h5py &ge; 
+- Numpy &ge; 
+- Scipy &ge;
+- Matplotlib &ge;
 
 
 ### Download:
 
+The only thing to do is to clone this repository.
 
 ## Description:
 
-PyR@TE is a python code that calculates the Renormalization Group Equations for any non supersymmetric model. After the gauge groups, the particle contents as well as the scalar potential have been defined in a model file, PyR@TE calculates the RGEs for the required parameters at the one- or two-loop level, and up to the three-loop level for gauge couplings.
+PyR@TE is a python code that calculates the Renormalization Group Equations (RGEs) for any renormalizable non-supersymmetric model. After the gauge groups, the particle contents as well as the scalar potential have been defined in a model file, PyR@TE calculates the RGEs for the required parameters at the one- or two-loop level, and up to the three-loop level for gauge couplings.
 
 ### How to run PyR@TE
 
-To run PyR@TE, open a shell, change to the directory where it is installed and enter:
+While there is no official documentation available yet for the version 3, please refer yourself to the example notebook in `doc/` to see how to run PyR@TE.   
 
-python pyR@TE.py -m models/SM.model 
-
-The option -m or --Model is used to read in a model file, in this case the SM.
-
-
-### Output
 
 
 For suggestions, bug reports or any comments please contact the author at : 
