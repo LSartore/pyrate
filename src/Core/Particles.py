@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-from sympy import Symbol, Rational, I, sqrt
-import sys
+from sympy import Symbol, I
 
 from Logging import loggingCritical
 
-# from Contraction import GetDynkinLabel, getdimIrrep, Conjugate
-from numpy import matrix as npa
 from sympy.parsing.sympy_parser import parse_expr
 from copy import copy
+
+from Definitions import GaugeGroup
 
 
 class Particle(object):
@@ -65,7 +64,7 @@ class Particle(object):
             if isinstance(v, list):
                 v = tuple(v)
             if not isinstance(v, tuple) and not g.abelian:
-                dynk = tuple(self.idb.get(g.type, 'dynkinLabels', v))
+                dynk = tuple(self.idb.get(g.type, 'dynkinLabels', v, realBasis=GaugeGroup.realBasis))
                 if type(dynk[0]) == list:
                     loggingCritical(f"Error : more than one representation of the group {g.type} have dimension {dynk} :")
                     loggingCritical(' -> ' + ', '.join([str(el) for el in dynk[:-1]]) + ' and ' + str(dynk[-1]))
@@ -97,7 +96,7 @@ class Particle(object):
             g = self.groups[gName]
 
             if not g.abelian:
-                antiP.Qnb[gName] = self.idb.get(g.type, 'conjugate', qnb)
+                antiP.Qnb[gName] = self.idb.get(g.type, 'conjugate', qnb, realBasis=GaugeGroup.realBasis)
             else:
                 antiP.Qnb[gName] = -1 * qnb
 

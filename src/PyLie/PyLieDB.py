@@ -466,7 +466,7 @@ class PyLieDB():
         if isinstance(val, str):
             return val
         if not isinstance(val, npStr):
-            if objType == 'dynkinlabels' and type(val) == int and val == -1:
+            if objType == 'dynkinlabels' and int(val) == val and val == -1:
                 return True
             elif objType == 'dynkinlabels' and isinstance(val, np.ndarray):
                 return val.tolist()
@@ -516,7 +516,7 @@ class PyLieDB():
 
         # Final enhancements to the result
         if type(ret) == tuple:
-            ret, objType = ret
+            ret, objType, algebra = ret
 
             # This is mainly for interactive IPython notebooks
             if objType == 'invariants' and 'fields' in kwargs:
@@ -526,6 +526,10 @@ class PyLieDB():
                         ret[i] = inv.expr()
                     except:
                         pass
+            # Remove the True argument for dynkin labels of real reps
+            if (objType == 'dynkinlabels' or objType == 'conjugate') and 'realBasis' in kwargs:
+                if ret[-1] is True and algebra._goToRealBasis(ret[:-1], kwargs['realBasis']):
+                    return type(ret)(ret[:-1])
 
         return ret
 
@@ -574,7 +578,7 @@ class PyLieDB():
             if objType in self.basicTranslations:
                 return self.readBasicInfo(algebra, objType)
             if objName is not None:
-                return PyLieDB.parse(self.f[algebra.fn][objType][objName], objType=objType), objType
+                return PyLieDB.parse(self.f[algebra.fn][objType][objName], objType=objType), objType, algebra
             return PyLieDB.parse(self.f[algebra.fn][objType])
         else:
             # Compute the object
@@ -585,7 +589,7 @@ class PyLieDB():
                 self.writeObject(algebra, objType, objName=objName, objVal=obj)
 
             # Return it
-            return obj, objType
+            return obj, objType, algebra
 
 
     def compute(self, algebra, objType, *args, **kwargs):
@@ -871,7 +875,10 @@ class PyLieDB():
 
             storeName = str(arg)
 
-            return storeName, (arg,), kwargs
+            return storeName, (arg,), {k:v for k,v in kwargs.items() if k != 'realBasis'}
+
+        if dataType == 'conjugate':
+            return None, args, {k:v for k,v in kwargs.items() if k != 'realBasis'}
 
         # else, the info is not stored in the DB
         return None, args, kwargs
@@ -1012,7 +1019,7 @@ class PyLieDB():
                     # ret.append(Symbol(self.repName(algebra, el[0], latex=True)))
                     ret += self.repName(algebra, el[0], latex=True)
 
-                    if i+1 < len(tmp) and j < el[1]:
+                    if i+1 < len(tmp) or j+1 < el[1]:
                         ret += '\oplus'
 
             # return Add(*ret, evaluate=False)
