@@ -126,6 +126,13 @@ class LatexExport():
                     noStarSymb = model.allCouplings[noStar][1]
                     self.latex[v[1]] = self.totex(conjugate(noStarSymb))
 
+            if v[0] == 'ScalarMasses' and k in model.assumptions and model.assumptions[k]['squared'] is True:
+                if v[1] in self.latex:
+                    sm = self.latex[v[1]]
+                else:
+                    sm = self.totex[v[1]]
+
+                self.latex[Symbol(str(v[1]), commutative=False)] = '{'+sm+'}^2'
 
     def preamble(self, model):
         date = datetime.datetime.now()
@@ -389,7 +396,7 @@ r""" \\[.1cm] \hline
                     print(" BASES : ", base1, base2)
                     if cSymb != 1:
                         new = Symbol(str(cSymb), commutative=False)
-                    if cSymb in self.latex:
+                    if cSymb in self.latex and new not in self.latex:
                         self.latex[new] = self.latex[cSymb]
                         cSymb = new
                     else:
@@ -397,9 +404,9 @@ r""" \\[.1cm] \hline
 
                     ret = (Symbol(base2, commutative=False)*Symbol(base1, commutative=False))**2
 
-                    if Symbol(base1) in self.latex:
+                    if Symbol(base1) in self.latex and Symbol(base1, commutative=False) not in self.latex:
                         self.latex[Symbol(base1, commutative=False)] = self.latex[Symbol(base1)]
-                    if Symbol(base2) in self.latex:
+                    if Symbol(base2) in self.latex and Symbol(base2, commutative=False) not in self.latex:
                         self.latex[Symbol(base2, commutative=False)] = self.latex[Symbol(base2)]
 
                     if coeff*cSymb != 1:
@@ -455,7 +462,7 @@ r""" \\[.1cm] \hline
 
                 if cSymb != 1:
                     new = Symbol(str(cSymb), commutative=False)
-                    if cSymb in self.latex:
+                    if cSymb in self.latex and new not in self.latex:
                         self.latex[new] = self.latex[cSymb]
                         cSymb = new
                     else:
@@ -507,7 +514,6 @@ r""" \\[.1cm] \hline
             lag = []
 
             self.string += "\\subsection{" + translation[cType] + "}\n{\\allowdisplaybreaks\n\\begin{align*}\n"
-            symbDic = {}
 
             for c, expr in dic.items():
                 cSymb = model.allCouplings[c][1]
@@ -519,10 +525,9 @@ r""" \\[.1cm] \hline
                     for el in term:
                         lag.append(el)
 
-                symbDic[cSymb] = str(cSymb) + '\,'
-
+            lagExpr = self.totex(lag).replace(r'\left', r'\big').replace(r'\right', r'\big')
             self.string += r"\begin{autobreak}" + "\n"
-            self.string += r"-\mathcal{L}_" + lagIndex[cType] + " = " + self.totex(lag).replace(r'\left', r'\big').replace(r'\right', r'\big')
+            self.string += r"-\mathcal{L}_" + lagIndex[cType] + " = " + lagExpr
 
             if cType == 'Yukawas' or cType == 'FermionMasses':
                 self.string += '\n' + r' + \text{h.c.}'

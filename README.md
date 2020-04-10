@@ -2,7 +2,7 @@
 
 ### New in v3.0:
 
-- 3-loop running for gauge couplings
+- The core of the program is based on <a href="https://arxiv.org/abs/1906.04625">1906.04625</a>, where the general gauge couplings RGEs were computed up to 3 loops.
 - Python 3 compatibility
 - Drastic improvement of the performances (computation times of several hours reduced to some minutes)
 - The structure of the model file has been rethought, and in particular the implementation of the Lagrangian. New features are available.
@@ -23,11 +23,11 @@
 
 ### Download:
 
-The only thing to do is to clone this repository, and begin working in PyR@TE 3's main folder.
+The only thing to do is to clone this repository, and begin working in PyR@TE 3's main folder.  
 
-## Description:
+### Description:
 
-PyR@TE is a python code that calculates the Renormalization Group Equations (RGEs) for any renormalizable non-supersymmetric model. After the gauge groups, the particle contents as well as the scalar potential have been defined in a model file, PyR@TE calculates the RGEs for the required parameters at the one- or two-loop level, and up to the three-loop level for gauge couplings.
+PyR@TE is a Python code that computes the renormalization group equations (RGEs) for any renormalizable non-supersymmetric model. After the gauge groups, the particle content and the Lagrangian of have been defined in a model file, PyR@TE calculates the RGEs for all of the couplings at the one- or two-loop level, and up to the three-loop level for gauge couplings.  
 
 ### How to run PyR@TE
 

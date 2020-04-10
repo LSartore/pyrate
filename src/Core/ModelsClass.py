@@ -704,6 +704,11 @@ class Model(object):
                         assumptions['symmetric'] = True
                     if 'hermitian' in v:
                         assumptions['hermitian'] = True
+                    if cType == 'ScalarMasses':
+                        if 'squared' in v:
+                            assumptions['squared'] = True
+                        else:
+                            assumptions['squared'] = False
 
                     invalidAssumptions = [el for el in v[1:] if el not in assumptions]
 

@@ -54,7 +54,7 @@ QuarticTerms: {
 },
 
 ScalarMasses: {
-    mu : Hbar[i] H[i],
+    mu : {-Hbar[i] H[i], squared},
 }
 
 }
@@ -70,10 +70,10 @@ Substitutions: {
     g_U1Y : g1,
     g_SU2L : g2,
     g_SU3c : g3,
-    
+
     # Possibly define GUT normalizations
     g1 : sqrt(5/3) * g1,
-    
+
     # Substitutions for Yukawa matrices
     Yu : [0, 0, 'yt'],
     Yd : [0, 0, 'yb'],
@@ -82,18 +82,18 @@ Substitutions: {
 
 Latex: {
     # Particles
-    
+
     uR : u_R,
     dR : d_R,
     eR : e_R,
-    
+
     Pi : \Pi,
     Sigma : \Sigma,
-    
+
     Htilde : \tilde{H},
-    
+
     # Couplings
-    
+
     g1 : g_1,
     g2 : g_2,
     g3 : g_3,
@@ -101,10 +101,10 @@ Latex: {
     Yu : Y_u,
     Yd : Y_d,
     Ye : Y_e,
-    
+
     lambda : \lambda,
     mu : \mu,
-    
+
     yt : y_t,
     yb : y_b,
     ytau: y_\tau

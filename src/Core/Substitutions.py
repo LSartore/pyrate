@@ -235,6 +235,23 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
                         for c, bFunc in RGEdic.items():
                             self.couplingRGEs[cType][nLoop][c] = bFunc.subs(sub)
 
+    # For squared scalar mass parameters, replace mu -> mu^2 everywhere
+    muSubDic = {}
+    muDic = {}
+    for k,v in self.allCouplings.items():
+         if v[0] == 'ScalarMasses':
+             if k in self.assumptions and self.assumptions[k]['squared'] is True:
+                 muSubDic[v[1]] = v[1]**2
+                 muDic[k] = v[1]
+
+    if muSubDic != {}:
+        for cType, loopDic in self.couplingRGEs.items():
+            for nLoop, RGEdic in loopDic.items():
+                for c, bFunc in RGEdic.items():
+                    self.couplingRGEs[cType][nLoop][c] = bFunc.subs(muSubDic)
+
+                    if cType == 'ScalarMasses' and c in muDic:
+                        self.couplingRGEs[cType][nLoop][c] = expand(self.couplingRGEs[cType][nLoop][c]/(2*muDic[c]))
 
     if substitutionDic == {}:
         for k,v in list(self.NonZeroCouplingRGEs.items()):
