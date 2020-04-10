@@ -386,6 +386,7 @@ r""" \\[.1cm] \hline
 
             if base1 is not None and base2 is not None:
                 if base2 == base1+'bar':
+                    print(" BASES : ", base1, base2)
                     if cSymb != 1:
                         new = Symbol(str(cSymb), commutative=False)
                     if cSymb in self.latex:
@@ -527,6 +528,7 @@ r""" \\[.1cm] \hline
                 self.string += '\n' + r' + \text{h.c.}'
             self.string += '\n' + r"\end{autobreak}"
             self.string += "\n\\end{align*}\n}"
+
 
     def RGEs(self, model):
         Printer.RGE = True
@@ -944,6 +946,12 @@ class Printer(LatexPrinter):
         return self.splitEquation(args)
 
     def _print_Mul(self, expr):
+        if expr.find(Indexed) != set() and expr.find(Pow) != set():
+            print("\n\n indexed mul :", expr)
+
+            if not all([int(el.exp) != el.exp for el in expr.find(Pow)]):
+                return ' '.join([self._print(el) for el in splitPow(expr)])
+
         if isinstance(expr.args[0], Rational) and abs(expr.args[0]) != 1 and not self.baseMul:
             coeff = Mul(*[el for el in flatten(expr.as_coeff_mul()) if el.is_number])
 

@@ -391,6 +391,10 @@ class Lagrangian():
                     if indexed != set():
                         indices = flatten([el.indices for el in indexed])
 
+                        if len(indices) == 1 and isinstance(base, Indexed):
+                                newTerms += [base]*exp
+                                continue
+
                         indCopies = {}
                         for i in indices:
                             if base.count(i) != 2:
@@ -425,9 +429,9 @@ class Lagrangian():
 
             if expandedTerm is not None:
                 if expandedTerm == []:
-                    expandedTerm.append(Mul(coeff, *terms))
+                    expandedTerm.append(Mul(coeff, *terms, evaluate=False))
                 else:
-                    expandedTerm[0] += Mul(coeff, *terms)
+                    expandedTerm[0] += Mul(coeff, *terms, evaluate=False)
 
             inds = []
             indRanges = {}
