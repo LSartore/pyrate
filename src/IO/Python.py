@@ -509,6 +509,7 @@ class RGEsolver():
 
     def runString(self, model, path):
         self.stringRun = "import sys\n"
+        path = path.replace('\\', '\\\\')
         self.stringRun += f"sys.path.append('{path}')\n\n"
         self.stringRun += "from " + self._Name + " import RGEsolver"
 
