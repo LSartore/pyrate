@@ -60,6 +60,15 @@ class Inputs():
             if not (os.path.exists(settings['UFOfolder'])):
                 os.makedirs(settings['UFOfolder'])
 
+        if 'RealBasis' in settings and type(settings['RealBasis']) == str:
+            settings['RealBasis'] = settings['RealBasis'].lower()
+            if settings['RealBasis'] in ('none', 'true', 'false'):
+                settings['RealBasis'] = eval(settings['RealBasis'].capitalize())
+            elif settings['RealBasis'] not in ('adjoint', 'all'):
+                loggingInfo("Warning : RealBasis argument not understood. Setting it to 'adjoint'.")
+                settings['RealBasis'] = 'adjoint'
+
+
         self.yamlSettings = self.readModelFile(settings)
         self.settings = settings
 
@@ -161,6 +170,9 @@ class Inputs():
         # Some other options
         parser.add_argument('--no-KinMix', '-no-kin', dest='NoKinMix', action='store_true', default=False,
                             help='Switch off the kinetic mixing terms if multiple U(1) gauge groups are present.')
+
+        parser.add_argument('--RealBasis', '-rb', dest='RealBasis', action='store', default=None,
+                            help='Specify the treatment of real representations. Possible values are : None, adjoint, all.')
 
         return parser.parse_args().__dict__
 
