@@ -7,7 +7,7 @@ import time
 #################
 
 class pyLogger():
-    """ PyR@TE logger class -- Possesses onyl static methods """
+    """ PyR@TE logger class -- Possesses only static methods """
 
     noNewLine = False
     gVB = {'vInfo': False, 'vDebug': False, 'vCritical': False}

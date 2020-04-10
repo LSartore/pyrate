@@ -60,7 +60,7 @@ def exports(runSettings, model):
             ufo = UFOExport(model)
             ufo.write(runSettings['UFOfolder'])
         except TypeError as e:
-            print('\n' + str(e))
+            loggingCritical("An error occurred during the UFO export : \n" +  str(e))
         else:
             loggingInfo("Done.")
 
