@@ -3,7 +3,7 @@
 from Logging import loggingCritical, loggingInfo
 
 from sympy import (Mul, Pow, Symbol, adjoint, conjugate, diag, Matrix, sqrt, root, solveset,
-                   Abs, DiagonalMatrix, diff, flatten, MatMul, Integer)
+                   Abs, DiagonalMatrix, diff, flatten, MatMul, Integer, transpose)
 
 from Definitions import mSymbol, expand, Trace, trace, replaceKey, insertKey, Identity, splitPow
 
@@ -533,6 +533,10 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
         for k, v in substitutionDic['yukMat'].items():
             mat = v[1]
 
+            if 'unitary' in self.assumptions[k] and self.assumptions[k]['unitary'] is True:
+                loggingInfo("Warning : the 'unitary' assumption for matrix '" + k + "' is ignored, since an explicit substitution was given.")
+                del self.assumptions[k]['unitary']
+
             if hasattr(mat, 'find') and mat.find(Identity) != set() and mat.find(Identity) != {}:
                 values[k] = (mat.args_cnc()[0][0], mat.args_cnc()[1][0])
                 continue
@@ -729,3 +733,18 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
                         self.couplingRGEs[cType][nLoop][c] = properSub(bFunc, v[1], v[0])
 
 
+    # Now handle Yukawa matrix unitarity
+    unitaryMatrices = {}
+    unitarySubs = {}
+    for k,v in self.allCouplings.items():
+        if k in self.assumptions and 'unitary' in self.assumptions[k] and self.assumptions[k]['unitary'] is True:
+            mat = v[1]
+            unitarySubs.update({el:Identity(mat.shape[0]) for el in [adjoint(mat)*mat, mat*adjoint(mat), conjugate(mat)*transpose(mat), transpose(mat)*conjugate(mat)]})
+            unitaryMatrices[k] = v
+
+    for cType, loopDic in self.couplingRGEs.items():
+        for nLoop, RGEdic in loopDic.items():
+            for c, bFunc in list(RGEdic.items()):
+                newRGE = bFunc.subs(unitarySubs)
+                newRGE = newRGE.replace(lambda x: x.is_Pow and isinstance(x.base, Identity), lambda x: x.base).doit()
+                self.couplingRGEs[cType][nLoop][c] = newRGE

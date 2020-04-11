@@ -704,6 +704,9 @@ class Model(object):
                         assumptions['symmetric'] = True
                     if 'hermitian' in v:
                         assumptions['hermitian'] = True
+                    if 'unitary' in v:
+                        assumptions['unitary'] = True
+
                     if cType == 'ScalarMasses':
                         if 'squared' in v:
                             assumptions['squared'] = True

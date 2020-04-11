@@ -3,22 +3,23 @@
 from sys import exit
 from Logging import loggingCritical
 
-from sympy import Symbol, Mul, MatMul, conjugate, SparseMatrix, Matrix, diag
+from sympy import Symbol, Mul, MatMul, conjugate, SparseMatrix, Matrix, Pow, diag
 
 
 class mSymbol(Symbol):
     """ mSymbol(name, n, m, **assumptions) """
 
-    def __new__(cls, *args, symmetric=False, hermitian=False, real=False):
+    def __new__(cls, *args, symmetric=False, hermitian=False, real=False, unitary=False):
         if args[1] != args[2]:
-            if symmetric or hermitian:
-                loggingCritical("Matrix <" + args[0] + "> cannot be symmetric nor hermitian since it is not a square matrix.")
+            if symmetric or hermitian or unitary:
+                loggingCritical("Matrix <" + args[0] + "> cannot be symmetric, hermitian or unitary since it is not a square matrix.")
                 exit()
 
         if not args[1] == args[2] == 1:
             obj = Symbol.__new__(cls, args[0], commutative=False, hermitian=hermitian)
             obj.is_symmetric = symmetric
             obj.is_realMatrix = real
+            obj.is_unitary = unitary
         else:
             obj = Symbol.__new__(cls, args[0], real=real)
         obj.shape = (args[1], args[2])
@@ -114,7 +115,6 @@ class mMul(Mul):
             obj = Mul(*newArgs)
 
             return obj
-
 
 class Identity(mSymbol):
     is_Identity = True
