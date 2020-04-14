@@ -697,6 +697,11 @@ class Model(object):
                 assumptions = {}
                 invalidAssumptions = []
 
+                if cType == 'ScalarMasses':
+                    assumptions = {'squared': False}
+                    if type(v) != tuple:
+                        v = (v,)
+
                 if type(v) == tuple:
                     if 'real' in v:
                         assumptions['real'] = True
@@ -710,8 +715,6 @@ class Model(object):
                     if cType == 'ScalarMasses':
                         if 'squared' in v:
                             assumptions['squared'] = True
-                        else:
-                            assumptions['squared'] = False
 
                     invalidAssumptions = [el for el in v[1:] if el not in assumptions]
 
