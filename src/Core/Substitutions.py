@@ -479,7 +479,12 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
                 traceFactors = []
                 coeff = 1
 
-                for el in splitPow(term.args):
+                if isinstance(term, Mul):
+                    subTerms = term.args
+                else:
+                    subTerms = term
+
+                for el in splitPow(subTerms):
                     if not el.is_commutative:
                         matFactors.append(el)
                     elif isinstance(el, Trace):
