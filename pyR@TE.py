@@ -28,6 +28,10 @@ welcomemessage = (
        and F.Staub, A.Wingerter (version 1)
     Please cite: arXiv:20xx.xxxxx , arXiv:1608.07274 and arXiv:1309.7030
 
+! Disclaimer !
+    This is a beta-version. If you encounter any bug or have any trouble
+    running PyR@TE, please contact the author at : sartore at lpsc.in2p3.fr
+    Also, please consider downloading the most recent version regularly.
 ============================================================================
 """ )
 print(welcomemessage)
