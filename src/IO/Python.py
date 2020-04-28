@@ -57,7 +57,6 @@ class PythonExport():
         self.preamble(model)
         self.RGsolver(model)
 
-
     def write(self, path):
         tmpDir = os.getcwd()
 
@@ -212,9 +211,14 @@ class RGEsolver():
 
         s += self.couplingsDefinition(model)
 
-        s += "\n\n        self.couplings = Coupling.couplings\n"
+        s += """
 
-        s += """\n
+        self.couplings = Coupling.couplings
+        self.matrixCouplings = {c.name: np.vectorize(lambda x: x.name)(c.as_explicit())
+                                for cList in self.couplings.values()
+                                for c in cList if c.is_matrix}
+
+
     def extractCouplings(self, couplingsArray, couplingType):
         ret = []
         for c in self.couplings[couplingType]:
@@ -340,6 +344,13 @@ class RGEsolver():
 
         self.tList, self.solutions = np.array(tList), {k:np.array(v) for k,v in solutions.items()}
 
+        for k,v in self.matrixCouplings.items():
+            self.solutions[k] = np.zeros(v.shape).tolist()
+            for i, l in enumerate(self.solutions[k]):
+                for j in range(len(l)):
+                    self.solutions[k][i][j] = self.solutions[v[i,j]].tolist()
+            self.solutions[k] = np.array(self.solutions[k]).transpose([2,0,1])
+
         print(f"System of RGEs solved in {time.time()-time0:.3f} seconds.")
 
 
@@ -388,11 +399,13 @@ class RGEsolver():
             if not all([el == 0 for el in self.solutions[c.name]]):
                 allCouplingsByType[c.type].append(c)
 
-        # Remove the coupling types with only identically vanishing couplings
-        # + take into account 'which' and 'whichNot' keywords
         if which != {} and whichNot != {}:
             print("Error in 'plot' function: Arguments 'which' and 'whichNot' cannot be used simultaneously.")
             return
+
+        ########################################
+        # Identify the couplings to be plotted #
+        ########################################
 
         if type(which) == str:
             which = {which: 'all'}
@@ -414,7 +427,13 @@ class RGEsolver():
                 elif which[cType] != 'all':
                     if type(which[cType]) == str:
                         which[cType] = [which[cType]]
-                    couplingsToDelete = [c for c in cList if c.name not in which[cType]]
+                    tmpList = []
+                    for el in which[cType]:
+                        if el not in self.matrixCouplings:
+                            tmpList.append(el)
+                        else:
+                            tmpList += [*self.matrixCouplings[el].flat]
+                    couplingsToDelete = [c for c in cList if c.name not in tmpList]
             if whichNot != {}:
                 if cType in whichNot:
                     if whichNot[cType] == 'all':
@@ -422,7 +441,13 @@ class RGEsolver():
                     else:
                         if type(whichNot[cType]) == str:
                             whichNot[cType] = [whichNot[cType]]
-                        couplingsToDelete = [c for c in cList if c.name in whichNot[cType]]
+                        tmpList = []
+                        for el in whichNot[cType]:
+                            if el not in self.matrixCouplings:
+                                tmpList.append(el)
+                            else:
+                                tmpList += [*self.matrixCouplings[el].flat]
+                        couplingsToDelete = [c for c in cList if c.name in tmpList]
 
             if toDelete:
                 del allCouplingsByType[cType]
@@ -431,6 +456,11 @@ class RGEsolver():
                 for c in couplingsToDelete:
                     if c in allCouplingsByType[cType]:
                         allCouplingsByType[cType].remove(c)
+
+
+        ###################
+        # Actual plotting #
+        ###################
 
         if subPlots:
             plt.figure(figsize=(figSize[0]/80., figSize[0]/80.), dpi=80)
