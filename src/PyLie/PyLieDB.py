@@ -66,7 +66,7 @@ class PyLieDB():
         self.translations = {
             'conjugate' : self.conjugate,
             'repname' : self.repName,
-            'repProduct': self.repProduct
+            'repproduct': self.repProduct
             }
 
 
