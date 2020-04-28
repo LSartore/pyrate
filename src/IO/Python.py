@@ -352,8 +352,8 @@ class RGEsolver():
               6: [231, 232, 233, 234, 235, 236],
               7: [241, 242, 243, 244, 231, 232, 233]}
 
-    def plot(self, figSize=(600, 600), subPlots=True, which=None, whichNot=None, printLoopLevel=True):
-        """ We finally plot the running couplings.
+    def plot(self, figSize=(600, 600), subPlots=True, which={}, whichNot={}, printLoopLevel=True):
+        """ Plot the running couplings.
 
         Several options may be given to this function:
             - figSize=(x,y):
@@ -362,14 +362,18 @@ class RGEsolver():
                 If True, plot all the various couplings in the same window. If False,
                 produces one figure by coupling type.
             - which=... :
-                The user may want to plot only one or several types of couplings. Usage:
+                The user may want to plot only one or several (types of) couplings. Usage:
 
                 >>> which='GaugeCouplings'
 
                 >>> which=('GaugeCouplings', 'QuarticTerms')
 
+                >>> which={'GaugeCouplings': 'all', 'Yukawas': ['yt', 'yb']}
+
+                >>> which={'GaugeCouplings': ['g1', 'g2], 'Yukawas': 'Yu_{33}'}
             - whichNot=... :
                 Which types of coupling types are NOT to be plotted. Same usage as which.
+                Note that 'which' and 'whichNot' cannot be used simultaneously.
             - printLoopLevel=True/False :
                 The loop-levels of the computation are displayed in the title of the plots.
         """
@@ -386,21 +390,47 @@ class RGEsolver():
 
         # Remove the coupling types with only identically vanishing couplings
         # + take into account 'which' and 'whichNot' keywords
+        if which != {} and whichNot != {}:
+            print("Error in 'plot' function: Arguments 'which' and 'whichNot' cannot be used simultaneously.")
+            return
+
         if type(which) == str:
-            which = (which,)
+            which = {which: 'all'}
+        elif type(which) == tuple:
+            which = {el: 'all' for el in which}
         if type(whichNot) == str:
-            whichNot = (whichNot,)
+            which = {which: 'all'}
+        elif type(whichNot) == tuple:
+            whichNot = {el: 'all' for el in whichNot}
 
         for cType, cList in list(allCouplingsByType.items()):
+            couplingsToDelete = []
             toDelete = False
             if cList == []:
                 toDelete = True
-            if which is not None and cType not in which:
-                toDelete = True
-            if whichNot is not None and cType in whichNot:
-                toDelete = True
+            if which != {}:
+                if cType not in which:
+                    toDelete = True
+                elif which[cType] != 'all':
+                    if type(which[cType]) == str:
+                        which[cType] = [which[cType]]
+                    couplingsToDelete = [c for c in cList if c.name not in which[cType]]
+            if whichNot != {}:
+                if cType in whichNot:
+                    if whichNot[cType] == 'all':
+                        toDelete = True
+                    else:
+                        if type(whichNot[cType]) == str:
+                            whichNot[cType] = [whichNot[cType]]
+                        couplingsToDelete = [c for c in cList if c.name in whichNot[cType]]
+
             if toDelete:
                 del allCouplingsByType[cType]
+
+            if couplingsToDelete != []:
+                for c in couplingsToDelete:
+                    if c in allCouplingsByType[cType]:
+                        allCouplingsByType[cType].remove(c)
 
         if subPlots:
             plt.figure(figsize=(figSize[0]/80., figSize[0]/80.), dpi=80)
