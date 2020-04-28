@@ -394,7 +394,6 @@ r""" \\[.1cm] \hline
 
             if base1 is not None and base2 is not None:
                 if base2 == base1+'bar':
-                    print(" BASES : ", base1, base2)
                     if cSymb != 1:
                         new = Symbol(str(cSymb), commutative=False)
                     if cSymb in self.latex and new not in self.latex:
