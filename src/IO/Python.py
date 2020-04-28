@@ -202,6 +202,7 @@ class RGEsolver():
         self.tmax = tmax
 
         self.kappa = lambda n: 1/(4*np.pi)**(''' + self.betaExponent + ''')
+        self.kappaString = '1/(4*np.pi)**(''' + self.betaExponent + ''')'
 
         self.tList = []
         self.solutions = {}
@@ -213,7 +214,7 @@ class RGEsolver():
 
         s += "\n\n        self.couplings = Coupling.couplings\n"
 
-        s += """\n\n
+        s += """\n
     def extractCouplings(self, couplingsArray, couplingType):
         ret = []
         for c in self.couplings[couplingType]:
@@ -227,6 +228,7 @@ class RGEsolver():
         s += self.RGEs(model)
 
         s += r'''
+
 
     def printInitialConditions(self, returnString=False):
         """ This function displays the current running scheme and the initial values of the couplings.
@@ -261,6 +263,7 @@ class RGEsolver():
 '''
 
         s += r'''
+
     ##################
     # Solve function #
     ##################
@@ -294,7 +297,7 @@ class RGEsolver():
         solver.set_initial_value(y0, t0)
 
         # Solve upwards
-        while solver.successful() and solver.t < tmax:
+        while solver.successful() and solver.t < tmax + dt/2:
             tList.append(solver.t)
             for i, c in enumerate(self.allCouplings):
                 y = solver.y[i]
@@ -316,7 +319,7 @@ class RGEsolver():
 
             solver.set_initial_value(y0, t0)
             # Solve downwards
-            while solver.successful() and solver.t > tmin:
+            while solver.successful() and solver.t > tmin - dt/2:
                 solver.integrate(solver.t-dt)
 
                 tList2.append(solver.t)
@@ -335,9 +338,10 @@ class RGEsolver():
             for c in self.allCouplings:
                 solutions[c.name] = solutions2[c.name][::-1] + solutions[c.name]
 
-        self.tList, self.solutions = tList, solutions
+        self.tList, self.solutions = np.array(tList), {k:np.array(v) for k,v in solutions.items()}
 
         print(f"System of RGEs solved in {time.time()-time0:.3f} seconds.")
+
 
     #################
     # Plot function #
@@ -425,6 +429,64 @@ class RGEsolver():
 
             plt.legend(cNames)
             plt.xlabel(r't',fontsize=17-len(allCouplingsByType))
+
+
+    #########################
+    # Save / load functions #
+    #########################
+
+    def save(self, fileName):
+        try:
+            import pickle
+        except:
+            print("Error: unable to load the 'pickle' module.")
+            return
+
+        storeKappa = self.kappa
+        self.kappa = None
+
+        try:
+            if '.' not in fileName:
+                fileName += '.save'
+            print(f"Saving the RGE object in file '{fileName}'...", end='')
+            file = open(fileName, 'wb')
+            pickle.dump(self, file)
+        except BaseException as e:
+            print("\nAn error occurred while saving the rge object :")
+            print(e)
+        else:
+            print(" Done.")
+        finally:
+            file.close()
+
+        self.kappa = storeKappa
+
+    def load(fileName):
+        import os
+        try:
+            import pickle
+        except:
+            print("Error: unable to load the 'pickle' module.")
+            return
+
+        if not os.path.exists(fileName):
+            print(f"Error: The file '{fileName}' doesn't exist.")
+            return None
+
+        try:
+            print(f"Loading the RGE object from file '{fileName}'...", end='')
+            file = open(fileName, 'rb')
+            rge = pickle.load(file)
+        except BaseException as e:
+            print("\nAn error occurred while loading the rge object :")
+            print(e)
+        else:
+            print(" Done.")
+        finally:
+            file.close()
+
+        rge.kappa = eval('lambda n:' + rge.kappaString)
+        return rge
 
 '''
 
@@ -628,6 +690,19 @@ rge.solve(step = .05)
 ####################
 
 rge.plot(subPlots=True, printLoopLevel=True)
+
+
+#############################################
+# Possibly save the results for a later use #
+#############################################
+
+# Save the results in some file
+
+# rge.save('rgeResults.save')
+
+# Later, load the rge object with :
+
+# rge = RGEsolver.load('rgeResults.save')
 
 """
 
