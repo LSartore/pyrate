@@ -48,11 +48,13 @@ class PythonExport():
         if self.inconsistentRGset:
             raise TypeError("     -> Error : The RGE set is inconsistent. Please refer to the latex output.")
 
+        self.RGfileString = {}
+        self.allBetaFunctions = {}
+
         # Initialize the latex substitutions
         self.latex = {pycode(k):v for k,v in latexSubs.items()}
 
         self.preamble(model)
-
         self.RGsolver(model)
 
 
@@ -73,7 +75,17 @@ class PythonExport():
         self.file.write(self.string)
         self.file.close()
 
-        # Then create and write the run.py file
+        # Then, create the file containing the expression of the beta-functions
+        fileName = os.path.join(path, 'PythonOuput', 'RGEs.py')
+        try:
+            self.file = open(fileName, 'w')
+            self.file.write(self.RGEfileString())
+        except:
+            loggingCritical('ERROR while creating the Python RGE file. Skipping.')
+            return
+        self.file.close()
+
+        # Finally create and write the run.py file
         os.chdir(os.path.join(path, 'PythonOuput'))
         self.runString(self.model, os.path.join(path, 'PythonOuput'))
         os.chdir(tmpDir)
@@ -81,11 +93,11 @@ class PythonExport():
         fileName = os.path.join(path, 'PythonOuput', 'run.py')
         try:
             self.file = open(fileName, 'w')
+            self.file.write(self.stringRun)
         except:
             loggingCritical('ERROR while creating the Python run file. Skipping.')
             return
 
-        self.file.write(self.stringRun)
         self.file.close()
 
     def preamble(self, model):
@@ -127,7 +139,6 @@ class Coupling():
         self.cplx = cplx
 
         self.initialValue = init if shape == () else np.zeros(shape)
-        # self.initialValue = np.random.rand() - .5 if shape == () else np.zeros(shape)
 
         if fromMat is not None:
             self.pos = pos
@@ -196,7 +207,7 @@ class RGEsolver():
         self.solutions = {}
         '''
 
-        s += "self.loops = " + pycode({k:v for k,v in model.loopDic.items() if k in model.toCalculate}, end='\n'+27*' ')
+        s += "self.loops = " + pycode({k:v for k,v in model.loopDic.items() if k in model.toCalculate}, end='\n'+22*' ')
 
         s += self.couplingsDefinition(model)
 
@@ -354,7 +365,7 @@ class RGEsolver():
                 >>> which=('GaugeCouplings', 'QuarticTerms')
 
             - whichNot=... :
-                Which coupling types are NOT to be plotted. Same usage as which.
+                Which types of coupling types are NOT to be plotted. Same usage as which.
             - printLoopLevel=True/False :
                 The loop-levels of the computation are displayed in the title of the plots.
         """
@@ -469,10 +480,9 @@ class RGEsolver():
 
 
     def RGEs(self, model):
-
         s = '''\n
     def betaFunction(self, t, couplingsArray):
-        """ This function contains the expression of the various RGEs of the model. It is called by the
+        """ This function generates the numerical values of the model RGEs. It is called by the
             solver to provide the derivative of the couplings with respect to the energy scale."""\n\n'''
 
         betaInitString = ""
@@ -492,19 +502,88 @@ class RGEsolver():
             if 'Anomalous' in cType:
                 continue
 
+            argsDic = {}
+            for nLoop, RGEdic in loopDic.items():
+                for c, RGE in RGEdic.items():
+                    if c not in self.allCouplings:
+                        continue
+                    args = [v for k,v in self.allCouplings.items() if RGE.find(model.allCouplings[k][1]) != set()]
+
+                    if cType not in argsDic:
+                        argsDic[cType] = {}
+                    if c not in argsDic[cType]:
+                        argsDic[cType][c] = args
+                    else:
+                        argsDic[cType][c] += [el for el in args if el not in argsDic[cType][c]]
+
             s += '\n'
             for nLoop, RGEdic in loopDic.items():
                 s += f"        if self.loops['{cType}'] >= {nLoop+1}:\n"
                 for c, RGE in RGEdic.items():
                     if c not in self.allCouplings:
                         continue
-                    s += 12*' ' + f'b{pycode(Symbol(c))} += (' + pycode(RGE/self.betaFactor) + ')*self.kappa(' + str(nLoop+1) + ')'
-                    s += (f'**{nLoop+1}' if nLoop > 0 else '') + '*np.log(10)\n'
+
+                    betaName = 'beta_' + self.allCouplings[c]
+                    args = ['nLoop'] + argsDic[cType][c]
+                    betaString = (betaName + '(' + ','.join(args) + ')').replace('nLoop,', 'nLoop, ')
+
+                    if cType not in self.RGfileString:
+                        self.RGfileString[cType] = {}
+                    if c not in self.RGfileString[cType]:
+                        self.RGfileString[cType][c] = {}
+                    if 'def' not in self.RGfileString[cType][c]:
+                        self.RGfileString[cType][c]['def'] = betaString
+                    if cType not in self.allBetaFunctions:
+                        self.allBetaFunctions[cType] = []
+                    if betaName not in self.allBetaFunctions[cType]:
+                        self.allBetaFunctions[cType].append(betaName)
+
+                    betaString = betaString.replace('nLoop', str(nLoop+1))
+
+                    self.RGfileString[cType][c][nLoop] = pycode(RGE/self.betaFactor)
+
+                    s += 12*' ' + f'b{pycode(Symbol(c))} += ' + betaString + '*self.kappa(' + str(nLoop+1) + ')'
+                    s += '*np.log(10)\n'
 
         s += '\n        return ['
         s += ', '.join([('b'+v if k not in self.couplingStructure else f'*b{v}.flat') for k,v in self.allCouplings.items()])
         s += ']'
 
+
+        importBetaFuncs = '\n\nfrom RGEs import ('
+        importBetaFuncs += (',\n' + 18*' ').join([', '.join(betaFuncs) for cType, betaFuncs in self.allBetaFunctions.items()])
+        importBetaFuncs += ')'
+
+        pos = self.string.find('import matplotlib.pyplot as plt') + len('import matplotlib.pyplot as plt')
+        self.string = self.string[:pos] + importBetaFuncs + self.string[pos:]
+
+        return s
+
+    def RGEfileString(self):
+        s = f"""#####################################################################
+#       This file was automatically generated by PyR@TE 3.
+# It contains the expressions of the RGEs of the model '{self.model._Name}'.
+#####################################################################
+
+import numpy as np
+
+tr = lambda x: np.trace(x)
+adjoint = lambda x: x.H
+transpose = lambda x: x.transpose()
+conjugate = lambda x: np.conjugate(x)"""
+
+        for cType, RGEs in self.RGfileString.items():
+            sType = self.translation[cType]
+            s += '\n\n\n' + '#'*(len(sType)+4) + '\n'
+            s += '# ' + sType + ' #\n'
+            s += '#'*(len(sType)+4)
+
+            for c, loopDic in RGEs.items():
+                s += '\n\n' + 'def ' + loopDic['def'] + ':'
+                del loopDic['def']
+                for nLoop, RGE in loopDic.items():
+                    s += f'\n    if nLoop == {nLoop+1}:\n'
+                    s += '        return ' + RGE
         return s
 
     def runString(self, model, path):
@@ -581,16 +660,16 @@ class Printer(PythonCodePrinter):
         return 'np.pi'
 
     def _print_adjoint(self, expr):
-        return pycode(expr.args[0]) + '.H'
+        return 'adjoint(' + pycode(expr.args[0]) + ')'
 
     def _print_transpose(self, expr):
-        return pycode(expr.args[0]) + '.transpose()'
+        return 'transpose(' + pycode(expr.args[0]) + ')'
 
     def _print_conjugate(self, expr):
-        return 'np.conjugate(' + pycode(expr.args[0]) + ')'
+        return 'conjugate(' + pycode(expr.args[0]) + ')'
 
     def _print_Trace(self, expr):
-        return 'np.trace(' + pycode(expr.args[0]) + ')'
+        return 'tr(' + pycode(expr.args[0]) + ')'
 
     def _print_Mul(self, expr):
         if expr.find(conjugate) != set():
@@ -616,27 +695,5 @@ class Printer(PythonCodePrinter):
 
 
 def pycode(expr, **settings):
-    """ Converts an expr to a string of Python code
-    Parameters
-    ==========
-    expr : Expr
-        A SymPy expression.
-    fully_qualified_modules : bool
-        Whether or not to write out full module names of functions
-        (``math.sin`` vs. ``sin``). default: ``True``.
-    standard : str or None, optional
-        If 'python2', Python 2 sematics will be used.
-        If 'python3', Python 3 sematics will be used.
-        If None, the standard will be automatically detected.
-        Default is 'python3'. And this parameter may be removed in the
-        future.
-    Examples
-    ========
-    >>> from sympy import tan, Symbol
-    >>> from sympy.printing.pycode import pycode
-    >>> pycode(tan(Symbol('x')) + 1)
-    'math.tan(x) + 1'
-    """
-
     return Printer(**settings).doprint(expr)
 
