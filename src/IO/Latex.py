@@ -173,10 +173,11 @@ r"\date{" + str(date.day) + " " + month[date.month] + " " + date.strftime("%Y, %
 
     def gaugeGroups(self, model):
         def printCoupling(coupling):
-            if coupling not in model.gutNorm:
+            gutNorm = {str(k):v for k,v in model.gutNorm.items()}
+            if str(coupling) not in gutNorm:
                 return self.totex(coupling)
             else:
-                return self.totex(coupling) + r'\rightarrow' + latex(model.gutNorm[coupling][1], fold_short_frac=None).replace(self.totex(coupling), r'\,' + self.totex(coupling))
+                return self.totex(coupling) + r'\rightarrow' + latex(gutNorm[str(coupling)][1], fold_short_frac=None).replace(self.totex(coupling), r'\,' + self.totex(coupling))
         # Gauge groups
         gaugeGroups = []
 
