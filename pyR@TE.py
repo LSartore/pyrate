@@ -80,6 +80,8 @@ try:
 
     # Initialize various gauge and tensor quantities + check gauge invariance
     RGmodule.initialize()
+except SystemExit:
+    exit()
 except:
     error = True
     track = traceback.format_exc()

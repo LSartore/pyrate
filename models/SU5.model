@@ -34,7 +34,6 @@ CplxScalars: {
 Potential: {
 
 Definitions:{
-    #
     tFond : t(SU5, 5),
     Sigma[i,j]: tFond[a,i,j]*phi24[a],
     Tr2 : Sigma[i,j] Sigma[j,i],
@@ -42,8 +41,7 @@ Definitions:{
 
     # CGCs
     Cyuk5 : cgc(SU5, q5, Hbar, q10),
-    Cyuk10 : cgc(SU5, q10, H, q10),
-    # Ctrip : cgc(SU5, phi24, phi24, phi24, 0)
+    Cyuk10 : cgc(SU5, q10, H, q10)
 },
 
 #########################################

@@ -173,6 +173,7 @@ class Inputs():
 
         parser.add_argument('--RealBasis', '-rb', dest='RealBasis', action='store', default=None,
                             help='Specify the treatment of real representations. Possible values are : None, adjoint, all.')
+        parser.set_defaults(RealBasis=default['RealBasis'])
 
         return parser.parse_args().__dict__
 
