@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import subprocess
-
 from sys import exit
 import sys
 import os
 
-sys.path.append("/home/lohan/ownCloud/PyR@TE_3/src/pylie")
+wd = os.path.abspath(os.path.dirname(__file__))
+sys.path.append(wd)
 
 import copy as cp
 from functools import reduce, cmp_to_key
@@ -14,18 +13,15 @@ import operator
 
 import numpy as np
 
-from sympy import (I, Indexed, IndexedBase, KroneckerDelta, MatrixSymbol, Rational,
-                   SparseMatrix, Wild,
-                   flatten, matrix2numpy, sqrt, zeros)
+from sympy import (GramSchmidt, I, IndexedBase, KroneckerDelta,
+                   Rational, Wild)
 
-from sympy import expand, simplify, factorial, flatten, GramSchmidt, exp, pi, conjugate
+from sympy import (conjugate, exp, expand, factorial, flatten, matrix2numpy,
+                   pi, sqrt)
 
-from sympy import pprint, Symbol
 
 from Math import MathGroup, Sn, sMat, sEye as eye
-
 from Math import sTensor
-
 
 import time
 
@@ -35,8 +31,7 @@ import re as reg
 from sympy import init_printing
 init_printing(forecolor='White', wrap_line=False, use_unicode=False)
 
-
-tensor = False
+# tensor = False
 
 def timer(func):
     def inner(*args, **kwargs):
@@ -245,7 +240,6 @@ class LieAlgebra(object):
         self.math = MathGroup()
 
         # which reps need to be translated to real basis is a property of the algebra
-
         self._realBasisDic = {}
         self._computeReal = False
 
@@ -1817,9 +1811,9 @@ class LieAlgebra(object):
             for i in range(1, len(aux4)):
                 bigMatrix = bigMatrix.append(aux4[i] - eye(aux4[i].shape[0]), axis=0)
 
+
             aux4 = [self.math._inverseFlatten(el, [len(aux0[0][0]), refP12[0].shape[0]])
                                           for el in bigMatrix.nullSpace(vecForm=True)]
-
 
             aux4 = flatten(aux4, cls=list)
 

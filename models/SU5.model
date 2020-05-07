@@ -50,7 +50,7 @@ Definitions:{
 
 Yukawas: {
     Y5 : Cyuk5[i,j,k] q5[i] Hbar[j] q10[k],
-    Y10 : 1/8 * Cyuk10[i,j,k] q10[i] H[j] q10[k],
+    Y10 : 1/2 * Cyuk10[i,j,k] q10[i] H[j] q10[k],
 },
 
 QuarticTerms: {

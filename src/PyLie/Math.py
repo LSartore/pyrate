@@ -11,7 +11,7 @@ from sympy.combinatorics import Permutation
 from sympy import (Add, I, Mul, SparseMatrix, Symbol, Rational,
                    conjugate, factorial, flatten, im, sqrt)
 
-from sympy import expand, simplify as sSimplify
+from sympy import simplify as sSimplify
 
 class Sn:
     def __init__(self):
@@ -562,7 +562,7 @@ class sMat(SparseMatrix):
             for k2, v2 in m2._smat.items():
                 k = (k1[0]*m2.shape[0]+k2[0], k1[1]*m2.shape[1]+k2[1])
                 m._smat[k] = v1*v2
-                if simplify and isinstance(m._smat[k], Mul) or isinstance(m._smat[k], Add):
+                if simplify :
                     m._smat[k] = sSimplify(m._smat[k])
 
         return m
@@ -621,11 +621,8 @@ class sMat(SparseMatrix):
                 s = sMat(H.shape[0], 1, {})
                 if i < len(preferedOrder):
                     row = rowDic[preferedOrder[i]]
-                    a = sMat(n, 1, {(k,0):v  for k,v in row.items()})
-                    ##### s = H*a
 
                     for k,v in H.rowDic.items():
-                        # for rA, vA in row.items():
                         keySet = set(v.keys()).intersection(row.keys())
                         if keySet != set():
                             s[(k,0)] = 0
@@ -634,7 +631,6 @@ class sMat(SparseMatrix):
                             s[(k,0)] += v[key]*row[key]
 
                 empty = s.empty()
-
                 if empty:
                     i += 1
                 if i >= m:#-1:
@@ -656,7 +652,6 @@ class sMat(SparseMatrix):
                     if abs(v) > u*maxAbs:
                         j, sj = k[0], v
                         break
-
 
             H = self.Gmul(H, n, i, j, s, sj)
 

@@ -75,9 +75,9 @@ Substitutions: {
     g1 : sqrt(5/3) * g1,
 
     # Substitutions for Yukawa matrices
-    Yu : [0, 0, 'yt'],
-    Yd : [0, 0, 'yb'],
-    Ye : [0, 0, 'ytau']
+    #Yu : [0, 0, 'yt'],
+    #Yd : [0, 0, 'yb'],
+    #Ye : [0, 0, 'ytau']
 }
 
 Latex: {
