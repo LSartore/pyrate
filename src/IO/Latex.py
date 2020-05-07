@@ -718,7 +718,7 @@ r""" \\[.1cm] \hline
                 vevStr = sField + ' &\\rightarrow ' + sField + ' + ' + self.totex(v[1])
 
             if cplx:
-                vevStr = self.totex(v[3]) + ' \\; : \\; ' + vevStr
+                vevStr = self.totex(Symbol(str(v[3]))) + ' \\; : \\; ' + vevStr
             else:
                 vevStr = self.totex(Symbol(str(fieldComponent[1]))) + ' \\; : \\; ' + vevStr
 

@@ -48,6 +48,7 @@ class PythonExport():
         if self.inconsistentRGset:
             raise TypeError("     -> Error : The RGE set is inconsistent. Please refer to the latex output.")
 
+        self.gaugeFixing = False
         self.RGfileString = {}
         self.allBetaFunctions = {}
 
@@ -227,8 +228,14 @@ class RGEsolver():
             else:
                 ret.append(np.matrix(np.reshape([couplingsArray[p] for p in range(c.pos, c.pos+c.nb)], c.shape)))
         return ret
-        """
+"""
 
+        if self.gaugeFixing:
+            s += """
+
+    def fixGauge(self, xi):
+        self.xiGauge = xi
+"""
         s += self.RGEs(model)
 
         s += r'''
@@ -588,7 +595,8 @@ class RGEsolver():
 
             if cType == 'Vevs' and model.gaugeFixing is None:
                 s += "\n        #   For vevs the gauge must be fixed. Let's use for instance the Landau gauge :\n"
-                s += "        self.xi = 0\n"
+                s += "        self.xiGauge = 0\n"
+                self.gaugeFixing = True
 
             for c, cName in self.cDic[cType].items():
                 s += f"\n        self.{cName} = Coupling('{cName}', '{cType}'"
@@ -631,6 +639,9 @@ class RGEsolver():
                         continue
                     args = [v for k,v in self.allCouplings.items() if RGE.find(model.allCouplings[k][1]) != set()]
 
+                    if RGE.find(Symbol('_xiGauge', real=True)) != set():
+                        args.append('xiGauge')
+
                     if cType not in argsDic:
                         argsDic[cType] = {}
                     if c not in argsDic[cType]:
@@ -660,7 +671,7 @@ class RGEsolver():
                     if betaName not in self.allBetaFunctions[cType]:
                         self.allBetaFunctions[cType].append(betaName)
 
-                    betaString = betaString.replace('nLoop', str(nLoop+1))
+                    betaString = betaString.replace('nLoop', str(nLoop+1)).replace('xiGauge', 'self.xiGauge')
 
                     self.RGfileString[cType][c][nLoop] = pycode(RGE/self.betaFactor)
 
@@ -784,7 +795,8 @@ class Printer(PythonCodePrinter):
 
     def _print_Symbol(self, expr):
         if expr == Symbol('_xiGauge', real=True):
-            return 'self.xi'
+            # return 'self.xi'
+            return 'xiGauge'
 
         ret = super(PythonCodePrinter, self)._print_Symbol(expr)
         ret = ret.replace('\\', '')
