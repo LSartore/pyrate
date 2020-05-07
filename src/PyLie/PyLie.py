@@ -1811,7 +1811,6 @@ class LieAlgebra(object):
             for i in range(1, len(aux4)):
                 bigMatrix = bigMatrix.append(aux4[i] - eye(aux4[i].shape[0]), axis=0)
 
-
             aux4 = [self.math._inverseFlatten(el, [len(aux0[0][0]), refP12[0].shape[0]])
                                           for el in bigMatrix.nullSpace(vecForm=True)]
 
