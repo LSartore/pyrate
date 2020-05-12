@@ -59,6 +59,7 @@ class GaugeGroup():
         repMats = self.idb.get(self.type, 'repMatrices', rep, realBasis=self.realBasis)
         fs = self.idb.get(self.type, 'frobenius', rep)
         tex = self.idb.get(self.type, 'repname', rep, latex=True)
+        index = self.idb.get(self.type, 'dynkinIndex', rep)
 
         if fs == 1:
             repType = 'complex'
@@ -67,7 +68,7 @@ class GaugeGroup():
         elif fs == -1:
             repType = 'pseudo-real'
 
-        self.repDic[rep] = (dim, labels, repType, repMats, tex)
+        self.repDic[rep] = (dim, labels, repType, repMats, tex, index)
 
 
 

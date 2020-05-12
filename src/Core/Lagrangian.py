@@ -214,13 +214,23 @@ class Lagrangian():
             rep = eval(args.replace(gp + ',', ''))
 
             if gp in self.model.gaugeGroups:
-                gp = self.model.gaugeGroups[gp].type
+                gp = self.model.gaugeGroups[gp]
+            else:
+                for gName, g in self.model.gaugeGroups.items():
+                    if g.type == gp:
+                        gp = g
+                        break
+                if type(gp) == str:
+                    loggingCritical(f"Error in 'Definitions': gauge group '{gp}' is unknown.")
+                    return
 
             # DimR -> Dynkin labels
             if isinstance(rep, int):
-                rep = self.idb.get(gp, 'dynkinLabels', rep)
+                rep = self.idb.get(gp.type, 'dynkinLabels', rep)
 
-            repMats = self.idb.get(gp, 'repMatrices', rep)
+            # repMats = self.idb.get(gp, 'repMatrices', rep, realBasis=GaugeGroup.realBasis)
+            repMats = gp.repMat(tuple(rep))
+
             shape = tuple([len(repMats), *repMats[0].shape])
             dic = {}
             for i, mat in enumerate(repMats):
@@ -228,7 +238,7 @@ class Lagrangian():
                     dic[(i,*k)] = v
 
             # This is for latex output
-            expr = Function('t')(Symbol(gp), Symbol(str(rep)))
+            expr = Function('t')(Symbol(gp.type), Symbol(str(rep)))
 
             return TensorObject(copy=(name, shape, dic), fromDef=name, expr=expr)
 

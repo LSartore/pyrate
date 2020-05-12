@@ -835,10 +835,10 @@ r""" \\[.1cm] \hline
 \begin{table}[h]
 \renewcommand{\arraystretch}{1.1}
 \centering
-\begin{tabular}{@{}ccccccc@{}}
+\begin{tabular}{@{}cccccccc@{}}
 \toprule
-\multirow{2}{*}{Group} & \multirow{2}{*}{Lie algebra} & \multirow{2}{*}{Dim.} & \multirow{2}{*}{Rank} & \multicolumn{3}{c}{Representations}       \\ \cmidrule(l){5-7}
-                       &                              &                       &                       & Name / Dim. & Dynkin labels & Type        \\ \midrule
+\multirow{2}{*}{Group} & \multirow{2}{*}{Lie algebra} & \multirow{2}{*}{Dim.} & \multirow{2}{*}{Rank} & \multicolumn{4}{c}{Representations}                 \\ \cmidrule(l){5-8}
+                       &                              &                       &                       & Name / Dim. & Dynkin labels & Index & Reality   \\ \midrule
 """
         gDic = {}
 
@@ -853,13 +853,12 @@ r""" \\[.1cm] \hline
                     if k not in gDic[grp.type].repDic:
                         gDic[grp.type].repDic = v
 
-
         for gPos, grp in enumerate(gDic.values()):
             repList = sorted([v for v in grp.repDic.values() if v[0] > 1], key=lambda x: x[0])
 
             l = str(len(repList))
             for i, rep in enumerate(repList):
-                name, labels, repType = rep[-1], str(list(rep[1])), rep[2].capitalize()
+                name, labels, repType, index = rep[4], str(list(rep[1])), rep[2].capitalize(), self.totex(rep[5])
                 if i == 0:
                     pre = '\\multirow{'+l+'}{*}'
                     self.string += pre + '{'+grp.type+'} & '
@@ -870,6 +869,7 @@ r""" \\[.1cm] \hline
                     self.string += ' & '*4
                 self.string += '$'+name+'$ & '
                 self.string += labels + ' & '
+                self.string += '$'+index+'$' + ' & '
                 self.string += repType
                 if rep[0] == grp.dim:
                     self.string += ' (adjoint)'

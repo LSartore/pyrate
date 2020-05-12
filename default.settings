@@ -23,7 +23,7 @@ DefaultLoopLevel : 1
 CheckGaugeInvariance : True
 PrintComputationTimes : True
 
-RealBasis : adjoint
+RealBasis : all
 
 
 # Output

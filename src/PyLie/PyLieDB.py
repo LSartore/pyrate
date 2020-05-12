@@ -61,6 +61,7 @@ class PyLieDB():
             'conjugaterep' : lambda a: (lambda r: a.conjugateIrrep(r).tolist()),
             'dynkinlabels' : self.getDynkinLabels,
             'dimr' : self.dimR,
+            'dynkinindex' : lambda a: a.dynkinIndex,
             }
 
         self.translations = {
@@ -371,6 +372,8 @@ class PyLieDB():
         else:
             if val is True:
                 return -1
+            if int(val) != val:
+                return PyLieDB.convert(val, allStr=True)
             return int(val)
 
 
@@ -408,6 +411,8 @@ class PyLieDB():
             return 'dynkinlabels'
         if loweredItemName in ('repname', 'name'):
             return 'repname'
+        if loweredItemName in ('index'):
+            return 'dynkinindex'
 
         return itemName
 
@@ -833,7 +838,7 @@ class PyLieDB():
 
             return storeName, (arg,), kwargs
 
-        if dataType in ('frobenius', 'conjugaterep', 'dimr') :
+        if dataType in ('frobenius', 'conjugaterep', 'dimr', 'dynkinindex') :
             # StoreName :
             #   rep
 

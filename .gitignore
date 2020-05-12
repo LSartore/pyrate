@@ -131,3 +131,7 @@ dmypy.json
 # Others
 
 ToDo.txt
+
+# DB (temporary)
+
+src/PyLie/PyLieDB.hd5f.gz
