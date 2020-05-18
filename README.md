@@ -13,12 +13,12 @@
 ### Dependencies :
 
 - Python &ge; 3.6
-- PyYAML &ge; 
+- PyYAML &ge; 5.3
 - Sympy &ge; 1.5
-- h5py &ge; 
-- Numpy &ge; 
-- Scipy &ge;
-- Matplotlib &ge;
+- h5py &ge; 2.10
+- Numpy &ge; 1.18
+- Scipy &ge; 1.4
+- Matplotlib &ge; 3.1
 
 
 ### Download:
@@ -42,3 +42,4 @@ Please note that these two notebooks do not cover the entirety of PyR@TE 3's fun
 For suggestions, bug reports or any comments please contact the author at : 
 
 sartore at lpsc.in2p3.fr
+
