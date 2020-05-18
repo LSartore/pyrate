@@ -45,9 +45,9 @@ class ScalarMassBetaFunction(BetaFunction):
 
         self.coefficients.append( [r(2), r(10), r(0), r(3), r(-143,6), r(11,6),
                                    r(10,6), r(-3), r(8), r(8), r(-3), r(-3),
-                                   r(1,6), r(-1), r(-1,2), r(-1), r(0), r(0),
-                                   r(-12), r(5), r(0), r(-1), r(-1,2), r(0),
-                                   r(2), r(-4), r(2), r(2), r(1), r(0),
+                                   r(1,6), r(-1), r(-1,2), r(-2), r(0), r(0),
+                                   r(-12), r(5), r(0), r(-1), r(-1), r(0),
+                                   r(2), r(-4), r(2), r(4), r(1), r(0),
                                    r(0), r(0), r(-1), r(-3,2), r(4), r(4),
                                    r(2)] )
 
@@ -357,6 +357,14 @@ class ScalarMassBetaFunction(BetaFunction):
                                 self.yt(e_,l_,m_),
                                 self.M(m_,n_),
                                 self.yt(e_,n_,i_),
+                                doTrace=True, yukSorting=self.model.YukPos)
+
+             + 2*tensorContract(self.y(a,i_,j_),
+                                self.Mt(j_,k_),
+                                self.M(k_,l_),
+                                self.yt(e_, l_, m_),
+                                self.y(b, m_, n_),
+                                self.yt(e_, n_, i_),
                                 doTrace=True, yukSorting=self.model.YukPos)
 
                + tensorContract(self.y(a,i_,j_),
