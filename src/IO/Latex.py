@@ -247,7 +247,9 @@ r""" \\ \hline
 
         self.string += ('\n' + r"""
 \subsection{Fermions}
-
+""")
+        if fermions != []:
+            self.string += (r"""
 \begin{table}[h]
 \renewcommand{\arraystretch}{1.15}
 \centering
@@ -259,6 +261,8 @@ Name & Generations & """ + totalGroup + r"""\\ \hline \\ [-2ex]
 r""" \\[.1cm] \hline
 \end{tabular}
 \end{table}""")
+        else:
+            self.string += "\n\\emph{None.}\n"
 
         # Scalars
         scalars = []
@@ -297,9 +301,12 @@ r""" \\[.1cm] \hline
             repStr = '('+', '.join(rep)+')' if len(rep) > 1 else rep[0]
             scalars.append(('$'+self.totex(Symbol(name))+'$', str(s.cplx), expr, gen, repStr))
 
+
         self.string += ('\n' + r"""
 \subsection{Scalars}
-
+""")
+        if scalars != []:
+            self.string += (r"""
 \begin{table}[h]
 \renewcommand{\arraystretch}{1.15}
 \centering
@@ -311,6 +318,8 @@ Name & Complex & Expression & Generations & """ + totalGroup + r"""\\ \hline \\ 
 r""" \\[.1cm] \hline
 \end{tabular}
 \end{table}""")
+        else:
+            self.string += "\n\\emph{None.}\n"
 
     def handleExplicit(self, model):
         for coupling in model.ExplicitMatrices:
@@ -857,6 +866,7 @@ r""" \\[.1cm] \hline
             repList = sorted([v for v in grp.repDic.values() if v[0] > 1], key=lambda x: x[0])
 
             l = str(len(repList))
+            i = 0
             for i, rep in enumerate(repList):
                 name, labels, repType, index = rep[4], str(list(rep[1])), rep[2].capitalize(), self.totex(rep[5])
                 if i == 0:
@@ -871,11 +881,18 @@ r""" \\[.1cm] \hline
                 self.string += labels + ' & '
                 self.string += '$'+index+'$' + ' & '
                 self.string += repType
+
                 if rep[0] == grp.dim:
                     self.string += ' (adjoint)'
                 self.string += r'\\'
                 if i+1 < len(repList):
                     self.string += '\n'
+
+            if i == 0:
+                self.string += '{'+grp.type+'} & '
+                self.string += '{'+grp.sName+'} & '
+                self.string += '{'+str(grp.dim)+'} & '
+                self.string += '{'+str(grp.rank)+ '} & / & / & / & / \\\\'
 
             if i+1 < len(repList) and gPos+1 < len(gDic):
                 self.string += '\\midrule\n'

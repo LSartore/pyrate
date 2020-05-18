@@ -248,8 +248,6 @@ class Lagrangian():
         # Case 2 : expr is a CGC
         ##########
 
-        # Several ways to call cgc():
-        # ->
         if expr[:4].lower() == 'cgc(':
             args = expr[4:-1].split(',')
 
@@ -270,7 +268,6 @@ class Lagrangian():
 
             # Read the fields
             fields = []
-            # lastpos = 0
             for i, el in enumerate(args):
                 if el.isnumeric() or ('(' in el and ')' in el):
                     # Stop after encountering an int or a tuple
@@ -293,7 +290,6 @@ class Lagrangian():
             N = 0
             # The CGC call contains a pos
             if args != []:
-                # print(args)
                 if len(args) == 1:
                     N = int(args[0])
                 else:
@@ -324,8 +320,6 @@ class Lagrangian():
             expr = Function('cgc')(Symbol(gType), *([Symbol(el) for el in fields]+[N]))
 
             return TensorObject(copy=(name, shape, dic), fromDef=name, expr=expr, fields=fieldNames)
-
-
 
         ##########
         # Case 3 : an expression involving the already defined quantities
@@ -378,7 +372,6 @@ class Lagrangian():
                 Lbase = name[:name.find('[')]
                 Linds = name[name.find('[')+1:name.find(']')].split(',')
                 Linds = [Symbol(el) for el in Linds]
-                # LnInds = len(Linds)
 
         # D) Validate and compute the expression
         rhsResult = 0

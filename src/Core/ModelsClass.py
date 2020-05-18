@@ -171,6 +171,7 @@ class Model(object):
 
 
         # Read the substitutions
+        self.substitutions = {}
         self.gutNorm = {}
         if 'Substitutions' in settings and settings['Substitutions'] != {}:
            self.substitutions = getSubstitutions(self, settings['Substitutions'] if 'Substitutions' in settings else {})
@@ -303,8 +304,8 @@ class Model(object):
                 loggingCritical(f"Error : the particle '{part}' is charged under an unknown gauge group.")
                 exit()
         if not 'Potential' in settings:
-            loggingCritical("Error : no Potential specified, exit.")
-            exit()
+            settings['Potential'] = {}
+            self.saveSettings['Potential'] = {}
 
 
         ################
@@ -403,7 +404,6 @@ class Model(object):
                     self.loopDic[k] = v
 
             # Anomalous
-
             self.loopDic['ScalarAnomalous'] = self.loopDic['QuarticTerms']
             self.loopDic['FermionAnomalous'] = self.loopDic['Yukawas']
 
