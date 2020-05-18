@@ -26,7 +26,7 @@ RealScalars: {
 # Complex Scalars #
 ###################
 
-CplxScalars: {
+ComplexScalars: {
    H: {RealFields:[Hr, Hi], Norm: 1/Sqrt(2), Qnb:{ SU5: 5 }},
 }
 

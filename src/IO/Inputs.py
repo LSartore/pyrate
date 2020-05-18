@@ -278,15 +278,17 @@ class Inputs():
                         exit()
 
             # For complex scalars, also check that the pairs [Pi, Sigma] are only used once
-            if 'CplxScalars' in yamlSettings and yamlSettings['CplxScalars'] != {}:
+            if 'CplxScalars' in yamlSettings and 'ComplexScalars' not in yamlSettings:
+                yamlSettings['ComplexScalars'] = yamlSettings['CplxScalars']
+            if 'ComplexScalars' in yamlSettings and yamlSettings['ComplexScalars'] != {}:
                 realFieldsDic = {}
-                for k,v in yamlSettings['CplxScalars'].items():
+                for k,v in yamlSettings['ComplexScalars'].items():
                     if type(v) == dict:
                         pass
                     elif type(v) == list:
                         if len(v) == len(yamlSettings['Groups']) + 3:
                             qnb = {grp:Q for (grp, Q) in zip(yamlSettings['Groups'], v[3:])}
-                            yamlSettings['CplxScalars'][k] = {'RealFields': [v[0], v[1]], 'Norm': v[2], 'Qnb': qnb}
+                            yamlSettings['ComplexScalars'][k] = {'RealFields': [v[0], v[1]], 'Norm': v[2], 'Qnb': qnb}
                         else:
                             loggingCritical(f"Error : The length of the lists describing complex scalars should be 3 + {len(yamlSettings['Groups'])}, "
                                           + f"corresponding to Re + Im + norm + various quantum numbers. ('{k} : {v}')")
@@ -295,7 +297,7 @@ class Inputs():
                         loggingCritical(f"Error : Complex scalars should either be described by a dictionary or a list. ('{k} : {v}')")
                         exit()
 
-                    rf = tuple(yamlSettings['CplxScalars'][k]['RealFields'])
+                    rf = tuple(yamlSettings['ComplexScalars'][k]['RealFields'])
                     if rf not in realFieldsDic:
                         realFieldsDic[rf] = k
                     else:
@@ -331,7 +333,7 @@ class Inputs():
         """ Automatically add quotes where needed in the model file, so the user doesn't have to do it """
 
         preambleKW = ('Author', 'Date', 'Name', 'Groups',
-                      'Fermions', 'RealScalars', 'CplxScalars',
+                      'Fermions', 'RealScalars', 'ComplexScalars',
                       'Potential')
 
         kwList = ('Definitions', 'Yukawas', 'QuarticTerms',

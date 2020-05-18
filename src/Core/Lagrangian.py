@@ -200,6 +200,8 @@ class Lagrangian():
         As much as possible, the user input is validated and error messages
         are printed if needed."""
 
+        originalExpr = expr
+
         ##########
         # Case 1 : expr is a representation matrix
         ##########
@@ -330,14 +332,11 @@ class Lagrangian():
         ##########
         localDict = {}
 
-        barCount = 0
-        for k,v in self.definitions.items():
-            if k[-3:] != 'bar':
-                localDict[k] = v.symbol
-            else:
-                expr = expr.replace(k, '_bar' + str(barCount))
-                localDict['_bar' + str(barCount)] = v.symbol
-                barCount += 1
+        count = 0
+        for k,v in sorted(self.definitions.items(), key=lambda x:-len(x[0])):
+            expr = expr.replace(k, f'_{count}_')
+            localDict[f'_{count}_'] = v.symbol
+            count += 1
 
         def sympyParse(expr):
             return parse_expr(expr, local_dict = localDict,
@@ -355,8 +354,11 @@ class Lagrangian():
                 expr = expr.replace(k, k + ' ')
 
         # B) Parse the string
-        expr = sympyParse(expr)
-
+        try:
+            expr = sympyParse(expr)
+        except:
+            loggingCritical("Error while parsing the term " + str(originalExpr) + ".")
+            exit()
 
         rep = {}
         if expr.find(Pow) != set():
@@ -379,7 +381,6 @@ class Lagrangian():
                 # LnInds = len(Linds)
 
         # D) Validate and compute the expression
-
         rhsResult = 0
         commonFreeInds = None
         for term in termList:
@@ -472,7 +473,6 @@ class Lagrangian():
 
             # Now that the term is validated, construct the resulting tensor object
             contractArgs = []
-
             for field in terms:
                 if not isinstance(field, Symbol):
                     base, inds = field.base, field.indices
@@ -654,8 +654,8 @@ class Lagrangian():
                 assumptionDic = self.model.assumptions[str(coupling)]
 
                 coupling = mSymbol(str(coupling), fGen[0], fGen[1], **assumptionDic)
-                if coupling not in self.couplingStructure:
-                    self.couplingStructure[str(coupling)] = (fGen[0], fGen[1])
+                if coupling not in self.model.couplingStructure:
+                    self.model.couplingStructure[str(coupling)] = (fGen[0], fGen[1])
 
             if tensorInds not in self.dicToFill:
                 self.dicToFill[tensorInds] = coupling*coeff

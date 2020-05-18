@@ -268,8 +268,8 @@ class Model(object):
                 else:
                     loggingCritical(f"Error : Particle '{k}' cannot be defined twice. Please check the model file.")
                     exit()
-        if 'CplxScalars' in settings:
-            for k,v in settings['CplxScalars'].items():
+        if 'ComplexScalars' in settings:
+            for k,v in settings['ComplexScalars'].items():
                 twice = []
 
                 for f in v['RealFields']:
@@ -443,8 +443,8 @@ class Model(object):
         self.Particles.update(self.Scalars)
 
         # Now that the Real Scalars have been created we can create the Cplx one associated
-        if 'CplxScalars' in settings:
-            for part, setts in settings['CplxScalars'].items():
+        if 'ComplexScalars' in settings:
+            for part, setts in settings['ComplexScalars'].items():
                 setts['Norm'] = self.parseMathExpr(setts['Norm'])
                 if 'Gen' not in setts:
                     setts['Gen'] = 1

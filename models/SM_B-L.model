@@ -30,7 +30,7 @@ RealScalars: {
 #Complex Scalars : have to be expressed in terms of Real Scalars see above
 ##########################################################################
 
-CplxScalars: {
+ComplexScalars: {
     H: {RealFields: [Pi, Sigma], Norm: 1/Sqrt(2), Qnb : {U1BL: 0, U1Y: 1/2, SU2L: 2, SU3c: 1}},
     chi: {RealFields: [chiR, chiI], Norm: 1/Sqrt(2), Qnb : {U1BL: 2, U1Y: 0, SU2L: 1, SU3c: 1}}
 }
@@ -76,24 +76,24 @@ Substitutions: {
 Latex: {
     gprime : g',
     gtilde : \tilde{g},
-    
+
     uR : u_R,
     dR : d_R,
     eR : e_R,
     nuR : \nu_R,
-    
+
     chi : \chi,
     chiR: \chi_r,
     chiI: \chi_i,
-    
+
     Htilde : \tilde{H},
-    
+
     Yu : Y_u,
     Yd : Y_d,
     Ye : Y_e,
     Ynu: Y_\nu,
     YN : Y_N,
-    
+
     lambda1 : \lambda_1,
     lambda2 : \lambda_2,
     lambda3 : \lambda_3

@@ -952,8 +952,6 @@ class Printer(LatexPrinter):
 
     def _print_Mul(self, expr):
         if expr.find(Indexed) != set() and expr.find(Pow) != set():
-            print("\n\n indexed mul :", expr)
-
             if not all([int(el.exp) != el.exp for el in expr.find(Pow)]):
                 return ' '.join([self._print(el) for el in splitPow(expr)])
 
