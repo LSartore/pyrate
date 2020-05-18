@@ -983,14 +983,16 @@ class Printer(LatexPrinter):
 
     def _print_Indexed(self, expr):
         base, inds = expr.args[0], expr.args[1:]
-
         s = self._print(base)
 
         if self.incrementInds:
             inds = [el+1 for el in inds]
 
         if '_' in s:
-            s = '{' + s + '}_{' + ','.join([self.latex.totex(el) for el in inds]) + '}'
+            if '\\tilde' in s:
+                s = s + '{}_{' + ','.join([self.latex.totex(el) for el in inds]) + '}'
+            else:
+                s = '{' + s + '}_{' + ','.join([self.latex.totex(el) for el in inds]) + '}'
         else:
             s += '_{' + ','.join([self.latex.totex(el) for el in inds]) + '}'
 
