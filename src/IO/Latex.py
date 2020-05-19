@@ -30,6 +30,7 @@ class LatexExport():
 
         self.cgcs = {}
         self.groupTheoryInfo = ('GroupTheoryInfo' in model.runSettings and model.runSettings['GroupTheoryInfo'] is True)
+        self.moreGroupTheoryInfo = model.runSettings['MoreGroupTheoryInfo']
 
         # Update sympy's modifier for 'Xbar' -> overline for fermions, dagger for scalars
         if 'bar' in modifier_dict:
@@ -142,7 +143,7 @@ class LatexExport():
         self.string += r"""\documentclass[12pt]{article}
 \pagestyle{empty}
 
-\usepackage[top=2cm,bottom=2cm,left=3cm,right=2cm,nohead,nofoot]{geometry}
+\usepackage[top=2cm,bottom=2cm,left=2.5cm,right=2cm,nohead,nofoot]{geometry}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
@@ -154,7 +155,8 @@ class LatexExport():
         if self.groupTheoryInfo:
             self.string += r"""
 \usepackage{booktabs}
-\usepackage{multirow}"""
+\usepackage{multirow}
+\usepackage{longtable}"""
 
         self.string += (r"""
 \setlength{\parindent}{0pt}
@@ -190,7 +192,7 @@ r"\date{" + str(date.day) + " " + month[date.month] + " " + date.strftime("%Y, %
 
         self.string += (r"""
 
-\section{Model}{
+\section{Model}
 
 \subsection{Gauge groups}
 
@@ -217,6 +219,7 @@ r""" \\ \hline
     def particles(self, model):
         totalGroup = list(model.gaugeGroups)
         totalGroup = r' $\times$ '.join(totalGroup)
+
         # Fermions
         fermions = []
 
@@ -836,18 +839,21 @@ r""" \\[.1cm] \hline
         if all([g.abelian for g in model.gaugeGroups.values()]):
             return
 
+        # More group info ?
+        if self.moreGroupTheoryInfo > 0:
+            for g in model.gaugeGroupsList:
+                if not g.abelian:
+                    g.moreGroupInfo(self.moreGroupTheoryInfo)
+
         self.string += "\n\\clearpage\n\n\\appendix\n\\section{Group theoretical information}\n"
 
         # 1) Gauge groups table
         self.string += "\\subsection{Gauge groups}\n"
         self.string += r"""
-\begin{table}[h]
-\renewcommand{\arraystretch}{1.1}
-\centering
-\begin{tabular}{@{}cccccccc@{}}
+\begin{longtable}{@{}cccccccc@{}}
 \toprule
 \multirow{2}{*}{Group} & \multirow{2}{*}{Lie algebra} & \multirow{2}{*}{Dim.} & \multirow{2}{*}{Rank} & \multicolumn{4}{c}{Representations}                 \\ \cmidrule(l){5-8}
-                       &                              &                       &                       & Name / Dim. & Dynkin labels & Index & Reality   \\ \midrule
+                       &                              &                       &                       & Name / Dim. & Dynkin labels & Index & Reality   \\ \midrule\endhead
 """
         gDic = {}
 
@@ -862,13 +868,34 @@ r""" \\[.1cm] \hline
                     if k not in gDic[grp.type].repDic:
                         gDic[grp.type].repDic = v
 
+        # Handle very long list of reps (too long to fit in one page)
+        if any([len(g.repDic) > 40 for gType, g in gDic.items()]):
+            tmpDic = {}
+            for gPos, (gType, g) in enumerate(gDic.items()):
+                maxLength = (45 if gPos > 0  else 40)
+                if len(g.repDic) > maxLength:
+                    for i, (rKey, rVal) in enumerate(g.repDic.items()):
+                        if i%maxLength == 0:
+                            key = gType + str(i//maxLength)
+                            tmpDic[key] = g.copy()
+                            tmpDic[key].repDic = dict()
+
+                            if i//maxLength > 0 and maxLength == 40:
+                                maxLength = 45
+
+                        tmpDic[key].repDic[rKey] = rVal
+                else:
+                    tmpDic[gType] = g
+
+            gDic = tmpDic
+
         for gPos, grp in enumerate(gDic.values()):
             repList = sorted([v for v in grp.repDic.values() if v[0] > 1], key=lambda x: x[0])
 
             l = str(len(repList))
             i = 0
             for i, rep in enumerate(repList):
-                name, labels, repType, index = rep[4], str(list(rep[1])), rep[2].capitalize(), self.totex(rep[5])
+                name, labels, repType, index = rep[4], str(list(rep[1])), rep[2].capitalize(), latex(rep[5], fold_short_frac=True)
                 if i == 0:
                     pre = '\\multirow{'+l+'}{*}'
                     self.string += pre + '{'+grp.type+'} & '
@@ -886,20 +913,21 @@ r""" \\[.1cm] \hline
                     self.string += ' (adjoint)'
                 self.string += r'\\'
                 if i+1 < len(repList):
-                    self.string += '\n'
+                    self.string += '*\n'
 
-            if i == 0:
+            if len(repList) == 0:
                 self.string += '{'+grp.type+'} & '
                 self.string += '{'+grp.sName+'} & '
                 self.string += '{'+str(grp.dim)+'} & '
                 self.string += '{'+str(grp.rank)+ '} & / & / & / & / \\\\'
 
-            if i+1 < len(repList) and gPos+1 < len(gDic):
-                self.string += '\\midrule\n'
-            else:
-                self.string += '\\bottomrule\n'
+            if i+1 == len(repList):
+                if gPos + 1 < len(gDic):
+                    self.string += '\\midrule\n'
+                else:
+                    self.string += '\\bottomrule\n'
 
-        self.string += "\\end{tabular}\n\\end{table}\n"
+        self.string += "\\end{longtable}\n\n"
 
 
         if model.lagrangian.cgcs == {}:

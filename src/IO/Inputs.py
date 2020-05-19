@@ -68,6 +68,16 @@ class Inputs():
                 loggingInfo("Warning : RealBasis argument not understood. Setting it to 'adjoint'.")
                 settings['RealBasis'] = 'adjoint'
 
+        if 'MoreGroupTheoryInfo' in settings:
+            if settings['MoreGroupTheoryInfo'] is True:
+                settings['MoreGroupTheoryInfo'] = 10
+            elif settings['MoreGroupTheoryInfo'] is False:
+                settings['MoreGroupTheoryInfo'] = 0
+            elif type(settings['MoreGroupTheoryInfo']) != int:
+                loggingInfo("Warning : 'MoreGroupTheoryInfo' setting must be a boolean or a positive integer. Setting it to False.")
+                settings['MoreGroupTheoryInfo'] = 0
+        else:
+            settings['MoreGroupTheoryInfo'] = 0
 
         self.yamlSettings = self.readModelFile(settings)
         self.settings = settings
@@ -167,7 +177,7 @@ class Inputs():
         parser.add_argument('--UFOfolder', '-ufo', dest='UFOfolder', action='store', default=None,
                             help='Ask PyR@TE to produce a UFO \'running.py\' file in the specified folder')
 
-        # Some other options
+            # Some additional options
         parser.add_argument('--no-KinMix', '-no-kin', dest='NoKinMix', action='store_true', default=False,
                             help='Switch off the kinetic mixing terms if multiple U(1) gauge groups are present.')
 
@@ -492,6 +502,7 @@ class Inputs():
             s = s.replace(s[comment:newLine], '', 1)
             comment = s.find('#')
 
+        s = s.replace(':', ': ')
         for kw in kwList:
             s = insertQuotes(s, kw)
 
@@ -529,7 +540,7 @@ DefaultLoopLevel : 1
 CheckGaugeInvariance : True
 PrintComputationTimes : True
 
-RealBasis : adjoint
+RealBasis : all
 
 # Output
 
@@ -539,6 +550,7 @@ CopyModelFile : False
 LatexOutput : True
 AbsReplacements : True   #Automatic replacements x*conjugate(x) -> \\abs{x}^2
 GroupTheoryInfo : True
+MoreGroupTheoryInfo : False
 
 MathematicaOutput : True
 MathematicaSolver : True
