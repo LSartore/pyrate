@@ -55,6 +55,17 @@ class PythonExport():
         # Initialize the latex substitutions
         self.latex = {pycode(k):v for k,v in latexSubs.items()}
 
+        # Fix the symbolic gen numbers
+        self.symbolicGens = []
+        self.genFix = ''
+        for p in model.Particles.values():
+            if isinstance(p.gen, Symbol):
+                if p.gen not in self.symbolicGens:
+                    self.symbolicGens.append(p.gen)
+
+        if self.symbolicGens != []:
+            self.genFix = ' = '.join([str(el) for el in self.symbolicGens]) + ' = 3'
+
         self.preamble(model)
         self.RGsolver(model)
 
@@ -155,8 +166,8 @@ class Coupling():
         if not self.is_matrix:
             return self
 
-        nameFunc = lambda x: self.name+'_{' + str(1 + x // self.shape[0]) + str(1 + x % self.shape[1]) + '}'
-        initFunc = lambda x: list(self.initialValue)[x // self.shape[0]][x % self.shape[1]]
+        nameFunc = lambda x: self.name+'_{' + str(1 + x // self.shape[1]) + str(1 + x % self.shape[1]) + '}'
+        initFunc = lambda x: list(self.initialValue)[x // self.shape[1]][x % self.shape[1]]
         arrayFunc = np.vectorize(lambda x: Coupling(nameFunc(x), self.type, fromMat=self, init=initFunc(x), pos=self.pos+x))
         array = arrayFunc(np.reshape(range(self.nb), self.shape))
 
@@ -209,6 +220,12 @@ class RGEsolver():
         '''
 
         s += "self.loops = " + pycode({k:v for k,v in model.loopDic.items() if k in model.toCalculate}, end='\n'+22*' ')
+
+        if self.genFix != '':
+            s += """
+
+        # Fix the symbolic generation numbers
+        """ + self.genFix
 
         s += self.couplingsDefinition(model)
 
@@ -704,6 +721,12 @@ tr = lambda x: np.trace(x)
 adjoint = lambda x: x.H
 transpose = lambda x: x.transpose()
 conjugate = lambda x: np.conjugate(x)"""
+
+        if self.genFix != '':
+            s += """
+
+# Fix the symbolic generation numbers
+""" + self.genFix
 
         for cType, RGEs in self.RGfileString.items():
             sType = self.translation[cType]

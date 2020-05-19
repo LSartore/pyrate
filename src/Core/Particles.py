@@ -42,6 +42,8 @@ class Particle(object):
 
     def getGen(self, dic):
         """convert the Gen into either a symbol or a number"""
+        if 'Gen' not in dic:
+            return 1
         try:
             return Symbol(dic['Gen'])
         except:

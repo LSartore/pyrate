@@ -88,12 +88,14 @@ class LatexExport():
                     v = '{' + v + '}'
                 if k in model.allCouplings:
                     self.latex[model.allCouplings[k][1]] = v
-                elif k in model.Particles or k in model.Scalars:
-                    self.latex[Symbol(k)] = v
-                elif k in model.lagrangian.definitions:
-                    self.latex[Symbol(k)] = v
                 else:
-                    loggingCritical(f"Warning in 'Latex' : object '{k}' is not defined. Skipping.")
+                    self.latex[Symbol(k)] = v
+                # elif k in model.Particles or k in model.Scalars:
+                #     self.latex[Symbol(k)] = v
+                # elif k in model.lagrangian.definitions:
+                #     self.latex[Symbol(k)] = v
+                # else:
+                #     loggingCritical(f"Warning in 'Latex' : object '{k}' is not defined. Skipping.")
 
         self.latex[Symbol('_xiGauge', real=True)] = '\\xi'
 
@@ -1194,7 +1196,8 @@ class Printer(LatexPrinter):
 
             # Remove IdentityMatrices from atoms
             #  + Remove the gauge parameter 'xi' when dealing with vevs
-            atoms = [el for el in atoms if not (hasattr(el, 'is_Identity') and el.is_Identity) and not str(el)=='_xiGauge' and not str(el) == 'n_g']
+            #  + Remove any symbolic coefficient (e.g. generation numbers)
+            atoms = [el for el in atoms if not (hasattr(el, 'is_Identity') and el.is_Identity) and not str(el)=='_xiGauge' and str(el) in Printer.model.allCouplings]
 
             score = sum([priority[Printer.model.allCouplings[str(el)][0]] for el in atoms])
 

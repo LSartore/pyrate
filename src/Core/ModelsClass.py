@@ -77,6 +77,7 @@ class Model(object):
         self.allFermions = {}
         self.allScalars = {}
 
+        self.symbolicGen = False
         self.getParticles(settings)
 
         ######################
@@ -483,6 +484,8 @@ class Model(object):
                     tup = [nS, s, tuple(el), parse_expr(str(sName) + str([n for n in el if n != -1]), local_dict={str(s._name): IndexedBase(str(s._name))})]
                     self.allScalars[sName + str([n for n in el if n != -1])] = tuple(tup)
                     nS += 1
+
+        self.symbolicGen = any([isinstance(p.gen, Symbol) for p in self.Particles.values()])
 
     def getVevs(self, settings):
         if 'Vevs' in settings and settings['Vevs'] != {}:

@@ -48,7 +48,7 @@ def exports(runSettings, model):
             python = PythonExport(model, latexSubs=latex.latex)
             python.write(path)
         except TypeError as e:
-            print('\n' + str(e))
+            print('\nError : ' + str(e))
         else:
             loggingInfo("Done.")
 

@@ -48,7 +48,7 @@ class MathematicaExport():
         if anomalous:
             self.anomalous(model)
 
-        if model.runSettings['MathematicaSolver'] is True:
+        if model.runSettings['MathematicaSolver'] is True and model.symbolicGen is False:
             self.RGsolver(model)
 
         self.replacements()
