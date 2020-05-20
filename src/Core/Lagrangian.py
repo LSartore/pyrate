@@ -2,12 +2,12 @@
 from sys import exit
 
 from Logging import loggingInfo, loggingCritical, print_progress
-from Definitions import GaugeGroup, Tensor, mSymbol, splitPow, tensorContract
+from Definitions import GaugeGroup, Tensor, mSymbol, splitPow, tensorContract, insertKey
 from Particles import Particle
 
 import itertools
 
-from sympy import (Adjoint, Function, Indexed, IndexedBase, Mul, Pow, Symbol, Wild,
+from sympy import (Adjoint, Function, I, Indexed, IndexedBase, Mul, Pow, Symbol, Wild,
                    conjugate, expand, flatten)
 
 from sympy.functions.special.tensor_functions import Eijk
@@ -516,6 +516,13 @@ class Lagrangian():
         all the occurences of user-defined quantities with their expression."""
         loggingInfo("Expanding the Lagrangian ...")
 
+
+        def isComplex(cType, c, expTerm):
+            return (cType in ('QuarticTerms', 'TrilinearTerms', 'ScalarMasses')
+                    and c + 'star' not in self.potential[cType]
+                    and not(c[-4:] == 'star' and c[:-4] in self.potential[cType])
+                    and expTerm.find(I) != set())
+
         count = 0
         content = ()
         for couplingType, terms in self.potential.items():
@@ -526,7 +533,7 @@ class Lagrangian():
             else:
                 continue
 
-            for coupling, term in terms.items():
+            for coupling, term in list(terms.items()):
                 TensorObject.globalTensorCount = 1
                 parsedTerm = []
                 expTerm = self.parseExpression(term, expandedTerm=parsedTerm).dic[()]
@@ -536,6 +543,10 @@ class Lagrangian():
 
                 self.fillTensorDic(coupling, expTerm, content)
 
+                if isComplex(couplingType, coupling, expTerm):
+                    self.conjugateScalarTerm(couplingType, coupling, content)
+                    count += 1
+
                 count += 1
                 print_progress(count, self.model.nCouplings, prefix=' '*4, bar_length=20, printTime=self.model.times, logProgress=True)
 
@@ -543,6 +554,21 @@ class Lagrangian():
             for k,v in list(self.dicToFill.items()):
                 if v == 0:
                     self.dicToFill.pop(k)
+
+    def conjugateScalarTerm(self, cType, c, content):
+        cStar = c + 'star'
+        expTerm = self.fullyExpandedPotential[cType][c].subs(I, -I)
+
+        self.potential[cType] = insertKey(self.potential[cType], c, cStar, self.potential[cType][c])
+        self.expandedPotential[cType][cStar] = Symbol('_hc')
+        self.fullyExpandedPotential[cType][cStar] = expTerm
+        self.model.nCouplings += 1
+
+        self.model.allCouplings = insertKey(self.model.allCouplings, c, cStar, cType)
+        self.model.couplingsPos[cType][cStar] = self.model.couplingsPos[cType][c] + .5
+        self.fillTensorDic(cStar, expTerm, content)
+
+        self.model.assumptions[cStar] = self.model.assumptions[c]
 
 
     def fillTensorDic(self, coupling, expTerm, content):

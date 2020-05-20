@@ -147,7 +147,7 @@ class Model(object):
             if couplingType == 'Definitions':
                 continue
             tKeys = list(terms.keys())
-            for coupling, term in terms.items():
+            for coupling in terms:
                 self.nCouplings += 1
 
                 # Add the various couplings to the Couplings dictionnary
@@ -871,10 +871,10 @@ class Model(object):
                 try:
                     self.lagrangianMapping[couplingType] = Matrix(mappingMatrix).inv() * self.betaFactor
                 except:
-                    from sympy import pretty
+                    # from sympy import pretty
                     loggingCritical("\nError in Lagrangian mapping : matrix of couplings is not invertible.")
                     loggingCritical("\tCoupling type : " + couplingType)
-                    loggingCritical("\t\t" + pretty(mappingMatrix).replace("\n", "\n\t\t"))
+                    # loggingCritical("\t\t" + pretty(mappingMatrix).replace("\n", "\n\t\t"))
                     exit()
 
                 self.toCalculate[couplingType] = dicList

@@ -348,6 +348,158 @@ r""" \\[.1cm] \hline
                         self.latex[c] = str(c).replace(str(coupling), r'\left(' + self.latex[coupling] + r'\right)')
 
 
+    def parseLagTerm(self, model, cType, cSymb, expr):
+        if isinstance(expr, Add):
+            return Mul(cSymb, Add(*[self.parseLagTerm(model, cType, 1, el) for el in expr.args], evaluate=False), evaluate=False)
+
+        def split(term):
+            noInds = str(term)[:str(term).find('[')] if str(term).find('[') != -1 else str(term)
+            inds = str(term).replace(noInds, '')
+
+            if inds == '':
+                inds = []
+            else:
+                inds = eval(inds.replace('[', "['").replace(',', "','").replace(']',"']"))
+            return (noInds, inds)
+
+        def sortKey(x):
+            sp = split(x)
+            return (sp[0] not in model.lagrangian.cgcs, sp[1], (0 if 'bar' in str(x) else 1), sp[0])
+
+
+        args = []
+        levi = []
+        coeff = 1
+
+        for el in splitPow(expr, deep=True):
+            if el.is_number:
+                coeff *= el
+            elif isinstance(el, LeviCivita):
+                levi.append(el)
+            else:
+                args.append(el)
+
+        base1, base2 = None, None
+
+        # Workaround for (x^\dagger)**2 x**2 -> (x^\dagger x)**2
+        # + Workaround for  x^\dagger x^\dagger x x -> (x^\dagger x)**2
+        if (len(args) == 2 and isinstance(args[0], Pow) and args[0].args[1] == 2
+                           and isinstance(args[1], Pow) and args[1].args[1] == 2):
+            base1, base2 = sorted([str(args[0].args[0]), str(args[1].args[0])])
+        if (lambda a: len(a) == 4 and a[0] == a[1] and a[2] == a[3])(sorted(args, key=lambda x:str(x))):
+            sArgs = sorted(args, key=lambda x: str(x))
+            base1, base2 = str(sArgs[1]), str(sArgs[2])
+
+        if base1 is not None and base2 is not None:
+            if base2 == base1+'bar':
+                if cSymb != 1:
+                    new = Symbol(str(cSymb), commutative=False)
+                if cSymb in self.latex and new not in self.latex:
+                    self.latex[new] = self.latex[cSymb]
+                    cSymb = new
+                else:
+                    cSymb = new
+
+                ret = (Symbol(base2, commutative=False)*Symbol(base1, commutative=False))**2
+
+                if Symbol(base1) in self.latex and Symbol(base1, commutative=False) not in self.latex:
+                    self.latex[Symbol(base1, commutative=False)] = self.latex[Symbol(base1)]
+                if Symbol(base2) in self.latex and Symbol(base2, commutative=False) not in self.latex:
+                    self.latex[Symbol(base2, commutative=False)] = self.latex[Symbol(base2)]
+
+                if coeff*cSymb != 1:
+                    return coeff*cSymb*ret
+
+                return ret
+
+
+        if isinstance(cSymb, mSymbol):
+            newArgs = [0 for _ in range(len(args))]
+            fermions = list(model.allCouplings[str(cSymb)][2])
+
+            # Possibly replace f^2 by [f,f] in the list of args (e.g. majorana fermions)
+            args = splitPow(args)
+            newArgs = [0,0]
+            scalar = 0
+
+            remain = []
+            # Add generation indices to fermions and sort as [fermion1, scalar, fermion2]
+            for el in args:
+                splitEl = split(el)
+
+                if splitEl[0] in fermions:
+                    fCount = fermions.index(splitEl[0]) + 1
+                    pos = fermions.index(splitEl[0])
+
+                    el = IndexedBase(splitEl[0]).__getitem__(('f'+str(fCount), *splitEl[1]))
+
+                    newArgs[pos] = el
+                    fermions[pos] = 0
+                else:
+                    if isinstance(el, Indexed):
+                        base = el.base
+                    else:
+                        base = el
+
+                    if str(base) in model.Particles:
+                        scalar = el
+                    else:
+                        remain.append(el)
+
+            if scalar != 0:
+                newArgs.insert(1, scalar)
+
+            newArgs = remain + newArgs
+
+            if cSymb in self.latex:
+                cSymb = Symbol(str(self.latex[cSymb]) + '{}_{f_1,f_2}', commutative=False)
+            else:
+                cSymb = Symbol(str(cSymb) + '{}_{f_1,f_2}', commutative=False)
+        else:
+            newArgs = sorted(args, key=sortKey)
+
+            if cSymb != 1:
+                new = Symbol(str(cSymb), commutative=False)
+                if cSymb in self.latex and new not in self.latex:
+                    self.latex[new] = self.latex[cSymb]
+                    cSymb = new
+                else:
+                    cSymb = new
+
+        for el in levi:
+            for p, obj in enumerate(newArgs):
+                if el.args[1] in obj.args:
+                    pos = p
+                    break
+            newArgs.insert(pos, el)
+
+        if coeff*cSymb != 1:
+            return Mul(coeff*cSymb, *newArgs, evaluate=False)
+        else:
+            return Mul(*newArgs, evaluate=False)
+
+    def handleHC(self, hcDic, lag):
+        lag += ' '
+
+        for k,v in hcDic.items():
+            texCoupling = self.totex(v)
+
+            p = lag.find(texCoupling)
+            p1 = lag.rfind('\n', 0, p)
+            p2 = lag.find('\n', p)
+
+            subStr = lag[p1:p2]
+
+            while subStr.count('\\big(') != subStr.count('\\big)'):
+                p2 = lag.find('\n', p2+1)
+                subStr = lag[p1:p2]
+
+            newStr = subStr.replace(texCoupling, '\\Big[' + texCoupling) + ' + \\mathrm{h.c.} \\Big]'
+            lag = lag.replace(subStr, newStr)
+
+        return lag
+
+
     def lagrangian(self, model):
         self.string += "\n\n\\section{Lagrangian}\n"
 
@@ -364,146 +516,15 @@ r""" \\[.1cm] \hline
                     'FermionMasses': '{fm}'}
 
 
-        def parseTerm(cType, cSymb, expr):
-            if isinstance(expr, Add):
-                return Mul(cSymb, Add(*[parseTerm(cType, 1, el) for el in expr.args], evaluate=False), evaluate=False)
-
-            def split(term):
-                noInds = str(term)[:str(term).find('[')] if str(term).find('[') != -1 else str(term)
-                inds = str(term).replace(noInds, '')
-
-                if inds == '':
-                    inds = []
-                else:
-                    inds = eval(inds.replace('[', "['").replace(',', "','").replace(']',"']"))
-                return (noInds, inds)
-
-            def sortKey(x):
-                sp = split(x)
-                return (sp[0] not in model.lagrangian.cgcs, sp[1], (0 if 'bar' in str(x) else 1), sp[0])
-
-
-            args = []
-            levi = []
-            coeff = 1
-
-            for el in splitPow(expr, deep=True):
-                if el.is_number:
-                    coeff *= el
-                elif isinstance(el, LeviCivita):
-                    levi.append(el)
-                else:
-                    args.append(el)
-
-            base1, base2 = None, None
-
-            # Workaround for (x^\dagger)**2 x**2 -> (x^\dagger x)**2
-            # + Workaround for  x^\dagger x^\dagger x x -> (x^\dagger x)**2
-            if (len(args) == 2 and isinstance(args[0], Pow) and args[0].args[1] == 2
-                               and isinstance(args[1], Pow) and args[1].args[1] == 2):
-                base1, base2 = sorted([str(args[0].args[0]), str(args[1].args[0])])
-            if (lambda a: len(a) == 4 and a[0] == a[1] and a[2] == a[3])(sorted(args, key=lambda x:str(x))):
-                sArgs = sorted(args, key=lambda x: str(x))
-                base1, base2 = str(sArgs[1]), str(sArgs[2])
-
-            if base1 is not None and base2 is not None:
-                if base2 == base1+'bar':
-                    if cSymb != 1:
-                        new = Symbol(str(cSymb), commutative=False)
-                    if cSymb in self.latex and new not in self.latex:
-                        self.latex[new] = self.latex[cSymb]
-                        cSymb = new
-                    else:
-                        cSymb = new
-
-                    ret = (Symbol(base2, commutative=False)*Symbol(base1, commutative=False))**2
-
-                    if Symbol(base1) in self.latex and Symbol(base1, commutative=False) not in self.latex:
-                        self.latex[Symbol(base1, commutative=False)] = self.latex[Symbol(base1)]
-                    if Symbol(base2) in self.latex and Symbol(base2, commutative=False) not in self.latex:
-                        self.latex[Symbol(base2, commutative=False)] = self.latex[Symbol(base2)]
-
-                    if coeff*cSymb != 1:
-                        return coeff*cSymb*ret
-
-                    return ret
-
-
-            if isinstance(cSymb, mSymbol):
-                newArgs = [0 for _ in range(len(args))]
-                fermions = list(model.allCouplings[str(cSymb)][2])
-
-                # Possibly replace f^2 by [f,f] in the list of args (e.g. majorana fermions)
-                args = splitPow(args)
-                newArgs = [0,0]
-                scalar = 0
-
-                remain = []
-                # Add generation indices to fermions and sort as [fermion1, scalar, fermion2]
-                for el in args:
-                    splitEl = split(el)
-
-                    if splitEl[0] in fermions:
-                        fCount = fermions.index(splitEl[0]) + 1
-                        pos = fermions.index(splitEl[0])
-
-                        el = IndexedBase(splitEl[0]).__getitem__(('f'+str(fCount), *splitEl[1]))
-
-                        newArgs[pos] = el
-                        fermions[pos] = 0
-                    else:
-                        if isinstance(el, Indexed):
-                            base = el.base
-                        else:
-                            base = el
-
-                        if str(base) in model.Particles:
-                            scalar = el
-                        else:
-                            remain.append(el)
-
-                if scalar != 0:
-                    newArgs.insert(1, scalar)
-
-                newArgs = remain + newArgs
-
-                if cSymb in self.latex:
-                    cSymb = Symbol(str(self.latex[cSymb]) + '{}_{f_1,f_2}', commutative=False)
-                else:
-                    cSymb = Symbol(str(cSymb) + '{}_{f_1,f_2}', commutative=False)
-            else:
-                newArgs = sorted(args, key=sortKey)
-
-                if cSymb != 1:
-                    new = Symbol(str(cSymb), commutative=False)
-                    if cSymb in self.latex and new not in self.latex:
-                        self.latex[new] = self.latex[cSymb]
-                        cSymb = new
-                    else:
-                        cSymb = new
-
-            for el in levi:
-                for p, obj in enumerate(newArgs):
-                    if el.args[1] in obj.args:
-                        pos = p
-                        break
-                newArgs.insert(pos, el)
-
-            if coeff*cSymb != 1:
-                return Mul(coeff*cSymb, *newArgs, evaluate=False)
-            else:
-                return Mul(*newArgs, evaluate=False)
-
         # Print definitions
         userDefinitions = {k:v for k,v in model.lagrangian.definitions.items() if k not in model.Particles and k not in ('kd', 'Eps')}
         if userDefinitions != {}:
             self.string += "\n\\subsection{Definitions}\n{\\allowdisplaybreaks\n\\begin{align*}\n"
 
             for dName, d in userDefinitions.items():
-                sDef = d.fromDef.replace('[', '_{').replace(']', '}')
+                sDef = d.fromDef.replace('[', '{}_{').replace(']', '}')
                 for k,v in self.latex.items():
-                    if str(k) in model.lagrangian.definitions:
-                    # if str(k) == sDef:
+                    if str(k) in model.lagrangian.definitions and model.lagrangian.definitions[str(k)].fromDef != '':
                         sDef = sDef.replace(str(k), v)
 
                 self.string += sDef + ' &= '
@@ -523,6 +544,7 @@ r""" \\[.1cm] \hline
             self.string += '\\end{align*}'
 
         for cType, dic in model.expandedPotential.items():
+            hcDic = {}
             if cType == 'Definitions' or dic == {}:
                 continue
             lag = []
@@ -532,7 +554,13 @@ r""" \\[.1cm] \hline
             for c, expr in dic.items():
                 cSymb = model.allCouplings[c][1]
 
-                term = parseTerm(cType, cSymb, expr)
+                if expr == Symbol('_hc'):
+                    continue
+                elif str(cSymb) + 'star' in dic and dic[str(cSymb) + 'star'] == Symbol('_hc'):
+                    hcDic[str(cSymb)] =  cSymb
+
+                term = self.parseLagTerm(model, cType, cSymb, expr)
+
                 if type(term) != list:
                     lag.append(term)
                 else:
@@ -540,6 +568,10 @@ r""" \\[.1cm] \hline
                         lag.append(el)
 
             lagExpr = self.totex(lag).replace(r'\left', r'\big').replace(r'\right', r'\big')
+
+            if hcDic != {}:
+                lagExpr = self.handleHC(hcDic, lagExpr)
+
             self.string += r"\begin{autobreak}" + "\n"
             self.string += r"-\mathcal{L}_" + lagIndex[cType] + " = " + lagExpr
 
