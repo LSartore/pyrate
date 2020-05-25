@@ -43,12 +43,21 @@ class TrilinearBetaFunction(BetaFunction):
 
         ## 2-loop
 
+        # self.coefficients.append( [r(6), r(30), r(0), r(9,2), r(-143,4), r(11,4),
+        #                            r(10,4), r(-9), r(24), r(-9,2), r(-9), r(1,4),
+        #                            r(-3), r(-3), r(0), r(-36), r(15,2), r(0),
+        #                            r(-3), r(0), r(6), r(-24), r(6), r(6),
+        #                            r(0), r(0), r(-3,2), r(-9,4), r(12), r(24),
+        #                            r(12)] )
+
+
         self.coefficients.append( [r(6), r(30), r(0), r(9,2), r(-143,4), r(11,4),
                                    r(10,4), r(-9), r(24), r(-9,2), r(-9), r(1,4),
-                                   r(-3), r(-3), r(0), r(-36), r(15,2), r(0),
-                                   r(-3), r(0), r(6), r(-24), r(6), r(6),
-                                   r(0), r(0), r(-3,2), r(-9,4), r(12), r(24),
-                                   r(12)] )
+                                   r(-3), r(-3), r(0), r(-36), r(-36), r(15,2),
+                                   r(0), r(-3), r(0), r(0), r(12), r(6),
+                                   r(-24), r(-24), r(6), r(6), r(0), r(0),
+                                   r(-3,2), r(-9,4), r(24), r(12), r(12), r(24),
+                                   r(12), r(12)] )
 
     ######################
     #  1-loop functions  #
@@ -161,108 +170,94 @@ class TrilinearBetaFunction(BetaFunction):
                               self.h(g_,h_,c))
 
     def h2_16(self, a,b,c):
-        return ( tensorContract(self.Ts(A_,a,e_),
-                                self.Ts(C_,e_,b),
-                                self.G(A_,B_),
-                                self.G(C_,D_),
-                                self.T(D_,i_,j_),
-                                self.T(B_,j_,k_),
-                                self.M(k_,l_),
-                                self.yt(c,l_,i_),
-                                doTrace=True, yukSorting=self.model.YukPos)
-
-               + tensorContract(self.Ts(A_,a,e_),
-                                self.Ts(C_,e_,b),
-                                self.G(A_,B_),
-                                self.G(C_,D_),
-                                self.T(D_,i_,j_),
-                                self.T(B_,j_,k_),
-                                self.y(c,k_,l_),
-                                self.Mt(l_,i_),
-                                doTrace=True, yukSorting=self.model.YukPos) )
+        return tensorContract(self.Ts(A_,a,e_),
+                              self.Ts(C_,e_,b),
+                              self.G(A_,B_),
+                              self.G(C_,D_),
+                              self.T(D_,i_,j_),
+                              self.T(B_,j_,k_),
+                              self.M(k_,l_),
+                              self.yt(c,l_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
 
     def h2_17(self, a,b,c):
+        return tensorContract(self.Ts(A_,a,e_),
+                              self.Ts(C_,e_,b),
+                              self.G(A_,B_),
+                              self.G(C_,D_),
+                              self.T(D_,i_,j_),
+                              self.T(B_,j_,k_),
+                              self.y(c,k_,l_),
+                              self.Mt(l_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
+
+    def h2_18(self, a,b,c):
         return tensorContract(self.Y2SCF(a,e_),
                               self.h(e_,b,c))
 
-    def h2_18(self, a,b,c):
+    def h2_19(self, a,b,c):
         return tensorContract(self.C2S(a,e_),
                               self.Y2S(e_,f_),
                               self.h(f_,b,c))
 
-    def h2_19(self, a,b,c):
+    def h2_20(self, a,b,c):
         return tensorContract(self.l(a,b,e_,f_),
                               self.Y2S(f_,g_),
                               self.h(e_,g_,c))
 
-    def h2_20(self, a,b,c):
-        return ( tensorContract(self.M(i_,j_),
-                                self.T(A_,j_,k_),
-                                self.yt(a,k_,l_),
-                                self.y(b,l_,m_),
-                                self.G(A_,B_),
-                                self.T(B_,m_,n_),
-                                self.yt(c,n_,i_),
-                                doTrace=True, yukSorting=self.model.YukPos)
-
-               + tensorContract(self.y(a,i_,j_),
-                                self.T(A_,j_,k_),
-                                self.Mt(k_,l_),
-                                self.y(b,l_,m_),
-                                self.G(A_,B_),
-                                self.T(B_,m_,n_),
-                                self.yt(c,n_,i_),
-                                doTrace=True, yukSorting=self.model.YukPos)
-
-               + tensorContract(self.y(a,i_,j_),
-                                self.T(A_,j_,k_),
-                                self.yt(b,k_,l_),
-                                self.M(l_,m_),
-                                self.G(A_,B_),
-                                self.T(B_,m_,n_),
-                                self.yt(c,n_,i_),
-                                doTrace=True, yukSorting=self.model.YukPos)
-
-               + tensorContract(self.y(a,i_,j_),
-                                self.T(A_,j_,k_),
-                                self.yt(b,k_,l_),
-                                self.y(c,l_,m_),
-                                self.G(A_,B_),
-                                self.T(B_,m_,n_),
-                                self.Mt(n_,i_),
-                                doTrace=True, yukSorting=self.model.YukPos) )
-
     def h2_21(self, a,b,c):
-        return ( 2*tensorContract(self.C2S(a,e_),
-                                  self.y(e_,i_,j_),
-                                  self.Mt(j_,k_),
-                                  self.y(b,k_,l_),
-                                  self.yt(c,l_,i_),
-                                  doTrace=True, yukSorting=self.model.YukPos)
-
-                 + tensorContract(self.C2S(a,e_),
-                                  self.y(e_,i_,j_),
-                                  self.yt(b,j_,k_),
-                                  self.M(k_,l_),
-                                  self.yt(c,l_,i_),
-                                  doTrace=True, yukSorting=self.model.YukPos))
+        return tensorContract(self.M(i_,j_),
+                              self.T(A_,j_,k_),
+                              self.yt(a,k_,l_),
+                              self.y(b,l_,m_),
+                              self.G(A_,B_),
+                              self.T(B_,m_,n_),
+                              self.yt(c,n_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
 
     def h2_22(self, a,b,c):
-        return ( tensorContract(self.M(i_,j_),
-                                self.yt(a,j_,k_),
-                                self.y(b,k_,l_),
-                                self.yt(c,l_,m_),
-                                self.C2F(m_,i_),
-                                doTrace=True, yukSorting=self.model.YukPos)
-
-               + tensorContract(self.y(a,i_,j_),
-                                self.Mt(j_,k_),
-                                self.y(b,k_,l_),
-                                self.yt(c,l_,m_),
-                                self.C2F(m_,i_),
-                                doTrace=True, yukSorting=self.model.YukPos) )
+        return tensorContract(self.y(a,i_,j_),
+                              self.T(A_,j_,k_),
+                              self.Mt(k_,l_),
+                              self.y(b,l_,m_),
+                              self.G(A_,B_),
+                              self.T(B_,m_,n_),
+                              self.yt(c,n_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
 
     def h2_23(self, a,b,c):
+        return tensorContract(self.C2S(a,e_),
+                              self.y(e_,i_,j_),
+                              self.Mt(j_,k_),
+                              self.y(b,k_,l_),
+                              self.yt(c,l_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
+
+    def h2_24(self, a,b,c):
+        return tensorContract(self.C2S(a,e_),
+                              self.y(e_,i_,j_),
+                              self.yt(b,j_,k_),
+                              self.M(k_,l_),
+                              self.yt(c,l_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
+
+    def h2_25(self, a,b,c):
+        return tensorContract(self.M(i_,j_),
+                              self.yt(a,j_,k_),
+                              self.y(b,k_,l_),
+                              self.yt(c,l_,m_),
+                              self.C2F(m_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
+
+    def h2_26(self, a,b,c):
+        return tensorContract(self.y(a,i_,j_),
+                              self.Mt(j_,k_),
+                              self.y(b,k_,l_),
+                              self.yt(c,l_,m_),
+                              self.C2F(m_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
+
+    def h2_27(self, a,b,c):
         return tensorContract(self.M(i_,j_),
                               self.yt(e_,j_,k_),
                               self.y(a,k_,l_),
@@ -270,7 +265,7 @@ class TrilinearBetaFunction(BetaFunction):
                               self.l(e_,f_,b,c),
                               doTrace=True, yukSorting=self.model.YukPos)
 
-    def h2_24(self, a,b,c):
+    def h2_28(self, a,b,c):
         return tensorContract(self.y(a,i_,j_),
                               self.yt(e_,j_,k_),
                               self.y(b,k_,l_),
@@ -278,7 +273,7 @@ class TrilinearBetaFunction(BetaFunction):
                               self.h(e_,f_,c),
                               doTrace=True, yukSorting=self.model.YukPos)
 
-    def h2_25(self, a,b,c):
+    def h2_29(self, a,b,c):
         return tensorContract(self.M(i_,j_),
                               self.yt(a,j_,k_),
                               self.y(e_,k_,l_),
@@ -286,7 +281,7 @@ class TrilinearBetaFunction(BetaFunction):
                               self.l(e_,f_,b,c),
                               doTrace=True, yukSorting=self.model.YukPos)
 
-    def h2_26(self, a,b,c):
+    def h2_30(self, a,b,c):
         return tensorContract(self.y(a,i_,j_),
                               self.yt(b,j_,k_),
                               self.y(e_,k_,l_),
@@ -294,40 +289,41 @@ class TrilinearBetaFunction(BetaFunction):
                               self.h(e_,f_,c),
                               doTrace=True, yukSorting=self.model.YukPos)
 
-    def h2_27(self, a,b,c):
+    def h2_31(self, a,b,c):
         return tensorContract(self.Y4S(a,e_),
                               self.h(e_,b,c))
 
-    def h2_28(self, a,b,c):
+    def h2_32(self, a,b,c):
         return tensorContract(self.Y2SYF(a,e_),
                               self.h(e_,b,c))
 
-    def h2_29(self, a,b,c):
-        return ( 2*tensorContract(self.M(i_,j_),
-                                  self.yt(a,j_,k_),
-                                  self.y(b,k_,l_),
-                                  self.yt(e_,l_,m_),
-                                  self.y(c,m_,n_),
-                                  self.yt(e_,n_,i_),
-                                  doTrace=True, yukSorting=self.model.YukPos)
+    def h2_33(self, a,b,c):
+        return tensorContract(self.M(i_,j_),
+                              self.yt(a,j_,k_),
+                              self.y(b,k_,l_),
+                              self.yt(e_,l_,m_),
+                              self.y(c,m_,n_),
+                              self.yt(e_,n_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
+    def h2_34(self, a,b,c):
+        return tensorContract(self.y(a,i_,j_),
+                              self.Mt(j_,k_),
+                              self.y(b,k_,l_),
+                              self.yt(e_,l_,m_),
+                              self.y(c,m_,n_),
+                              self.yt(e_,n_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
 
-                 + tensorContract(self.y(a,i_,j_),
-                                  self.Mt(j_,k_),
-                                  self.y(b,k_,l_),
-                                  self.yt(e_,l_,m_),
-                                  self.y(c,m_,n_),
-                                  self.yt(e_,n_,i_),
-                                  doTrace=True, yukSorting=self.model.YukPos)
+    def h2_35(self, a,b,c):
+        return tensorContract(self.y(a,i_,j_),
+                              self.yt(b,j_,k_),
+                              self.y(c,k_,l_),
+                              self.yt(e_,l_,m_),
+                              self.M(m_,n_),
+                              self.yt(e_,n_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
 
-                 + tensorContract(self.y(a,i_,j_),
-                                  self.yt(b,j_,k_),
-                                  self.y(c,k_,l_),
-                                  self.yt(e_,l_,m_),
-                                  self.M(m_,n_),
-                                  self.yt(e_,n_,i_),
-                                  doTrace=True, yukSorting=self.model.YukPos) )
-
-    def h2_30(self, a,b,c):
+    def h2_36(self, a,b,c):
         return tensorContract(self.M(i_,j_),
                               self.yt(a,j_,k_),
                               self.y(e_,k_,l_),
@@ -336,19 +332,20 @@ class TrilinearBetaFunction(BetaFunction):
                               self.yt(e_,n_,i_),
                               doTrace=True, yukSorting=self.model.YukPos)
 
-    def h2_31(self, a,b,c):
-        return ( tensorContract(self.M(i_,j_),
-                                self.yt(a,j_,k_),
-                                self.y(b,k_,l_),
-                                self.yt(c,l_,m_),
-                                self.Y2F(m_,i_),
-                                doTrace=True, yukSorting=self.model.YukPos)
+    def h2_37(self, a,b,c):
+        return tensorContract(self.M(i_,j_),
+                              self.yt(a,j_,k_),
+                              self.y(b,k_,l_),
+                              self.yt(c,l_,m_),
+                              self.Y2F(m_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
 
-               + tensorContract(self.y(a,i_,j_),
-                                self.Mt(j_,k_),
-                                self.y(b,k_,l_),
-                                self.yt(c,l_,m_),
-                                self.Y2F(m_,i_),
-                                doTrace=True, yukSorting=self.model.YukPos) )
+    def h2_38(self, a,b,c):
+        return tensorContract(self.y(a,i_,j_),
+                              self.Mt(j_,k_),
+                              self.y(b,k_,l_),
+                              self.yt(c,l_,m_),
+                              self.Y2F(m_,i_),
+                              doTrace=True, yukSorting=self.model.YukPos)
 
 
