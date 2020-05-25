@@ -92,8 +92,6 @@ class LatexExport():
                     self.latex[Symbol(k)] = v
                 # elif k in model.Particles or k in model.Scalars:
                 #     self.latex[Symbol(k)] = v
-                # elif k in model.lagrangian.definitions:
-                #     self.latex[Symbol(k)] = v
                 # else:
                 #     loggingCritical(f"Warning in 'Latex' : object '{k}' is not defined. Skipping.")
 
@@ -136,6 +134,15 @@ class LatexExport():
                     sm = self.totex[v[1]]
 
                 self.latex[Symbol(str(v[1]), commutative=False)] = '{'+sm+'}^2'
+
+        # Conjugated generators
+        for k,v in model.lagrangian.definitions.items():
+            if v.conj and Symbol(k) not in self.latex:
+                fromObj = k[:-3]
+                if Symbol(fromObj) not in self.latex:
+                    self.latex[Symbol(k)] = '\\left(' + fromObj + '\\right)^*'
+                else:
+                    self.latex[Symbol(k)] = '\\left(' + self.latex[Symbol(fromObj)] + '\\right)^*'
 
     def preamble(self, model):
         date = datetime.datetime.now()
@@ -522,6 +529,9 @@ r""" \\[.1cm] \hline
             self.string += "\n\\subsection{Definitions}\n{\\allowdisplaybreaks\n\\begin{align*}\n"
 
             for dName, d in userDefinitions.items():
+                if d.conj:
+                    continue
+
                 sDef = d.fromDef.replace('[', '{}_{').replace(']', '}')
                 for k,v in self.latex.items():
                     if str(k) in model.lagrangian.definitions and model.lagrangian.definitions[str(k)].fromDef != '':

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from sys import exit
 
-from Logging import loggingInfo, loggingCritical, print_progress
+from Logging import loggingCritical, print_progress
 from Definitions import GaugeGroup, Tensor, mSymbol, splitPow, tensorContract, insertKey
 from Particles import Particle
 
@@ -27,6 +27,7 @@ class TensorObject(Tensor):
         self.fromDef = fromDef
         self.expr = expr
         self.fields = fields
+        self.conj = False
 
         if copy is not None:
             self.range = copy[1]
@@ -118,6 +119,29 @@ class TensorObject(Tensor):
 
             self.epsDic[N] = self.dic
 
+    def getConjugate(self):
+        conj = TensorObject()
+        conj.conj = True
+        conj.fromDef = self.fromDef
+        if conj.fromDef != '':
+            if '[' not in conj.fromDef:
+                conj.fromDef += 'bar'
+            else:
+                conj.fromDef = conj.fromDef.replace('[', 'bar[')
+        conj.expr = self.expr
+        conj.fields = self.fields
+        conj.range, conj.dim, conj.sym = self.range, self.dim, self.sym
+
+        conj.dic = {k:self.dic[k].subs(I, -I) for k,v in self.dic.items()}
+
+        if isinstance(self.symbol, Symbol):
+            conj.symbol = Symbol(str(self.symbol) + 'bar')
+        if isinstance(self.symbol, IndexedBase):
+            conj.symbol = IndexedBase(str(self.symbol) + 'bar')
+
+        return conj
+
+
     def __repr__(self):
         s = ''
         if hasattr(self, 'symbol'):
@@ -191,6 +215,10 @@ class Lagrangian():
 
                     if str(type(obj.expr)) == 'cgc':
                         self.cgcs[str(obj.symbol)] = obj
+
+                    if str(type(obj.expr)) == 't':
+                        self.definitions[str(obj.symbol)+'bar'] = obj.getConjugate()
+
                 else:
                     loggingCritical(f"Warning : unable to read the definition '{k}: {v}'. Skipping.")
 
@@ -211,8 +239,8 @@ class Lagrangian():
             gp = args.split(',')[0]
 
             if gp + ',' not in args:
-                loggingCritical(f"Error : representation matrix {expr} should have exactly two arguments : group and rep")
-                return
+                loggingCritical(f"\nError : representation matrix {expr} should have exactly two arguments : group and rep")
+                exit()
             rep = eval(args.replace(gp + ',', ''))
 
             if gp in self.model.gaugeGroups:
@@ -223,8 +251,8 @@ class Lagrangian():
                         gp = g
                         break
                 if type(gp) == str:
-                    loggingCritical(f"Error in 'Definitions': gauge group '{gp}' is unknown.")
-                    return
+                    loggingCritical(f"\nError in 'Definitions': gauge group '{gp}' is unknown.")
+                    exit()
 
             # DimR -> Dynkin labels
             if isinstance(rep, int):
@@ -282,10 +310,10 @@ class Lagrangian():
             elif gp in [gp.type for gp in self.model.gaugeGroupsList] and all([el not in self.model.Particles for el in fields]) :
                 fieldNames = []
             else:
-                loggingCritical("Error : CGC syntax is 'cgc(groupName, field1, field2 [, field3 [, field4, [CGC number]]])' or "
+                loggingCritical("\nError : CGC syntax is 'cgc(groupName, field1, field2 [, field3 [, field4, [CGC number]]])' or "
                                 + "cgc(group, dynkins1, dynkins2 [, dynkins3 [, dynkins4, [CGC number]]]). The group and particles must be defined above.")
                 loggingCritical(f"Please rewrite the term '{name}: {expr}' accordingly.")
-                return
+                exit()
 
             N = 0
             # The CGC call contains a pos
@@ -293,11 +321,12 @@ class Lagrangian():
                 if len(args) == 1:
                     N = int(args[0])
                 else:
-                    loggingCritical(f"Error in {name}: {expr} ; too much arguments to cgc() function.")
-                    return
+                    loggingCritical(f"\nError in {name}: {expr} ; too much arguments to cgc() function.")
+                    exit()
 
             if not isinstance(N, int):
-                loggingCritical(f"Error in CGC '{name}: {expr}' : position argument must be an integer.")
+                loggingCritical(f"\nError in CGC '{name}: {expr}' : position argument must be an integer.")
+                exit()
 
             if fieldNames != []:
                 gpName, gType = gp, self.model.gaugeGroups[gp].type
@@ -351,7 +380,7 @@ class Lagrangian():
         try:
             expr = sympyParse(expr)
         except:
-            loggingCritical("Error while parsing the term " + str(originalExpr) + ".")
+            loggingCritical("\nError while parsing the term " + str(originalExpr) + ".")
             exit()
 
         rep = {}
@@ -403,8 +432,8 @@ class Lagrangian():
                         indCopies = {}
                         for i in indices:
                             if base.count(i) != 2:
-                                loggingCritical(f"Error in expression {subTerm} : all indices must be contracted.")
-                                return
+                                loggingCritical(f"\nError in expression {subTerm} : all indices must be contracted.")
+                                exit()
                             if i not in indCopies:
                                 indCopies[i] = [Symbol(str(i)+f'_{p}') for p in range(1,exp)]
 
@@ -453,17 +482,17 @@ class Lagrangian():
                 if count == 1:
                     freeInds.append(ind)
                 if count > 2:
-                    loggingCritical(f"Error: in term '{term}', the index '{ind}' appears more than twice.")
-                    return
+                    loggingCritical(f"\nError: in term '{term}', the index '{ind}' appears more than twice.")
+                    exit()
 
             if commonFreeInds is None:
                 commonFreeInds = freeInds
             elif freeInds != commonFreeInds:
-                loggingCritical(f"Error : each term of the sum '{expr}' must contain the same free indices.")
-                return
+                loggingCritical(f"\nError : each term of the sum '{expr}' must contain the same free indices.")
+                exit()
             if name is None and set(freeInds) != set(Linds):
-                loggingCritical(f"Error in term {term}: the free indices must be identical to those in the definition '{name}'.")
-                return
+                loggingCritical(f"\nError in term {term}: the free indices must be identical to those in the definition '{name}'.")
+                exit()
 
             # Now that the term is validated, construct the resulting tensor object
             contractArgs = []
@@ -515,8 +544,6 @@ class Lagrangian():
     def expand(self):
         """ Performs a first level of expansion of the Lagrangian. More precisely, replaces
         all the occurences of user-defined quantities with their expression."""
-        loggingInfo("Expanding the Lagrangian ...")
-
 
         def isComplex(cType, c, expTerm):
             return (cType in ('QuarticTerms', 'TrilinearTerms', 'ScalarMasses')

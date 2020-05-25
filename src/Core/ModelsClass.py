@@ -238,8 +238,6 @@ class Model(object):
         self.NonZeroCouplingRGEs = {}
         self.NonZeroDiagRGEs = {}
 
-        loggingInfo("Done.")
-
 
     def validateSettings(self, settings, runSettings):
         """Implements the different checks carried out on the input provided by the user"""
@@ -734,6 +732,9 @@ class Model(object):
 
     def expandLagrangian(self, RGmodule):
         self.lagrangian = Lagrangian(self.saveSettings, self, RGmodule)
+        loggingInfo("Done.")
+
+        loggingInfo("Expanding the Lagrangian ...")
         self.lagrangian.expand()
 
         self.expandedPotential = self.lagrangian.expandedPotential
