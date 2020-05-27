@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from sympy import Identity as sympyIdentity, MatMul, Mul, Symbol, Rational as r
+from sympy import Identity as sympyIdentity, MatMul, Mul, Symbol, Rational as r, conjugate, transpose
 from .BetaFunction import BetaFunction
 from Definitions import tensorContract, Identity
 
@@ -22,7 +22,6 @@ class VevBetaFunction(BetaFunction):
                     count += 1
                 except:
                     break
-
 
     def cDefinitions(self):
         """ Coefficients definition """
@@ -50,7 +49,6 @@ class VevBetaFunction(BetaFunction):
     def V1_2(self, a):
         return tensorContract(self.Y2S(a,b_),
                               self.v(b_))
-
 
     ######################
     #  2-loop functions  #
@@ -106,7 +104,6 @@ class ScalarAnomalous(BetaFunction):
                 except:
                     break
 
-
     def cDefinitions(self):
         """ Coefficients definition """
 
@@ -114,13 +111,13 @@ class ScalarAnomalous(BetaFunction):
 
         ## 1-loop
 
-        self.coefficients.append( [r(3) - xi, r(-1,2)] )
+        self.coefficients.append( [r(-3) + xi, r(1,2)] )
 
         ## 2-loop
 
-        self.coefficients.append( [r(35,3) - r(2)*xi  - r(1,4)*xi**2, r(-10,12), r(-11,12),
-                                   r(-3,2), r(-1,12), r(3,4),
-                                   r(1,2), r(-10,4)] )
+        self.coefficients.append( [r(-35,3) + r(2)*xi  + r(1,4)*xi**2, r(10,12), r(11,12),
+                                   r(3,2), r(1,12), r(-3,4),
+                                   r(-1,2), r(10,4)] )
 
     ######################
     #  1-loop functions  #
@@ -165,8 +162,7 @@ class ScalarAnomalous(BetaFunction):
 class FermionAnomalous(BetaFunction):
 
     def compute(self, i, j, nLoops):
-
-        return self.Beta(i, j, nLoops=nLoops)
+        return self.Beta(i,j, nLoops=nLoops)
 
     def fDefinitions(self):
         """ Functions definition """
@@ -181,7 +177,6 @@ class FermionAnomalous(BetaFunction):
                 except:
                     break
 
-
     def cDefinitions(self):
         """ Coefficients definition """
 
@@ -189,67 +184,58 @@ class FermionAnomalous(BetaFunction):
 
         ## 1-loop
 
-        self.coefficients.append( [r(2)*xi, r(1)] )
+        self.coefficients.append( [r(1)*xi, r(1,2)] )
 
         ## 2-loop
 
-        self.coefficients.append( [r(35,3) - r(3,2)*xi  - r(3,2)*xi**2, r(-10,12), r(-11,12),
-                                   r(-3,2) + r(2)*xi + r(2)*xi**2, r(-1,12),
-                                   r(3,4), r(1,2), r(-10,4), r(-1,2)*xi] )
+        self.coefficients.append( [r(-1,8), r(-3,8), r(9,2),
+                                   r(-7,4), r(-1,4), r(25,4) + 2*xi + r(1,4)*xi**2,
+                                   r(-1,2), r(-1,4), r(-3,2)] )
 
     ######################
     #  1-loop functions  #
     ######################
 
     def gF1_1(self, i, j):
-        # print('C2F : \n')
-        # print(self.C2F[i,j], type(self.C2F[i,j]))
-        # print(self.matrixToSymbol(self.C2F[i,j]), type(self.matrixToSymbol(self.C2F[i,j])))
         return self.matrixToSymbol(self.C2F[i,j])
 
     def gF1_2(self, i, j):
-        # print('Y2F : \n')
-        # print(self.Y2Ft[i,j], type(self.Y2Ft[i,j]))
-        return self.Y2Ft[i,j]
-
+        return self.Y2Ft[j,i]
 
     ######################
     #  2-loop functions  #
     ######################
 
     def gF2_1(self, i, j):
-        return tensorContract(self.C2SG(a,b_),
-                              self.v(b_))
+        return self.Y2FYFt[i,j]
+
     def gF2_2(self, i, j):
-        return tensorContract(self.C2SF(a,b_),
-                              self.v(b_))
+        return self.Y2FYSt[i,j]
+
     def gF2_3(self, i, j):
-        return tensorContract(self.C2SS(a,b_),
-                              self.v(b_))
+        return conjugate(self.Y2FCS[i,j])
+
     def gF2_4(self, i, j):
-        return tensorContract(self.C2S(a,b_),
-                              self.C2S(b_,c_),
-                              self.v(c_))
+        return tensorContract(self.Y2Ft(i, k_),
+                              self.C2F(k_, j))
+
     def gF2_5(self, i, j):
-        return tensorContract(self.l(a,b_,c_,d_),
-                              self.l(b_,c_,d_,e_),
-                              self.v(e_))
+        return conjugate(self.Y2FCF[i,j])
+
     def gF2_6(self, i, j):
-        return tensorContract(self.Y2SYF(b_,a),
-                              self.v(b_))
+        return self.matrixToSymbol(self.C2FG[i,j])
+
     def gF2_7(self, i, j):
-        return tensorContract(self.Y4S(b_,a),
-                              self.v(b_))
+        return self.matrixToSymbol(self.C2FF[i,j])
+
     def gF2_8(self, i, j):
-        return tensorContract(self.Y2SCF(b_,a),
-                              self.v(b_))
+        return self.matrixToSymbol(self.C2FS[i,j])
+
     def gF2_9(self, i, j):
-        return tensorContract(self.C2S(a,b_),
-                              self.Y2S(b_,c_),
-                              self.v(c_))
+        return self.matrixToSymbol(
+                tensorContract(self.C2F(i, k_),
+                               self.C2F(k_, j)))
 
-
-    ##
 
     def matrixToSymbol(self, expr):
         if isinstance(expr, MatMul):
@@ -268,5 +254,3 @@ class FermionAnomalous(BetaFunction):
             return Identity(expr.args[0])
 
         return expr
-
-

@@ -644,8 +644,10 @@ class Model(object):
                 self.saveSettings['FermionAnomalous'] = 'All'
 
                 for i, f1 in enumerate(self.allFermions.values()):
+                    if f1[1].conj:
+                        continue
                     for j, f2 in enumerate(self.allFermions.values()):
-                        if i>j:
+                        if f2[1].conj or i>j:
                             continue
 
                         key = [f[(3 if len(f) > 3 else 1)] for f in (f1, f2)]

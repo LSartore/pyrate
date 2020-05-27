@@ -824,32 +824,6 @@ r""" \\[.1cm] \hline
                 for vev, RGE in RGEdic.items():
                     model.couplingRGEs['Vevs'][nLoop][vev] = RGE.subs(xi, model.gaugeFixing)
 
-        if model.fermionAnomalous != {}:
-            s += "\\subsection{Fermion anomalous dimensions}\n{\\allowdisplaybreaks\n"
-
-            if model.saveSettings['FermionAnomalous'] == 'All':
-                s += '\n\\emph{All fermion anomalous dimensions were computed. Those equal to 0 do not appear below.}\n\n'
-
-            for k,v in model.fermionAnomalous.items():
-                if model.saveSettings['FermionAnomalous'] == 'All':
-                    if all([el[k] == 0 for el in model.couplingRGEs['FermionAnomalous'].values()]):
-                        continue
-
-                gamma = lambda n: '\\gamma_F^{('+str(n+1)+')}' + self.totex(k, incrementInds=True)
-
-                for n, RGEdic in model.couplingRGEs['FermionAnomalous'].items():
-                    RGE = RGEdic[k]
-
-                    if model.gaugeFixing is not None:
-                        RGE = RGE.subs(xi, model.gaugeFixing)
-
-                    s += "\n\\begin{align*}\n\\begin{autobreak}\n"
-                    s += gamma(n) + ' = '
-                    s += self.totex(RGE, sort=True, cType='Vevs')
-                    s += "\n\\end{autobreak}\n\\end{align*}"
-
-            s += "\n}"
-
         if model.scalarAnomalous != {}:
             s += "\\subsection{Scalar anomalous dimensions}\n{\\allowdisplaybreaks\n"
 
@@ -864,6 +838,32 @@ r""" \\[.1cm] \hline
                 gamma = lambda n: '\\gamma_S^{('+str(n+1)+')}' + self.totex(k, incrementInds=True)
 
                 for n, RGEdic in model.couplingRGEs['ScalarAnomalous'].items():
+                    RGE = RGEdic[k]
+
+                    if model.gaugeFixing is not None:
+                        RGE = RGE.subs(xi, model.gaugeFixing)
+
+                    s += "\n\\begin{align*}\n\\begin{autobreak}\n"
+                    s += gamma(n) + ' = '
+                    s += self.totex(RGE, sort=True, cType='Vevs')
+                    s += "\n\\end{autobreak}\n\\end{align*}"
+
+            s += "\n}"
+
+        if model.fermionAnomalous != {}:
+            s += "\\subsection{Fermion anomalous dimensions}\n{\\allowdisplaybreaks\n"
+
+            if model.saveSettings['FermionAnomalous'] == 'All':
+                s += '\n\\emph{All fermion anomalous dimensions were computed. Those equal to 0 do not appear below.}\n\n'
+
+            for k,v in model.fermionAnomalous.items():
+                if model.saveSettings['FermionAnomalous'] == 'All':
+                    if all([el[k] == 0 for el in model.couplingRGEs['FermionAnomalous'].values()]):
+                        continue
+
+                gamma = lambda n: '\\gamma_F^{('+str(n+1)+')}' + self.totex(k, incrementInds=True)
+
+                for n, RGEdic in model.couplingRGEs['FermionAnomalous'].items():
                     RGE = RGEdic[k]
 
                     if model.gaugeFixing is not None:

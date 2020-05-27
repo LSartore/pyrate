@@ -471,6 +471,9 @@ class RGEsModule():
                                                 self.y(a_,i_,j_),
                                                 self.yt(b_,j_,k_) ))
 
+            self.Y2FYSt = Tensor((self.nF, self.nF))
+            self.Y2FYSt.dic = self.dicTilde(self.Y2FYS.dic, [0,1])
+
 
             self.Y4F = Tensor((self.nF, self.nF),
                               tensorContract(self.y(a_,i_,j_),
