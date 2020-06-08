@@ -170,14 +170,6 @@ class Model(object):
                 self.allCouplings[k] = ('Vevs', v[1])
                 self.couplingsPos['Vevs'][k] = i
 
-
-        # Read the substitutions
-        self.substitutions = {}
-        self.gutNorm = {}
-        if 'Substitutions' in settings and settings['Substitutions'] != {}:
-           self.substitutions = getSubstitutions(self, settings['Substitutions'] if 'Substitutions' in settings else {})
-
-
         # Read the beta-factor
         if 'BetaFactor' in settings:
             if type(settings['BetaFactor']) not in (list, tuple):
@@ -187,8 +179,11 @@ class Model(object):
                 self.betaFactor = self.parseMathExpr(settings['BetaFactor'][0])
                 self.betaExponent = self.parseMathExpr(settings['BetaFactor'][1])
                 if self.betaExponent.find('n') == set():
-                    loggingCritical("Error : the beta-exponent must be an integer function of 'n'. Setting it to default (2*n).")
-                    self.betaExponent = lambda n: 2*n
+                    if self.betaExponent == 0:
+                        self.betaExponent = lambda n: 0
+                    else:
+                        loggingCritical("Error : the beta-exponent must be an integer function of 'n'. Setting it to default (2*n).")
+                        self.betaExponent = lambda n: 2*n
                 else:
                     lambdaExponent = lambdify(Symbol('n'), self.betaExponent)
                     self.betaExponent = lambda n: lambdaExponent(n)
@@ -354,31 +349,31 @@ class Model(object):
 
                 self.loopDic['Vevs'] = self.loopDic['QuarticTerms']
 
-            elif type(loops) == list and len(loops) == 6:
-                self.nLoops = loops
+            # elif type(loops) == list and len(loops) == 6:
+            #     self.nLoops = loops
 
-                self.loopDic['GaugeCouplings'] = self.nLoops[0]
-                self.loopDic['Yukawas'] = self.nLoops[1]
-                self.loopDic['QuarticTerms'] = self.nLoops[2]
+            #     self.loopDic['GaugeCouplings'] = self.nLoops[0]
+            #     self.loopDic['Yukawas'] = self.nLoops[1]
+            #     self.loopDic['QuarticTerms'] = self.nLoops[2]
 
-                self.loopDic['TrilinearTerms'] = self.nLoops[3]
-                self.loopDic['ScalarMasses'] = self.nLoops[4]
-                self.loopDic['FermionMasses'] = self.nLoops[5]
+            #     self.loopDic['TrilinearTerms'] = self.nLoops[3]
+            #     self.loopDic['ScalarMasses'] = self.nLoops[4]
+            #     self.loopDic['FermionMasses'] = self.nLoops[5]
 
-                self.loopDic['Vevs'] = self.loopDic['QuarticTerms']
+            #     self.loopDic['Vevs'] = self.loopDic['QuarticTerms']
 
-            elif type(loops) == list and len(loops) == 7:
-                self.nLoops = loops
+            # elif type(loops) == list and len(loops) == 7:
+            #     self.nLoops = loops
 
-                self.loopDic['GaugeCouplings'] = self.nLoops[0]
-                self.loopDic['Yukawas'] = self.nLoops[1]
-                self.loopDic['QuarticTerms'] = self.nLoops[2]
+            #     self.loopDic['GaugeCouplings'] = self.nLoops[0]
+            #     self.loopDic['Yukawas'] = self.nLoops[1]
+            #     self.loopDic['QuarticTerms'] = self.nLoops[2]
 
-                self.loopDic['TrilinearTerms'] = self.nLoops[3]
-                self.loopDic['ScalarMasses'] = self.nLoops[4]
-                self.loopDic['FermionMasses'] = self.nLoops[5]
+            #     self.loopDic['TrilinearTerms'] = self.nLoops[3]
+            #     self.loopDic['ScalarMasses'] = self.nLoops[4]
+            #     self.loopDic['FermionMasses'] = self.nLoops[5]
 
-                self.loopDic['Vevs'] = self.nLoops[6]
+            #     self.loopDic['Vevs'] = self.nLoops[6]
             elif type(loops) == str and loops == 'max':
                 self.nLoops = []
                 for k,v in maxLoops.items():
@@ -387,7 +382,8 @@ class Model(object):
             else:
                 loggingCritical("Error : Loops should be in one of the following forms :\n" +
                                 "\t- A single integer\n" +
-                                "\t- A list of three, six or seven integers\n" +
+                                # "\t- A list of three, six or seven integers\n" +
+                                "\t- A list of three integers\n" +
                                 "\t- The keyword 'max'")
                 exit()
 
@@ -740,6 +736,12 @@ class Model(object):
         self.lagrangian.expand()
 
         self.expandedPotential = self.lagrangian.expandedPotential
+
+        # Read the substitutions now
+        self.substitutions = {}
+        self.gutNorm = {}
+        if 'Substitutions' in self.saveSettings and self.saveSettings['Substitutions'] != {}:
+           self.substitutions = getSubstitutions(self, self.saveSettings['Substitutions'] if 'Substitutions' in self.saveSettings else {})
 
         # If any matrix substitution is provided, check now that the shapes correspond.
         # This is to prevent the computation from starting if not.

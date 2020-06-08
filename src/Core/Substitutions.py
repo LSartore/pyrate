@@ -14,16 +14,15 @@ def getSubstitutions(self, substitutions):
                 e.g. : g_SU3C: g_3
             - Explicit definition of a Yukawa coupling matrix :
                 e.g. : Yu: [[0, 0,   0  ],
-                               [0, 0,   0  ],
-                               [0, 0, 'y_t']]
+                            [0, 0,   0  ],
+                            [0, 0, 'y_t']]
             - Set a quantity to 0:
                 e.g. : Ye : 0
             - Definition of new quantities based on a 1-to-1 relation:
                 e.g. : alpha_1 : g_1**2 / (4 pi)
 
         Note that in the right-hand side, previously undefined quantities
-        must appear inside ' '. Since the rhs is a string, the user must use
-        double quotes to wrap the full expression in this case.
+        must appear inside ' '.
     """
 
     substitutionDic = {}
@@ -222,19 +221,6 @@ def getSubstitutions(self, substitutions):
 
 
 def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
-
-    # Replace 'Xstar' / 'X^*' / X^{*} by 'conjugate(X)'
-    for k,v in self.allCouplings.items():
-        # The conjugated couplings are removed, and must be replaced with Conjugate(...)
-        if k[-2:] == '^*' or k[-4:] == '^{*}' or k[-4:] == 'star':
-            noStar = k.replace('^*', '').replace('^{*}', '').replace('star', '')
-            if noStar in self.allCouplings:
-                sub = {v[1]: conjugate(self.allCouplings[noStar][1])}
-                for cType, loopDic in self.couplingRGEs.items():
-                    for nLoop, RGEdic in loopDic.items():
-                        for c, bFunc in RGEdic.items():
-                            self.couplingRGEs[cType][nLoop][c] = bFunc.subs(sub)
-
     # For squared scalar mass parameters, replace mu -> mu^2 everywhere
     muSubDic = {}
     muDic = {}
@@ -649,18 +635,30 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
 
 
     if 'sub' in substitutionDic and substitutionDic['sub'] != {}:
-        def subSet(list1, list2):
+        def subSet(list1, list2, nonCom=False):
             # Checks whether list2 is a subset of list1
             clist1 = list(list1)
-            for el2 in list2:
-                if el2 in clist1:
-                    clist1.remove(el2)
-                else:
-                    return False
+            if not nonCom:
+                for el2 in list2:
+                    if el2 in clist1:
+                        clist1.remove(el2)
+                    else:
+                        return False
+                return True
+            else:
+                for i, el in enumerate(clist1):
+                    if el != list2[0]:
+                        clist1[i] = 0
+                    else:
+                        break
+                for i,el in enumerate(clist1[::-1]):
+                    if el != list2[-1]:
+                        clist1[len(clist1) - (i+1)] = 0
+                    else:
+                        break
+                return [el for el in clist1 if el != 0][:len(list2)] == list2
 
-            return True
-
-        def properSub(expr, old, new):
+        def properSub(expr, old, new, nonCom=False):
             # Substitution function working for a*b -> c in expressions like a*x*b -> c*x
             # or a*x*b*y*b*a -> c**2 * x * y
             res = Integer(0)
@@ -670,13 +668,28 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
             oldCoeff = Mul(*[el for el in oldTerms if el.is_number])
             oldSymb = splitPow([el for el in oldTerms if not el.is_number])
 
+            if all([expr.find(el) == set() for el in oldSymb]):
+                return expr
+
             addTerms = expr.as_coeff_add()[1]
+
             for term in addTerms:
+
                 terms = flatten(term.as_coeff_mul())
                 coeff = Mul(*[el for el in terms if el.is_number])
                 terms = [el for el in terms if not el.is_number]
                 symbs = splitPow(terms)
                 traces = [el for el in terms if isinstance(el, Trace)]
+
+
+                if nonCom and len(oldSymb) == 1:
+                    tmp = term.subs(oldSymb[0], new)
+                    if tmp != term and oldCoeff != 1:
+                        tmp /= (oldCoeff)**sum([el.count(oldSymb[0]) for el in symbs])
+                    res += tmp
+
+                    continue
+
 
                 if traces != []:
                     noTraces = [el for el in terms if not isinstance(el, Trace)]
@@ -686,11 +699,15 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
                     res += tmp
                     continue
 
-                while subSet(symbs, oldSymb):
-                    for el in oldSymb:
-                        symbs.remove(el)
+                while subSet(symbs, oldSymb, nonCom=nonCom):
+                    for i, el in enumerate(oldSymb):
+                        # symbs.remove(el)
+                        if i == 0:
+                            symbs[symbs.index(el)] = new
+                        else:
+                            symbs.remove(el)
 
-                    symbs.append(new)
+                    # symbs.append(new)
                     coeff /= oldCoeff
 
                 res += coeff * Mul(*symbs)
@@ -709,6 +726,12 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
             v[1] = v[1].subs(k, c)
             v[2] = [(el[0].subs(k, c), el[1].subs(k, c)) for el in v[2]]
 
+            yukMat = False
+            if not c.is_commutative:
+                v[0] = mSymbol(str(v[0]), *c.shape, **self.assumptions[str(k)])
+                yukMat = True
+
+            substitutionDic['sub'][k] = tuple(v)
             self.allCouplings = insertKey(self.allCouplings, str(k), str(v[0]), (cType, v[0]))
             self.couplingsPos[cType] = insertKey(self.couplingsPos[cType], str(k), str(v[0]), self.couplingsPos[cType][str(k)]+.5)
 
@@ -725,8 +748,7 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
                     else:
                         newRGE += beta * el[1]
 
-                newRGE = properSub(expand(newRGE), v[1], v[0])
-
+                newRGE = properSub(expand(newRGE), v[1], v[0], nonCom=yukMat)
                 self.couplingRGEs[cType][nLoop] = replaceKey(self.couplingRGEs[cType][nLoop],
                                                              str(c),
                                                              str(v[0]),
@@ -735,7 +757,7 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
             for cType, loopDic in self.couplingRGEs.items():
                 for nLoop, RGEdic in loopDic.items():
                     for c, bFunc in list(RGEdic.items()):
-                        self.couplingRGEs[cType][nLoop][c] = properSub(bFunc, v[1], v[0])
+                        self.couplingRGEs[cType][nLoop][c] = properSub(bFunc, v[1], v[0], nonCom=yukMat)
 
 
     # Now handle Yukawa matrix unitarity
@@ -753,3 +775,16 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
                 newRGE = bFunc.subs(unitarySubs)
                 newRGE = newRGE.replace(lambda x: x.is_Pow and isinstance(x.base, Identity), lambda x: x.base).doit()
                 self.couplingRGEs[cType][nLoop][c] = newRGE
+
+
+    # Replace 'Xstar' / 'X^*' / X^{*} by 'conjugate(X)'
+    for k,v in self.allCouplings.items():
+        # The conjugated couplings are removed, and must be replaced with Conjugate(...)
+        if k[-2:] == '^*' or k[-4:] == '^{*}' or k[-4:] == 'star':
+            noStar = k.replace('^*', '').replace('^{*}', '').replace('star', '')
+            if noStar in self.allCouplings:
+                sub = {v[1]: conjugate(self.allCouplings[noStar][1])}
+                for cType, loopDic in self.couplingRGEs.items():
+                    for nLoop, RGEdic in loopDic.items():
+                        for c, bFunc in RGEdic.items():
+                            self.couplingRGEs[cType][nLoop][c] = bFunc.subs(sub)
