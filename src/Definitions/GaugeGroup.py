@@ -81,32 +81,8 @@ class GaugeGroup():
 
         try:
             self.idb.load()
-            a = self.idb.get(self.type)
 
-            # Identify the reps
-            dims = set()
-            maxDim = 0
-            step = self.idb.get(self.type, 'dim')
-            depth = 1
-
-            while len(dims) != N+1:
-                reps = a.repsUpToDimN(maxDim)
-                dims = set()
-                for r in reps:
-                    dims.add(self.idb.get(self.type, 'dimR', r))
-
-                if len(dims) < N+1:
-                    if depth == 1:
-                        maxDim += round(step/depth)
-                    else:
-                        depth += 1
-                        maxDim += round(step/depth)
-                if len(dims) > N+1:
-                    depth += 1
-                    maxDim -= round(step/depth)
-
-            # Remove the trivial representation
-            reps = reps[1:]
+            reps = self.idb.get(self.type, 'firstReps', N, table=False)
 
             # Compute rep info
             for r in reps:

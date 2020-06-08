@@ -20,8 +20,7 @@ import gzip
 
 class PyLieDB():
     """ This is the main class used to communicate with the Pylie module and
-        the associated database. The command-line operations are separated in another
-        class IdbQuery"""
+        the associated database. """
 
     def __init__(self, path=None, logLevel='Info', raiseErrors=False):
         global wd
@@ -67,7 +66,8 @@ class PyLieDB():
         self.translations = {
             'conjugate' : self.conjugate,
             'repname' : self.repName,
-            'repproduct': self.repProduct
+            'repproduct': self.repProduct,
+            'firstreps' : self.firstReps
             }
 
 
@@ -151,8 +151,16 @@ class PyLieDB():
         """ Prints (or returns as a string) the content of the DB """
 
         if not returnString and not self.loaded:
-            self.loggingCritical("Database is not loaded.")
-            return 'None'
+            # self.loggingCritical("Database is not loaded.")
+            # return 'None'
+            self.load()
+            if returnString:
+                return self.visit(shorter=shorter, returnString=returnString)
+            else:
+                self.visit(shorter=shorter, returnString=returnString)
+            self.close()
+            return
+
 
         # Reduce the threshold of np printer to be able to
         # have a global view on the DB
@@ -885,6 +893,13 @@ class PyLieDB():
         if dataType == 'conjugate':
             return None, args, {k:v for k,v in kwargs.items() if k != 'realBasis'}
 
+        if dataType == 'firstreps':
+            if len(args) != 1:
+                self.loggingCritical("Error : 'firstReps' takes exactly one argument.")
+                return
+
+            return None, args, kwargs
+
         # else, the info is not stored in the DB
         return None, args, kwargs
 
@@ -1030,6 +1045,39 @@ class PyLieDB():
             # return Add(*ret, evaluate=False)
             return Symbol(ret)
 
+
+    def firstReps(self, algebra, N, table=True):
+        # Identify the reps
+        dims = set()
+        maxDim = 0
+        step = algebra.dimAdj
+        depth = 1
+
+        while len(dims) != N+1:
+            reps = algebra.repsUpToDimN(maxDim)
+            dims = set()
+            for r in reps:
+                dims.add(algebra.dimR(r))
+
+            if len(dims) < N+1:
+                if depth == 1:
+                    maxDim += round(step/depth)
+                else:
+                    depth += 1
+                    maxDim += round(step/depth)
+            if len(dims) > N+1:
+                depth += 1
+                maxDim -= round(step/depth)
+
+        # Remove the trivial representation
+        reps = reps[1:]
+
+        if not table:
+            return reps
+
+        print(f"-- First representations of {algebra.cartan._fullName} --\n")
+        for r in reps:
+            print(f"{r} : {self.repName(algebra, r)}")
 
 
 class sMatDB():
