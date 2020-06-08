@@ -267,7 +267,6 @@ class Sn:
 
 class MathGroup:
     def __init__(self):
-        self.M = []
         pass
 
     def sumperso(self, listMat):
@@ -587,13 +586,13 @@ class sMat(SparseMatrix):
             return self[key, :]
         return super().__getitem__(key)
 
-    def nullSpace(self, u=0.01, vecForm=False, progress=False):
+    def nullSpace(self, vecForm=False, progress=False):
         rowDic = {}
 
         def result(H):
-            if not vecForm:
-                return H.rowDic
-            return [sMat(self.shape[1], 1, {(k,0):v for k,v in dic.items()}) for r, dic in H.rowDic.items()]
+            if vecForm:
+                return [sMat(self.shape[1], 1, {(k,0):v for k,v in dic.items()}) for r, dic in H.items()]
+            return H
 
         for k,v in self._smat.items():
             if k[0] not in rowDic:
@@ -604,7 +603,7 @@ class sMat(SparseMatrix):
         preferedOrder = sorted(rowDic.keys(), key=lambda k: len(rowDic[k]))
         m,n = max(len(preferedOrder), 1), self.shape[1]
 
-        H = sMat.id(n, rowDic=True)
+        H = sMat.id(n, rowDic=True).rowDic
 
         s = 0
         r = n
@@ -618,40 +617,29 @@ class sMat(SparseMatrix):
 
             empty = True
             while empty:
-                s = sMat(H.shape[0], 1, {})
+                s = {}
                 if i < len(preferedOrder):
                     row = rowDic[preferedOrder[i]]
 
-                    for k,v in H.rowDic.items():
+                    for k,v in H.items():
                         keySet = set(v.keys()).intersection(row.keys())
                         if keySet != set():
-                            s[(k,0)] = 0
+                            tmp = 0
 
-                        for key in keySet:
-                            s[(k,0)] += v[key]*row[key]
+                            for key in keySet:
+                                tmp += v[key]*row[key]
 
-                empty = s.empty()
+                            if tmp != 0:
+                                s[k] = tmp
+
+                empty = (s == {})
                 if empty:
                     i += 1
-                if i >= m:#-1:
+                if i >= m:
                     return result(H)
 
-            if True:#len(s._smat) == 1:
-                key = list(s._smat.keys())[0]
-                j, sj = key[0], s._smat[key]
-            else:
-                maxAbs = 0
-                for k,v in s._smat.items():
-                    if k[0] > n-i:
-                        continue
-                    a = abs(v)
-                    if a > maxAbs:
-                        maxAbs = a
-
-                for k,v in s._smat.items():
-                    if abs(v) > u*maxAbs:
-                        j, sj = k[0], v
-                        break
+            key = list(s.keys())[0]
+            j, sj = key, s[key]
 
             H = self.Gmul(H, n, i, j, s, sj)
 
@@ -662,31 +650,31 @@ class sMat(SparseMatrix):
                 i += 1
 
     def Gmul(self, H, n, i, j, s, sj):
-        retH = sMat(H.shape[0]-1, H.shape[1])
-        retH.computeRowDic = True
-        retH.rowDic = {(k if k<j else k-1):d for k,d in H.rowDic.items() if k!=j}
+        retH = {(k if k<j else k-1):d for k,d in H.items() if k!=j}
 
-        if j in H.rowDic and H.rowDic[j] != {}:
-            for k,v in s._smat.items():
-                if k[0] == j:
+        if j in H and H[j] != {}:
+            for k,v in s.items():
+                if k == j:
                     continue
 
                 val = -v/sj
-                if k[0] < j:
-                    row = k[0]
-                elif k[0] > j:
-                    row = k[0]-1
+                if k < j:
+                    row = k
+                elif k > j:
+                    row = k-1
 
-                for col, hv in H.rowDic[j].items():
-                    if row not in retH.rowDic:
-                        retH.rowDic[row] = {}
-                    if col not in retH.rowDic[row]:
-                        retH.rowDic[row][col] = 0
+                for col, hv in H[j].items():
+                    if row not in retH:
+                        retH[row] = {}
+                    if col not in retH[row]:
+                        retH[row][col] = 0
 
-                    retH.rowDic[row][col] += val*hv
+                    retH[row][col] += val*hv
+
+                    if retH[row][col] == 0:
+                        del retH[row][col]
 
         return retH
-
 
     def sqrt(self):
         return sMat(*self.shape, {k:sqrt(v) for k,v in self._smat.items()})
@@ -709,7 +697,6 @@ class sMat(SparseMatrix):
             else:
                 eigenVal += el[1]*[el[0]]
 
-        # eigenVal = [el[0] for el in eigenS]
         auxVec = flatten([el[2] for el in eigenS], cls=list)
 
         eigenVec = sMat(n, n)
@@ -758,7 +745,6 @@ class sMat(SparseMatrix):
         return ret
 
     def orthogonalizeFast(self, vec):
-        # print('\t Vec : ', vec)
         n = vec.shape[0]
         result = sMat(n,n)
 
@@ -770,7 +756,6 @@ class sMat(SparseMatrix):
             pos2.add(k[0])
 
         pos1, pos2 = sorted(pos1), sorted(pos2)
-        # print(pos1, pos2)
 
         if pos2 != []:
             vecList = []
@@ -780,18 +765,15 @@ class sMat(SparseMatrix):
             vecList = [vec[pos2, :].transpose()] + vecList
             orth = sMat.orthogonalize(*vecList, normalize=True)
 
-            # print(orth)
             for i,v in enumerate(orth):
                 for j,p in enumerate(pos2):
                     result[i,p] = v[0,j]
 
-        # pprint(result)
 
         if pos1 != []:
             for i, p in enumerate(pos1):
                 result[i+len(pos2), p] = 1
 
-        # pprint(result)
         return result
 
 def sEye(n, v=1):

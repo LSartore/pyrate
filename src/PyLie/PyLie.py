@@ -27,11 +27,8 @@ import time
 
 import re as reg
 
-
 from sympy import init_printing
 init_printing(forecolor='White', wrap_line=False, use_unicode=False)
-
-# tensor = False
 
 def timer(func):
     def inner(*args, **kwargs):
@@ -1188,7 +1185,6 @@ class LieAlgebra(object):
             elif bigMatrix != [] and matrixE != []:
                 bigMatrix = bigMatrix.append(matrixE, axis=0)
 
-
         if len(bigMatrix) == 0:
             return [], [0, 0, 0]
 
@@ -1202,7 +1198,6 @@ class LieAlgebra(object):
             b1[self._nptokey(w1[i][0])] = dim1[i]
         for i in range(len(w2)):
             b2[self._nptokey(w2[i][0])] = dim2[i]
-
 
         aux4 = bigMatrix.nullSpace()
 
@@ -1398,8 +1393,8 @@ class LieAlgebra(object):
         for i in range(len(w3)):
             b3[self._nptokey(w3[i][0])] = dim3[i]
 
-
         aux4 = bigMatrix.nullSpace()
+        # aux4 = bigMatrix.nullSpace(progress=True)
 
         resTensor = []
         maxInds = [0, 0, 0]
