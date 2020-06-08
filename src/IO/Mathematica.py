@@ -273,7 +273,7 @@ range = {0, MP};
 
         sInit += """
 
-(* Now call the functions defined in section 2*)
+(* Now call the functions defined in section 2 *)
 
 solutions = RGsolve[initialScale, range];
 solutions = DiscardZeroCouplings[range, solutions];

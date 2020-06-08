@@ -620,7 +620,11 @@ r""" \\[.1cm] \hline
 
 
         self.string += r'\beta\left(X\right) \equiv ' + beta
-        self.string += r'\equiv' + '+'.join([latex(sympify(f'1/(4*pi)**({model.betaExponent(n)})', evaluate=False))+'\\beta^{('+str(n)+')}(X)' for n in range(1, 1+max(model.nLoops))])
+
+        if model.betaExponent(Symbol('n')) != 0:
+            self.string += r'\equiv' + '+'.join([latex(sympify(f'1/(4*pi)**({model.betaExponent(n)})', evaluate=False))+'\\beta^{('+str(n)+')}(X)' for n in range(1, 1+max(model.nLoops))])
+        else:
+            self.string += r'\equiv' + '+'.join(['\\beta^{('+str(n)+')}(X)' for n in range(1, 1+max(model.nLoops))])
 
         self.string += '\n\\end{equation*}\n'
 
@@ -1046,7 +1050,6 @@ class Printer(LatexPrinter):
 
         if isinstance(expr.args[0], Rational) and abs(expr.args[0]) != 1 and not self.baseMul:
             coeff = Mul(*[el for el in flatten(expr.as_coeff_mul()) if el.is_number])
-
             return self.latex.totex(coeff, baseMul=True) + ' ' + (self._print((expr/coeff).doit()) if expr != coeff else '')
 
         if self.absReplacements and expr.find(conjugate) != set():
