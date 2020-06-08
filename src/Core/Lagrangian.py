@@ -179,6 +179,7 @@ class Lagrangian():
         self.getDefinitions(settings)
 
         self.allFermionsValues = list(model.allFermions.values())
+        self.allScalarValues = list(model.allFermions.values())
 
     def getDefinitions(self, settings):
         #######################
@@ -472,7 +473,11 @@ class Lagrangian():
             for i, field in enumerate(terms):
                 if isinstance(field, Symbol):
                     continue
-                inds += list(field.indices)
+                try:
+                    inds += list(field.indices)
+                except AttributeError:
+                    loggingCritical(f"\nError (in term '{expr}') while reading the quantity '{field}'. It seems that indices are missing.")
+                    exit()
                 for p, ind in enumerate(field.indices):
                     indRanges[ind] = (self.definitions[str(field.base)], p)
 
@@ -491,7 +496,7 @@ class Lagrangian():
                 loggingCritical(f"\nError : each term of the sum '{expr}' must contain the same free indices.")
                 exit()
             if name is None and set(freeInds) != set(Linds):
-                loggingCritical(f"\nError in term {term}: the free indices must be identical to those in the definition '{name}'.")
+                loggingCritical(f"\nError in term {term}: there should be {len(set(Linds))} free indices" + (' -> ' + str(tuple(set(Linds))) if set(Linds) != set() else ''))
                 exit()
 
             # Now that the term is validated, construct the resulting tensor object
@@ -650,12 +655,12 @@ class Lagrangian():
                 tensorInds = tuple(scalars + fermions)
                 coeff = subTerm[0] * 2/len(set(itertools.permutations(fermions, 2)))
 
-                # Fermion1 = Fermion2 : the matrix is symmetric
-                if self.allFermionsValues[fermions[0]][1] == self.allFermionsValues[fermions[1]][1]:
-                    self.model.assumptions[str(coupling)]['symmetric'] = True
-                # Fermion1 = Fermion2bar : the matrix is hermitian
-                if self.allFermionsValues[fermions[0]][1] == self.allFermionsValues[self.antiFermionPos(fermions[1])][1]:
-                    self.model.assumptions[str(coupling)]['hermitian'] = True
+                # # Fermion1 = Fermion2 : the matrix is symmetric
+                # if self.allFermionsValues[fermions[0]][1] == self.allFermionsValues[fermions[1]][1]:
+                #     self.model.assumptions[str(coupling)]['symmetric'] = True
+                # # Fermion1 = Fermion2bar : the matrix is hermitian
+                # if self.allFermionsValues[fermions[0]][1] == self.allFermionsValues[self.antiFermionPos(fermions[1])][1]:
+                #     self.model.assumptions[str(coupling)]['hermitian'] = True
 
                 assumptionDic = self.model.assumptions[str(coupling)]
 
@@ -691,12 +696,12 @@ class Lagrangian():
                 tensorInds = tuple(fermions)
                 coeff = subTerm[0] * 2/len(set(itertools.permutations(tensorInds, 2)))
 
-                # Fermion1 = Fermion2 : the matrix is symmetric
-                if fermions[0] == fermions[1]:
-                    self.model.assumptions[str(coupling)]['symmetric'] = True
-                # Fermion1 = Fermion2bar : the matrix is hermitian
-                if fermions[0] == self.antiFermionPos(fermions[1]):
-                    self.model.assumptions[str(coupling)]['hermitian'] = True
+                # # Fermion1 = Fermion2 : the matrix is symmetric
+                # if fermions[0] == fermions[1]:
+                #     self.model.assumptions[str(coupling)]['symmetric'] = True
+                # # Fermion1 = Fermion2bar : the matrix is hermitian
+                # if fermions[0] == self.antiFermionPos(fermions[1]):
+                #     self.model.assumptions[str(coupling)]['hermitian'] = True
 
                 assumptionDic = self.model.assumptions[str(coupling)]
 
