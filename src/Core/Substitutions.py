@@ -290,6 +290,13 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
                 self.kinMat = self.kinMat.subs(*subRule(k,v))
 
     if 'zero' in substitutionDic and substitutionDic['zero'] != {}:
+        # If 'c' is complex, add the 'cstar' -> 0 substitution
+        for k in list(substitutionDic['zero'].keys()):
+            cType = self.allCouplings[k][0]
+            if cType in ('ScalarMasses', 'TrilinearTerms', 'QuarticTerms'):
+                if k + 'star' in self.allCouplings:
+                    substitutionDic['zero'] = insertKey(substitutionDic['zero'], k, k+'star', self.allCouplings[k+'star'][1])
+
         for k,v in substitutionDic['zero'].items():
             cType, symb = self.allCouplings[k][:2]
 
@@ -326,9 +333,9 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
 
     if 'yukMat' in substitutionDic and substitutionDic['yukMat'] != {}:
 
-        ##############################################################
-        # Definition of local functions used to perform substitution #
-        ##############################################################
+        ###############################################################
+        # Definition of local functions used to perform substitutions #
+        ###############################################################
         storeDic = {}
 
         def traceSub(tr):
