@@ -413,12 +413,21 @@ class Model(object):
         self.UgaugeGroups = [g for g in self.gaugeGroupsList if g.abelian]
 
     def getParticles(self, settings):
+        def completeTrivialReps(dic):
+            for k,v in self.gaugeGroups.items():
+                if k not in dic['Qnb']:
+                    if v.abelian:
+                        dic['Qnb'][k] = 0
+                    else:
+                        dic['Qnb'][k] = 1
+
         for key, value in settings.items():
             if key == 'Fermions':
                 self.Fermions = value
                 antiFermions = {}
                 # Create the particle and store it in Fermions
                 for part, val in value.items():
+                    completeTrivialReps(val)
                     self.Fermions[part] = Particle(part, val, self.gaugeGroups, self.idb)
                     antiFermions[part+'bar'] = self.Fermions[part].antiParticle()
 
@@ -430,6 +439,7 @@ class Model(object):
                         Qnb = {'Gen': 1, 'Qnb': qnb}
                     else :
                         Qnb = qnb
+                    completeTrivialReps(Qnb)
                     self.Scalars[part] = Particle(part, Qnb, self.gaugeGroups, self.idb)
             elif key == 'Potential':
                 self.potential = value
@@ -444,6 +454,7 @@ class Model(object):
                 if 'Gen' not in setts:
                     setts['Gen'] = 1
 
+                completeTrivialReps(setts)
                 self.ComplexScalars[part] = ComplexScalar(part, setts, self.gaugeGroups, self.idb)
                 self.ComplexScalars[part+'bar'] = self.ComplexScalars[part].antiParticle()
 
