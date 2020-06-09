@@ -83,12 +83,15 @@ def sortYukTrace(expr, yukPos, depth=0):
 
     try:
         transp = [isinstance(el, transpose) for el in args]
+        conj = [isinstance(el, conjugate) for el in args]
+
         chooseTranspose = False
         if all(transp):
             args = tuple([transpose(el) for el in args])[::-1]
-        elif any(transp):
+        elif any(transp) or any(conj):
             transposed = tuple([transpose(el) for el in args])[::-1]
-            if not any([isinstance(el, transpose) for el in transposed]):
+            if (not any([isinstance(el, transpose) for el in transposed])
+            and not any([isinstance(el, conjugate) for el in transposed])):
                 args = transposed
             else:
                 count = str(args).count('transpose') + str(args).count('conjugate')
