@@ -358,9 +358,10 @@ class Lagrangian():
 
         count = 0
         for k,v in sorted(self.definitions.items(), key=lambda x:-len(x[0])):
-            expr = expr.replace(k, f'symb_{count}_')
+            expr = expr.replace(k, f'@_{count}_')
             localDict[f'symb_{count}_'] = v.symbol
             count += 1
+        expr = expr.replace('@', 'symb')
 
         def sympyParse(expr):
             return parse_expr(expr, local_dict = localDict,
