@@ -1,33 +1,23 @@
 # YAML 1.1
+# Based on 1705.00751
 ---
 Author: Lohan Sartore
-Date: 07.04.2020
+Date: 08.06.2020
 Name: SU5
 Groups: {SU5: SU5}
 
-#################################
-# Fermions assumed weyl spinors #
-#################################
 
 Fermions: {
-    q5: {Gen: 3, Qnb:{ SU5 : -5}},
-    q10: {Gen: 3, Qnb:{ SU5: 10}},
+    q5: {Gen: 3, Qnb: {SU5 : -5}},
+    q10: {Gen: 3, Qnb : {SU5: 10}},
 }
-
-################
-# Real Scalars #
-################
 
 RealScalars: {
-    phi24: {Gen: 1, Qnb:{ SU5: 24}},
+    phi24: {SU5: 24}
 }
 
-###################
-# Complex Scalars #
-###################
-
 ComplexScalars: {
-   H: {RealFields:[Hr, Hi], Norm: 1/Sqrt(2), Qnb:{ SU5: 5 }},
+   H: {RealFields:[Hr, Hi], Norm: 1/sqrt(2), Qnb: {SU5: 5}},
 }
 
 
@@ -36,8 +26,8 @@ Potential: {
 Definitions:{
     tFond : t(SU5, 5),
     Sigma[i,j]: tFond[a,i,j]*phi24[a],
-    Tr2 : Sigma[i,j] Sigma[j,i],
-    Tr4 : Sigma[i,j] Sigma[j,k] Sigma[k,l] Sigma[l,i],
+    T2 : Sigma[i,j] Sigma[j,i],
+    T4 : Sigma[i,j] Sigma[j,k] Sigma[k,l] Sigma[l,i],
 
     # CGCs
     Cyuk5 : cgc(SU5, q5, Hbar, q10),
@@ -50,38 +40,22 @@ Definitions:{
 
 Yukawas: {
     Y5 : Cyuk5[i,j,k] q5[i] Hbar[j] q10[k],
-    Y10 : 1/2 * Cyuk10[i,j,k] q10[i] H[j] q10[k],
+    Y10 : {1/2 * Cyuk10[i,j,k] q10[i] H[j] q10[k], symmetric}
 },
 
 QuarticTerms: {
-    lambda1 : 1/2*Tr2**2,
-    lambda2 : Tr4,
+    lambda1 : 1/2*T2**2,
+    lambda2 : T4,
     lambda3 : 1/2 (Hbar[i] H[i])**2,
-    lambda4 : Hbar[i] H[i] * Tr2,
+    lambda4 : Hbar[i] H[i] * T2,
     lambda5 : Hbar[i] Sigma[i,j] Sigma[j,k] H[k]
 },
 
-ScalarMasses: {
-},
-
-TrilinearTerms: {
-    #T : Ctrip[i,j,k] phi24[i] phi24[j] phi24[k],
-    #t2 : Sigma[i,j] Sigma[j,k] Sigma[k,i]
-},
-
-FermionMasses: {
 }
-
-}
-
-Vevs: {
-}
-
 
 Substitutions: {
     # Gauge coupling
     g_SU5 : g
-
 }
 
 Latex: {
@@ -98,8 +72,8 @@ Latex: {
 
     tFond : t_{F},
     Sigma : \Sigma,
-    Tr2 : Tr_2,
-    Tr4 : Tr_4,
+    T2 : T_2,
+    T4 : T_4,
     Cyuk5 : C_{yuk}^5,
     Cyuk10 : C_{yuk}^{10}
 
