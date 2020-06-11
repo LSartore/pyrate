@@ -1,0 +1,74 @@
+# YAML 1.1
+# Based on 1705.00751
+---
+Author: Jan Kwapisz
+Date: 1.05.2020
+Name: SO10
+Groups: {SO10: SO10}
+
+
+Fermions: {
+    q16: {Gen: 3, Qnb:{SO10 : 16}},
+}
+
+RealScalars: {
+    phi10: {Gen: 1, Qnb:{SO10: 10}},
+    phi45: {Gen: 1, Qnb:{SO10: 45}}
+}
+
+ComplexScalars: {
+}
+
+
+Potential: {
+
+    Definitions:{
+        tFond : t(SO10, 10),
+        Sigma[i,j]: tFond[a,i,j]*phi45[a],
+        T2 : Sigma[i,j] Sigma[j,i],
+        T4 : Sigma[i,j] Sigma[j,k] Sigma[k,l] Sigma[l,i],
+    },
+
+    Yukawas: {
+    },
+
+    QuarticTerms: {
+        lambda1 : 1/8 T2**2,
+        lambda2 : 1/4 T4,
+        lambda3 : 1/8 (phi10[i] phi10[i])*(phi10[j] phi10[j]),
+        lambda4 : 1/4 (phi10[i] phi10[i]) * T2,
+        lambda5 : 1/8 (phi10[i] Sigma[i,j] Sigma[j,k] phi10[k])
+    },
+
+}
+
+
+Substitutions: {
+    # Gauge coupling
+    g_SO10 : g10,
+}
+
+Latex: {
+    # Particles
+
+    q16: \psi_{16},
+    phi10: \phi_{10},
+    phi45: \phi_{45},
+
+    # Defined quantities
+
+    tFond : t_{F},
+    Sigma : \Sigma,
+    T2 : T_2,
+    T4 : T_4,
+
+    # Couplings
+
+    g10 : g_{10},
+    lambda1 : \lambda_1,
+    lambda2 : \lambda_2,
+    lambda3 : \lambda_3,
+    lambda4 : \lambda_4,
+    lambda5 : \lambda_5,
+}
+

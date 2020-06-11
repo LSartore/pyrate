@@ -1,0 +1,221 @@
+# YAML 1.1
+## Minimal Left-Right Symmetric Model
+---
+Author: Lohan Sartore
+Date: 08.06.2020
+Name: MLRSM
+Groups: {U1BL: U1, SU2L: SU2, SU2R: SU2, SU3C: SU3}
+
+
+Fermions: {
+   LL : {Gen: 3, Qnb: {U1BL: -1/2, SU2L: 2}},
+   LR : {Gen: 3, Qnb: {U1BL: -1/2, SU2R: 2}},
+   QL : {Gen: 3, Qnb: {U1BL: 1/6, SU2L: 2, SU3C: 3}},
+   QR : {Gen: 3, Qnb: {U1BL: 1/6, SU2R: 2, SU3C: 3}}
+}
+
+RealScalars: {
+}
+
+CplxScalars: {
+   Phi : {RealFields: [Pi1, Sigma1], Norm: 1/sqrt(2), Qnb: {SU2L: 2, SU2R: -2}},
+   TL  : {RealFields: [Pi2, Sigma2], Norm: 1/sqrt(2), Qnb: {U1BL: 1, SU2L: 3}},
+   TR  : {RealFields: [Pi3, Sigma3], Norm: 1/sqrt(2), Qnb: {U1BL: 1, SU2R: 3}}
+}
+
+Potential: {
+
+    Definitions: {
+        tL : t(SU2L, 2),
+        tR : t(SU2R, 2),
+
+        PhiDag[i,j] : Phibar[j,i],
+        PhiT[i,j] : Eps[i,k] Phibar[k,l] Eps[j,l],
+        PhiTdag[i,j] : Eps[i,k] Phi[l,k] Eps[j,l],
+
+        Tr1 : PhiDag[i,j] Phi[j,i],
+        Tr2 : PhiT[i,j] PhiDag[j,i],
+        Tr3 : PhiTdag[i,j] Phi[j,i],
+
+        DL[i,j] : sqrt(2) * tL[a,i,j] TL[a],
+        DLdag[i,j] : sqrt(2) * tL[a,i,j] TLbar[a],
+        DR[i,j] : sqrt(2) * tR[a,i,j] TR[a],
+        DRdag[i,j] : sqrt(2) * tR[a,i,j] TRbar[a],
+
+## Comment : the sqrt(2) factors above allow to match the usual definition
+## of the scalar triplets in the form of a 2x2 matrix
+
+        DLt[i,j] : Eps[i,k] DL[k,j],
+        DRt[i,j] : Eps[i,k] DR[k,j],
+
+        TrL1 : DL[i,j] DLdag[j,i],
+        TrL2 : DL[i,j] DL[j,i],
+        TrL3 : DLdag[i,j] DLdag[j,i],
+        TrR1 : DR[i,j] DRdag[j,i],
+        TrR2 : DR[i,j] DR[j,i],
+        TrR3 : DRdag[i,j] DRdag[j,i],
+
+        TrPhiL : Phi[i,j] PhiDag[j,k] DL[k,l] DLdag[l,i],
+        TrPhiR : PhiDag[i,j] Phi[j,k] DR[k,l] DRdag[l,i],
+
+        Tb11 : Phi[i,j] DR[j,k] PhiDag[k,l] DLdag[l,i],
+        Tb12 : PhiDag[i,j] DL[j,k] Phi[k,l] DRdag[l,i],
+        Tb21 : PhiT[i,j] DR[j,k] PhiDag[k,l] DLdag[l,i],
+        Tb22 : PhiTdag[i,j] DL[j,k] Phi[k,l] DRdag[l,i],
+        Tb31 : Phi[i,j] DR[j,k] PhiTdag[k,l] DLdag[l,i],
+        Tb32 : PhiDag[i,j] DL[j,k] PhiT[k,l] DRdag[l,i]
+    },
+
+    Yukawas: {
+        hq :      QLbar[i,a] Phi[i,j] QR[j,a],
+        hqtilde : QLbar[i,a] PhiT[i,j] QR[j,a],
+        hl :      LLbar[i] Phi[i,j] LR[j],
+        hltilde : LLbar[i] PhiT[i,j] LR[j],
+        fL :      {LL[i] DLt[i,j] LL[j], symmetric},
+        fR :      {LR[i] DRt[i,j] LR[j], symmetric}
+    },
+
+## Comment : in the non-canonical version of the MLRSM, gR != gL in general.
+## Consequently, the L-R symmetry at the level of the scalar potential is radiatively broken.
+## => We need to define some L and R couplings separately
+
+    QuarticTerms: {
+        lambda1 : Tr1*Tr1,
+        lambda2 : Tr2*Tr2 + Tr3*Tr3,
+        lambda3 : Tr2*Tr3,
+        lambda4 : Tr1*(Tr2+Tr3),
+
+        rho1l : TrL1*TrL1,
+        rho1r : TrR1*TrR1,
+        rho2l : TrL2*TrL3,
+        rho2r : TrR2*TrR3,
+        rho3 : TrL1*TrR1,
+        rho4 : TrL2*TrR3 + TrL3*TrR2,
+
+        alpha1l : Tr1*TrL1,
+        alpha1r : Tr1*TrR1,
+        alpha2l : Tr3*TrL1,
+        alpha2r : Tr2*TrR1,
+        alpha3l : TrPhiL,
+        alpha3r : TrPhiR,
+
+        beta1 : Tb11 + Tb12,
+        beta2 : Tb21 + Tb22,
+        beta3 : Tb31 + Tb32
+    },
+
+    ScalarMasses: {
+        mu12 : Tr1,
+        mu22 : Tr2 + Tr3,
+        mu32l : TrL1,
+        mu32r : TrR1
+    },
+
+}
+
+Substitutions: {
+    # Rename the gauge couplings
+    g_U1BL : g1,
+    g_SU2L : gL,
+    g_SU2R : gR,
+    g_SU3C : g3
+}
+
+Latex: {
+    # Particles
+
+    QL : Q_L,
+    QR : Q_R,
+    LL : L_L,
+    LR : L_R,
+
+    Phi : \Phi,
+    TL : T_L,
+    TR : T_R,
+
+
+    # Definitions
+
+    tL : t_L,
+    tR : t_R,
+
+    PhiDag : \Phi^\dagger,
+    PhiT : \tilde{\Phi},
+    PhiTdag : \tilde{\Phi}^\dagger,
+
+    Tr1 : \mathrm{Tr}\left[\Phi^\dagger \Phi\right],
+    Tr2 : \mathrm{Tr}\left[\tilde{\Phi} \Phi^\dagger\right],
+    Tr3 : \mathrm{Tr}\left[\tilde{\Phi}^\dagger \Phi\right],
+
+    DL : \Delta_L,
+    DLdag : \Delta_L^\dagger,
+    DR : \Delta_R,
+    DRdag : \Delta_R^\dagger,
+
+    DLt : \tilde{\Delta}_L,
+    DRt : \tilde{\Delta}_R,
+
+    TrL1 : \mathrm{Tr}\left[\Delta_L^\dagger \Delta_L \right],
+    TrL2 : \mathrm{Tr}\left[\Delta_L \Delta_L \right],
+    TrL3 : \mathrm{Tr}\left[\Delta_L^\dagger \Delta_L^\dagger \right],
+    TrR1 : \mathrm{Tr}\left[\Delta_R^\dagger \Delta_R\right],
+    TrR2 : \mathrm{Tr}\left[\Delta_R \Delta_R\right]
+    TrR3 : \mathrm{Tr}\left[\Delta_R^\dagger \Delta_R^\dagger\right],
+
+    TrPhiL : \mathrm{Tr}\left[\Phi \Phi^\dagger \Delta_L \Delta_L^\dagger\right],
+    TrPhiR : \mathrm{Tr}\left[\Phi^\dagger \Phi \Delta_R \Delta_R^\dagger\right],
+
+    Tb11 : \mathrm{Tr}\left[\Phi \Delta_R \Phi^\dagger \Delta_L^\dagger\right],
+    Tb12 : \mathrm{Tr}\left[\Phi^\dagger \Delta_L \Phi \Delta_R^\dagger\right],
+    Tb21 : \mathrm{Tr}\left[\tilde{\Phi} \Delta_R \Phi^\dagger \Delta_L^\dagger\right],
+    Tb22 : \mathrm{Tr}\left[\tilde{\Phi}^\dagger \Delta_L \Phi \Delta_R^\dagger\right],
+    Tb31 : \mathrm{Tr}\left[\Phi \Delta_R \tilde{\Phi}^\dagger \Delta_L^\dagger\right],
+    Tb32 : \mathrm{Tr}\left[\Phi^\dagger \Delta_L \tilde{\Phi} \Delta_R^\dagger \right],
+
+    # Couplings
+
+    g1 : g_1,
+    gL : g_L,
+    gR : g_R,
+    g3 : g_3,
+
+    hq : h_q,
+    hqtilde : \tilde{h}_q,
+    hl : h_l,
+    hltilde : \tilde{h}_l,
+    fL : f_L,
+    fR : f_R,
+
+    lambda1 : \lambda_1,
+    lambda2 : \lambda_2,
+    lambda3 : \lambda_3,
+    lambda4 : \lambda_4,
+
+    rho1l : \rho_{1,l},
+    rho1r : \rho_{1,r},
+    rho2l : \rho_{2,l},
+    rho2r : \rho_{2,r},
+    rho3 : \rho_3,
+    rho4 : \rho_4,
+
+    alpha1l : \alpha_{1,l},
+    alpha1r : \alpha_{1,r},
+    alpha2l : \alpha_{2,l},
+    alpha2r : \alpha_{2,r},
+    alpha3l : \alpha_{3,l},
+    alpha3r : \alpha_{3,r},
+
+    beta1 : \beta_1,
+    beta2 : \beta_2,
+    beta3 : \beta_3,
+
+    mu12 : \mu_1^2,
+    mu22 : \mu_2^2,
+    mu32l : \mu_{3,l}^2,
+    mu32r : \mu_{3,r}^2
+}
+
+
+
+
+
