@@ -357,13 +357,18 @@ class Lagrangian():
         localDict = {}
 
         count = 0
+        expr = expr.replace('sqrt', '#').replace('Sqrt', '#')
         for k,v in sorted(self.definitions.items(), key=lambda x:-len(x[0])):
             expr = expr.replace(k, f'@_{count}_')
             localDict[f'symb_{count}_'] = v.symbol
             count += 1
         expr = expr.replace('@', 'symb')
+        expr = expr.replace('#', 'sqrt')
 
         def sympyParse(expr):
+            if '^' in expr:
+                loggingCritical(f"\nError in expression '{originalExpr}' : powers must be written using the '**' operator")
+                exit()
             return parse_expr(expr, local_dict = localDict,
                               transformations=standard_transformations[1:] + (implicit_multiplication,),
                               evaluate=False)
@@ -496,7 +501,7 @@ class Lagrangian():
             elif freeInds != commonFreeInds:
                 loggingCritical(f"\nError : each term of the sum '{expr}' must contain the same free indices.")
                 exit()
-            if name is None and set(freeInds) != set(Linds):
+            if name is not None and set(freeInds) != set(Linds):
                 loggingCritical(f"\nError in term {term}: there should be {len(set(Linds))} free indices" + (' -> ' + str(tuple(set(Linds))) if set(Linds) != set() else ''))
                 exit()
 
@@ -515,7 +520,8 @@ class Lagrangian():
                 contractArgs.append(tens(*inds))
 
             freeDummies = [Wild(str(el)) for el in Linds]
-            tmp = tensorContract(*contractArgs, value=coeff, freeDummies=freeDummies)
+            tmp = tensorContract(*contractArgs, value=coeff, freeDummies=freeDummies, doit=True)
+
             if not isinstance(tmp, dict):
                 tmp = expand(tmp)
 
