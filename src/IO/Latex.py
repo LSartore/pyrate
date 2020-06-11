@@ -10,7 +10,6 @@ try:
 
     import datetime
 
-    from Logging import loggingCritical
     from Definitions import mSymbol, splitPow, Trace
 
 except ImportError:
@@ -533,9 +532,10 @@ r""" \\[.1cm] \hline
                     continue
 
                 sDef = d.fromDef.replace('[', '{}_{').replace(']', '}')
-                for k,v in self.latex.items():
+                for k in sorted(self.latex.keys(), key=lambda x: len(str(x)), reverse=True):
                     if str(k) in model.lagrangian.definitions and model.lagrangian.definitions[str(k)].fromDef != '':
-                        sDef = sDef.replace(str(k), v)
+                        sDef = sDef.replace(str(k), self.latex[k])
+                sDef = sDef.replace(r'\\', '\\')
 
                 self.string += sDef + ' &= '
 
@@ -551,7 +551,7 @@ r""" \\[.1cm] \hline
                     self.cgcs[dName] = (sDef, expr)
 
                 self.string += r'\\' + '\n'
-            self.string += '\\end{align*}'
+            self.string += '\\end{align*}\n}\n'
 
         for cType, dic in model.expandedPotential.items():
             hcDic = {}
@@ -628,7 +628,10 @@ r""" \\[.1cm] \hline
 
         self.string += '\n\\end{equation*}\n'
 
-        if ('sub' in model.substitutions and model.substitutions['sub'] != {}) or ('yukMat' in model.substitutions and model.substitutions['yukMat'] != {}):
+        if ( ('sub' in model.substitutions and model.substitutions['sub'] != {})
+          or ('yukMat' in model.substitutions and model.substitutions['yukMat'] != {})
+          or ('zero' in model.substitutions and model.substitutions['zero'] != {}) ):
+
             self.string += '\\subsection{Definitions and substitutions}\n'
 
             if 'zero' in model.substitutions and model.substitutions['zero'] != {}:

@@ -538,10 +538,10 @@ class RGEsolver():
         except BaseException as e:
             print("\nAn error occurred while saving the rge object :")
             print(e)
+            return
         else:
-            print(" Done.")
-        finally:
             file.close()
+            print(" Done.")
 
         self.kappa = storeKappa
 
