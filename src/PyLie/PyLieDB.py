@@ -479,10 +479,10 @@ class PyLieDB():
         if isinstance(val, str):
             return val
         if not isinstance(val, npStr):
-            if objType == 'dynkinlabels' and int(val) == val and val == -1:
-                return True
-            elif objType == 'dynkinlabels' and isinstance(val, np.ndarray):
+            if objType == 'dynkinlabels' and isinstance(val, np.ndarray):
                 return val.tolist()
+            elif objType == 'dynkinlabels' and int(val) == val and val == -1:
+                return True
             return int(val)
         else:
             return PyLieDB.sympify(str(val, 'utf-8'))

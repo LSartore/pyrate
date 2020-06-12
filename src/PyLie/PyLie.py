@@ -1619,7 +1619,7 @@ class LieAlgebra(object):
             self._computeReal = False
             return taka
 
-        # For adjoint rep, make sure that (T_adj^i)_jk = -f[i,j,k]
+        # For adjoint rep, make sure that (T_adj^i)_jk = -I f[i,j,k]
         struc = self.structureConstants()
         adjRepMat = self.repMatrices(self.adjoint)
 
