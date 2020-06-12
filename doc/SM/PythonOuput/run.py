@@ -1,4 +1,5 @@
 import sys
+sys.path.append('/home/lohan/ownCloud/PyR@TE_3/doc/SM/PythonOuput')
 
 from SM import RGEsolver
 
@@ -60,4 +61,17 @@ rge.solve(step = .05)
 ####################
 
 rge.plot(subPlots=True, printLoopLevel=True)
+
+
+#############################################
+# Possibly save the results for a later use #
+#############################################
+
+# Save the results in some file
+
+# rge.save('rgeResults.save')
+
+# Later, load the rge object with :
+
+# rge = RGEsolver.load('rgeResults.save')
 

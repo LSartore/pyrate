@@ -64,12 +64,12 @@ ScalarMassCouplings = {mu};
 
 Vevs = {v};
 
-(* Gauge fixing *)
-xiGauge = 1;
+(* For vevs the gauge must be fixed. Let's use for instance the Landau gauge : *)
+xiGauge = 0;
 
-\[Beta][v, 1] = (3/5)*g1^2*v + 3*g2^2*v - 3*v*yb*Conjugate[yb] - 3*v*yt*Conjugate[yt] - v*ytau*Conjugate[ytau];
+\[Beta][v, 1] = (3/20)*xiGauge*g1^2*v + (3/4)*xiGauge*g2^2*v + (9/20)*g1^2*v + (9/4)*g2^2*v - 3*v*yb*Conjugate[yb] - 3*v*yt*Conjugate[yt] - v*ytau*Conjugate[ytau];
 
-\[Beta][v, 2] = -1221/800*g1^4*v + (9/16)*g1^2*g2^2*v - 43/40*g1^2*v*yb*Conjugate[yb] - 103/40*g1^2*v*yt*Conjugate[yt] - 81/40*g1^2*v*ytau*Conjugate[ytau] + (199/32)*g2^4*v - 63/8*g2^2*v*yb*Conjugate[yb] - 63/8*g2^2*v*yt*Conjugate[yt] - 21/8*g2^2*v*ytau*Conjugate[ytau] - 20*g3^2*v*yb*Conjugate[yb] - 20*g3^2*v*yt*Conjugate[yt] - 6*lambda^2*v + (27/4)*v*yb^2*Conjugate[yb]^2 - 3/2*v*yb*yt*Conjugate[yb]*Conjugate[yt] + (27/4)*v*yt^2*Conjugate[yt]^2 + (9/4)*v*ytau^2*Conjugate[ytau]^2;
+\[Beta][v, 2] = (9/200)*xiGauge^2*g1^4*v + (9/20)*xiGauge^2*g1^2*g2^2*v - 9/8*xiGauge^2*g2^4*v + (9/200)*xiGauge*g1^4*v + (9/20)*xiGauge*g1^2*g2^2*v - 9/20*xiGauge*g1^2*v*yb*Conjugate[yb] - 9/20*xiGauge*g1^2*v*yt*Conjugate[yt] - 3/20*xiGauge*g1^2*v*ytau*Conjugate[ytau] - 9/8*xiGauge*g2^4*v - 9/4*xiGauge*g2^2*v*yb*Conjugate[yb] - 9/4*xiGauge*g2^2*v*yt*Conjugate[yt] - 3/4*xiGauge*g2^2*v*ytau*Conjugate[ytau] - 1293/800*g1^4*v - 27/80*g1^2*g2^2*v - 5/8*g1^2*v*yb*Conjugate[yb] - 17/8*g1^2*v*yt*Conjugate[yt] - 15/8*g1^2*v*ytau*Conjugate[ytau] + (271/32)*g2^4*v - 45/8*g2^2*v*yb*Conjugate[yb] - 45/8*g2^2*v*yt*Conjugate[yt] - 15/8*g2^2*v*ytau*Conjugate[ytau] - 20*g3^2*v*yb*Conjugate[yb] - 20*g3^2*v*yt*Conjugate[yt] - 6*lambda^2*v + (27/4)*v*yb^2*Conjugate[yb]^2 - 3/2*v*yb*yt*Conjugate[yb]*Conjugate[yt] + (27/4)*v*yt^2*Conjugate[yt]^2 + (9/4)*v*ytau^2*Conjugate[ytau]^2;
 (* ::Subsection:: *)
 (*2. Solving and plotting functions*)
 
@@ -198,7 +198,7 @@ init[v] = 0;
 (loops[#] = 2)& /@ Vevs;
 
 
-(* Now call the functions defined in section 2*)
+(* Now call the functions defined in section 2 *)
 
 solutions = RGsolve[initialScale, range];
 solutions = DiscardZeroCouplings[range, solutions];

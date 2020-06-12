@@ -1,7 +1,7 @@
 \documentclass[12pt]{article}
 \pagestyle{empty}
 
-\usepackage[top=2cm,bottom=2cm,left=3cm,right=2cm,nohead,nofoot]{geometry}
+\usepackage[top=2cm,bottom=2cm,left=2.5cm,right=2cm,nohead,nofoot]{geometry}
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
@@ -11,6 +11,7 @@
 \usepackage{autobreak}
 \usepackage{booktabs}
 \usepackage{multirow}
+\usepackage{longtable}
 \setlength{\parindent}{0pt}
 
 \newcommand{\tr}{\mathrm{Tr}}
@@ -18,14 +19,14 @@
 
 \title{SM}
 \author{PyR@TE 3.0}
-\date{8 April 2020, 11:31}
+\date{11 June 2020, 15:28}
 
 \begin{document}
     \maketitle
     \tableofcontents
     \clearpage
 
-\section{Model}{
+\section{Model}
 
 \subsection{Gauge groups}
 
@@ -35,7 +36,7 @@
 \begin{tabular}{c@{\hskip .66cm}c@{\hskip .66cm}c@{\hskip .5cm}c}
 \hline
 Name & Type & Abelian & Coupling constant \\ \hline
-U1Y & $U(1)$ & True & $g_1$ \\
+U1Y & $U(1)$ & True & $g_1\rightarrow\sqrt{\frac{5}{3}} g_{1}$ \\
 SU2L & $SU(2)$ & False & $g_2$ \\
 SU3c & $SU(3)$ & False & $g_3$ \\ \hline
 \end{tabular}
@@ -74,8 +75,10 @@ $H$ & True & $\frac{1}{\sqrt{2}} \left(\Pi + i\, \Sigma\right)$ & 1 & ($+\frac{1
 \subsection{Definitions}
 {\allowdisplaybreaks
 \begin{align*}
-\tilde{H}_{i} &= \epsilon_{i,j} H^{\dagger}_{j}\\
-\end{align*}\subsection{Yukawa couplings}
+\tilde{H}{}_{i} &= \epsilon_{i,j} H^{\dagger}_{j}\\
+\end{align*}
+}
+\subsection{Yukawa couplings}
 {\allowdisplaybreaks
 \begin{align*}
 \begin{autobreak}
@@ -104,7 +107,7 @@ $H$ & True & $\frac{1}{\sqrt{2}} \left(\Pi + i\, \Sigma\right)$ & 1 & ($+\frac{1
 \begin{autobreak}
 -\mathcal{L}_{sm} = 
 
-+ \mu H^{\dagger}_{i} H_{i}
+-  \mu H^{\dagger}_{i} H_{i}
 \end{autobreak}
 \end{align*}
 }
@@ -588,19 +591,19 @@ Y_u=\begin{pmatrix}0 & 0 & 0\\0 & 0 & 0\\0 & 0 & y_t\end{pmatrix} \quad,\quad Y_
 	H \; : \; \frac{1}{\sqrt{2}}{\Pi}_{2} &\rightarrow \frac{1}{\sqrt{2}}\left({\Pi}_{2} + v\right)
 \end{align*}
 
-\textbf{Gauge fixing:}\\
-\begin{equation*}
-\xi \rightarrow 1
-\end{equation*}
 \textbf{RGEs:}
 
 \begin{align*}
 \begin{autobreak}
 \beta^{(1)}(v) =
 
-+ \frac{3}{5} g_1^{2} v
++ \frac{9}{20} g_1^{2} v
 
-+ 3 g_2^{2} v
++ \frac{3}{20} \xi g_1^{2} v
+
++ \frac{9}{4} g_2^{2} v
+
++ \frac{3}{4} \xi g_2^{2} v
 
 - 3 v \left|{y_t}\right|^{2}
 
@@ -613,23 +616,47 @@ Y_u=\begin{pmatrix}0 & 0 & 0\\0 & 0 & 0\\0 & 0 & y_t\end{pmatrix} \quad,\quad Y_
 \begin{autobreak}
 \beta^{(2)}(v) =
 
--  \frac{1221}{800} g_1^{4} v
+-  \frac{1293}{800} g_1^{4} v
 
-+ \frac{9}{16} g_1^{2} g_2^{2} v
++ \frac{9}{200} \xi g_1^{4} v
 
-+ \frac{199}{32} g_2^{4} v
++ \frac{9}{200} \xi^{2} g_1^{4} v
 
--  \frac{103}{40} g_1^{2} v \left|{y_t}\right|^{2}
+-  \frac{27}{80} g_1^{2} g_2^{2} v
 
--  \frac{43}{40} g_1^{2} v \left|{y_b}\right|^{2}
++ \frac{9}{20} \xi g_1^{2} g_2^{2} v
 
--  \frac{81}{40} g_1^{2} v \left|{y_\tau}\right|^{2}
++ \frac{9}{20} \xi^{2} g_1^{2} g_2^{2} v
 
--  \frac{63}{8} g_2^{2} v \left|{y_t}\right|^{2}
++ \frac{271}{32} g_2^{4} v
 
--  \frac{63}{8} g_2^{2} v \left|{y_b}\right|^{2}
+-  \frac{9}{8} \xi g_2^{4} v
 
--  \frac{21}{8} g_2^{2} v \left|{y_\tau}\right|^{2}
+-  \frac{9}{8} \xi^{2} g_2^{4} v
+
+-  \frac{17}{8} g_1^{2} v \left|{y_t}\right|^{2}
+
+-  \frac{9}{20} \xi g_1^{2} v \left|{y_t}\right|^{2}
+
+-  \frac{5}{8} g_1^{2} v \left|{y_b}\right|^{2}
+
+-  \frac{9}{20} \xi g_1^{2} v \left|{y_b}\right|^{2}
+
+-  \frac{15}{8} g_1^{2} v \left|{y_\tau}\right|^{2}
+
+-  \frac{3}{20} \xi g_1^{2} v \left|{y_\tau}\right|^{2}
+
+-  \frac{45}{8} g_2^{2} v \left|{y_t}\right|^{2}
+
+-  \frac{9}{4} \xi g_2^{2} v \left|{y_t}\right|^{2}
+
+-  \frac{45}{8} g_2^{2} v \left|{y_b}\right|^{2}
+
+-  \frac{9}{4} \xi g_2^{2} v \left|{y_b}\right|^{2}
+
+-  \frac{15}{8} g_2^{2} v \left|{y_\tau}\right|^{2}
+
+-  \frac{3}{4} \xi g_2^{2} v \left|{y_\tau}\right|^{2}
 
 - 20 g_3^{2} v \left|{y_t}\right|^{2}
 
@@ -653,18 +680,15 @@ Y_u=\begin{pmatrix}0 & 0 & 0\\0 & 0 & 0\\0 & 0 & y_t\end{pmatrix} \quad,\quad Y_
 \section{Group theoretical information}
 \subsection{Gauge groups}
 
-\begin{table}[h]
-\renewcommand{\arraystretch}{1.1}
-\centering
-\begin{tabular}{@{}ccccccc@{}}
+\begin{longtable}{@{}cccccccc@{}}
 \toprule
-\multirow{2}{*}{Group} & \multirow{2}{*}{Lie algebra} & \multirow{2}{*}{Dim.} & \multirow{2}{*}{Rank} & \multicolumn{3}{c}{Representations}       \\ \cmidrule(l){5-7}
-                       &                              &                       &                       & Name / Dim. & Dynkin labels & Type        \\ \midrule
-\multirow{2}{*}{SU2} & \multirow{2}{*}{A1} & \multirow{2}{*}{3} & \multirow{2}{*}{1} & $\mathbf{2}$ & [1] & Pseudo-real\\
- &  &  &  & $\overline{\mathbf{2}}$ & [1, True] & Pseudo-real\\\bottomrule
-\multirow{2}{*}{SU3} & \multirow{2}{*}{A2} & \multirow{2}{*}{8} & \multirow{2}{*}{2} & $\mathbf{3}$ & [1, 0] & Complex\\
- &  &  &  & $\overline{\mathbf{3}}$ & [0, 1] & Complex\\\bottomrule
-\end{tabular}
-\end{table}
+\multirow{2}{*}{Group} & \multirow{2}{*}{Lie algebra} & \multirow{2}{*}{Dim.} & \multirow{2}{*}{Rank} & \multicolumn{4}{c}{Representations}                 \\ \cmidrule(l){5-8}
+                       &                              &                       &                       & Name / Dim. & Dynkin labels & Index & Reality   \\ \midrule\endhead
+\multirow{2}{*}{SU2} & \multirow{2}{*}{A1} & \multirow{2}{*}{3} & \multirow{2}{*}{1} & $\mathbf{2}$ & [1] & $1 / 2$ & Pseudo-real\\*
+ &  &  &  & $\overline{\mathbf{2}}$ & [1, True] & $1 / 2$ & Pseudo-real\\\midrule
+\multirow{2}{*}{SU3} & \multirow{2}{*}{A2} & \multirow{2}{*}{8} & \multirow{2}{*}{2} & $\mathbf{3}$ & [1, 0] & $1 / 2$ & Complex\\*
+ &  &  &  & $\overline{\mathbf{3}}$ & [0, 1] & $1 / 2$ & Complex\\\bottomrule
+\end{longtable}
+
 
 \end{document}

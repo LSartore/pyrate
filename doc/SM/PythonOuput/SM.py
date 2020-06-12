@@ -4,7 +4,7 @@
 ##                                                     ##
 #  Model  : SM                                          #
 #  Author : Lohan Sartore                               #
-#  Date   : 01.04.2020                                  #
+#  Date   : 08.06.2020                                  #
 #########################################################
 
 import time
@@ -12,6 +12,12 @@ import numpy as np
 from sympy import flatten
 from scipy.integrate import ode
 import matplotlib.pyplot as plt
+
+from RGEs import (beta_g1, beta_g2, beta_g3,
+                  beta_yt, beta_yb, beta_ytau,
+                  beta_lambda_,
+                  beta_mu,
+                  beta_v)
 
 class Coupling():
     couplings = {}
@@ -31,7 +37,6 @@ class Coupling():
         self.cplx = cplx
 
         self.initialValue = init if shape == () else np.zeros(shape)
-        # self.initialValue = np.random.rand() - .5 if shape == () else np.zeros(shape)
 
         if fromMat is not None:
             self.pos = pos
@@ -48,8 +53,8 @@ class Coupling():
         if not self.is_matrix:
             return self
 
-        nameFunc = lambda x: self.name+'_{' + str(1 + x // self.shape[0]) + str(1 + x % self.shape[1]) + '}'
-        initFunc = lambda x: list(self.initialValue)[x // self.shape[0]][x % self.shape[1]]
+        nameFunc = lambda x: self.name+'_{' + str(1 + x // self.shape[1]) + str(1 + x % self.shape[1]) + '}'
+        initFunc = lambda x: list(self.initialValue)[x // self.shape[1]][x % self.shape[1]]
         arrayFunc = np.vectorize(lambda x: Coupling(nameFunc(x), self.type, fromMat=self, init=initFunc(x), pos=self.pos+x))
         array = arrayFunc(np.reshape(range(self.nb), self.shape))
 
@@ -92,14 +97,15 @@ class RGEsolver():
         self.tmax = tmax
 
         self.kappa = lambda n: 1/(4*np.pi)**(2*n)
+        self.kappaString = '1/(4*np.pi)**(2*n)'
 
         self.tList = []
         self.solutions = {}
         self.loops = {'GaugeCouplings' : 2, 
-                           'Yukawas' : 2, 
-                           'QuarticTerms' : 2, 
-                           'ScalarMasses' : 2, 
-                           'Vevs' : 2}
+                      'Yukawas' : 2, 
+                      'QuarticTerms' : 2, 
+                      'ScalarMasses' : 2, 
+                      'Vevs' : 2}
 
         # Gauge Couplings
         self.g1 = Coupling('g1', 'GaugeCouplings', latex='g_1')
@@ -118,10 +124,15 @@ class RGEsolver():
         self.mu = Coupling('mu', 'ScalarMasses', latex='\\mu')
 
         # Vacuum-expectation Values
+        #   For vevs the gauge must be fixed. Let's use for instance the Landau gauge :
+        self.xiGauge = 0
+
         self.v = Coupling('v', 'Vevs')
 
         self.couplings = Coupling.couplings
-
+        self.matrixCouplings = {c.name: np.vectorize(lambda x: x.name)(c.as_explicit())
+                                for cList in self.couplings.values()
+                                for c in cList if c.is_matrix}
 
 
     def extractCouplings(self, couplingsArray, couplingType):
@@ -132,10 +143,14 @@ class RGEsolver():
             else:
                 ret.append(np.matrix(np.reshape([couplingsArray[p] for p in range(c.pos, c.pos+c.nb)], c.shape)))
         return ret
-        
+
+
+    def fixGauge(self, xi):
+        self.xiGauge = xi
+
 
     def betaFunction(self, t, couplingsArray):
-        """ This function contains the expression of the various RGEs of the model. It is called by the
+        """ This function generates the numerical values of the model RGEs. It is called by the
             solver to provide the derivative of the couplings with respect to the energy scale."""
 
         g1, g2, g3 = self.extractCouplings(couplingsArray, 'GaugeCouplings')
@@ -151,39 +166,40 @@ class RGEsolver():
         bv = 0
 
         if self.loops['GaugeCouplings'] >= 1:
-            bg1 += ((41/10)*g1**3)*self.kappa(1)*np.log(10)
-            bg2 += (-19/6*g2**3)*self.kappa(1)*np.log(10)
-            bg3 += (-7*g3**3)*self.kappa(1)*np.log(10)
+            bg1 += beta_g1(1, g1,g2,g3,yt,yb,ytau)*self.kappa(1)*np.log(10)
+            bg2 += beta_g2(1, g2,g1,g3,yt,yb,ytau)*self.kappa(1)*np.log(10)
+            bg3 += beta_g3(1, g3,g1,g2,yt,yb)*self.kappa(1)*np.log(10)
         if self.loops['GaugeCouplings'] >= 2:
-            bg1 += ((199/50)*g1**5 + (27/10)*g1**3*g2**2 + (44/5)*g1**3*g3**2 - 1/2*g1**3*abs(yb)**2 - 17/10*g1**3*abs(yt)**2 - 3/2*g1**3*abs(ytau)**2)*self.kappa(2)**2*np.log(10)
-            bg2 += ((9/10)*g1**2*g2**3 + (35/6)*g2**5 + 12*g2**3*g3**2 - 3/2*g2**3*abs(yb)**2 - 3/2*g2**3*abs(yt)**2 - 1/2*g2**3*abs(ytau)**2)*self.kappa(2)**2*np.log(10)
-            bg3 += ((11/10)*g1**2*g3**3 + (9/2)*g2**2*g3**3 - 26*g3**5 - 2*g3**3*abs(yb)**2 - 2*g3**3*abs(yt)**2)*self.kappa(2)**2*np.log(10)
+            bg1 += beta_g1(2, g1,g2,g3,yt,yb,ytau)*self.kappa(2)*np.log(10)
+            bg2 += beta_g2(2, g2,g1,g3,yt,yb,ytau)*self.kappa(2)*np.log(10)
+            bg3 += beta_g3(2, g3,g1,g2,yt,yb)*self.kappa(2)*np.log(10)
 
         if self.loops['Yukawas'] >= 1:
-            byt += (-17/20*g1**2*yt - 9/4*g2**2*yt - 8*g3**2*yt + (3/2)*yt*abs(yb)**2 + (9/2)*yt*abs(yt)**2 + yt*abs(ytau)**2)*self.kappa(1)*np.log(10)
-            byb += (-1/4*g1**2*yb - 9/4*g2**2*yb - 8*g3**2*yb + (9/2)*yb*abs(yb)**2 + (3/2)*yb*abs(yt)**2 + yb*abs(ytau)**2)*self.kappa(1)*np.log(10)
-            bytau += (-9/4*g1**2*ytau - 9/4*g2**2*ytau + 3*ytau*abs(yb)**2 + 3*ytau*abs(yt)**2 + (5/2)*ytau*abs(ytau)**2)*self.kappa(1)*np.log(10)
+            byt += beta_yt(1, g1,g2,g3,yt,yb,ytau,lambda_)*self.kappa(1)*np.log(10)
+            byb += beta_yb(1, g1,g2,g3,yt,yb,ytau,lambda_)*self.kappa(1)*np.log(10)
+            bytau += beta_ytau(1, g1,g2,yt,yb,ytau,g3,lambda_)*self.kappa(1)*np.log(10)
         if self.loops['Yukawas'] >= 2:
-            byt += ((1187/600)*g1**4*yt - 9/20*g1**2*g2**2*yt + (19/15)*g1**2*g3**2*yt + (7/80)*g1**2*yt*abs(yb)**2 + (393/80)*g1**2*yt*abs(yt)**2 + (15/8)*g1**2*yt*abs(ytau)**2 - 23/4*g2**4*yt + 9*g2**2*g3**2*yt + (99/16)*g2**2*yt*abs(yb)**2 + (225/16)*g2**2*yt*abs(yt)**2 + (15/8)*g2**2*yt*abs(ytau)**2 - 108*g3**4*yt + 4*g3**2*yt*abs(yb)**2 + 36*g3**2*yt*abs(yt)**2 + 6*lambda_**2*yt - 12*lambda_*yt*abs(yt)**2 - 1/4*yt*abs(yb)**4 - 11/4*yt*abs(yb)**2*abs(yt)**2 + (5/4)*yt*abs(yb)**2*abs(ytau)**2 - 12*yt*abs(yt)**4 - 9/4*yt*abs(yt)**2*abs(ytau)**2 - 9/4*yt*abs(ytau)**4)*self.kappa(2)**2*np.log(10)
-            byb += (-127/600*g1**4*yb - 27/20*g1**2*g2**2*yb + (31/15)*g1**2*g3**2*yb + (237/80)*g1**2*yb*abs(yb)**2 + (91/80)*g1**2*yb*abs(yt)**2 + (15/8)*g1**2*yb*abs(ytau)**2 - 23/4*g2**4*yb + 9*g2**2*g3**2*yb + (225/16)*g2**2*yb*abs(yb)**2 + (99/16)*g2**2*yb*abs(yt)**2 + (15/8)*g2**2*yb*abs(ytau)**2 - 108*g3**4*yb + 36*g3**2*yb*abs(yb)**2 + 4*g3**2*yb*abs(yt)**2 + 6*lambda_**2*yb - 12*lambda_*yb*abs(yb)**2 - 12*yb*abs(yb)**4 - 11/4*yb*abs(yb)**2*abs(yt)**2 - 9/4*yb*abs(yb)**2*abs(ytau)**2 - 1/4*yb*abs(yt)**4 + (5/4)*yb*abs(yt)**2*abs(ytau)**2 - 9/4*yb*abs(ytau)**4)*self.kappa(2)**2*np.log(10)
-            bytau += ((1371/200)*g1**4*ytau + (27/20)*g1**2*g2**2*ytau + (5/8)*g1**2*ytau*abs(yb)**2 + (17/8)*g1**2*ytau*abs(yt)**2 + (537/80)*g1**2*ytau*abs(ytau)**2 - 23/4*g2**4*ytau + (45/8)*g2**2*ytau*abs(yb)**2 + (45/8)*g2**2*ytau*abs(yt)**2 + (165/16)*g2**2*ytau*abs(ytau)**2 + 20*g3**2*ytau*abs(yb)**2 + 20*g3**2*ytau*abs(yt)**2 + 6*lambda_**2*ytau - 12*lambda_*ytau*abs(ytau)**2 - 27/4*ytau*abs(yb)**4 + (3/2)*ytau*abs(yb)**2*abs(yt)**2 - 27/4*ytau*abs(yb)**2*abs(ytau)**2 - 27/4*ytau*abs(yt)**4 - 27/4*ytau*abs(yt)**2*abs(ytau)**2 - 3*ytau*abs(ytau)**4)*self.kappa(2)**2*np.log(10)
+            byt += beta_yt(2, g1,g2,g3,yt,yb,ytau,lambda_)*self.kappa(2)*np.log(10)
+            byb += beta_yb(2, g1,g2,g3,yt,yb,ytau,lambda_)*self.kappa(2)*np.log(10)
+            bytau += beta_ytau(2, g1,g2,yt,yb,ytau,g3,lambda_)*self.kappa(2)*np.log(10)
 
         if self.loops['QuarticTerms'] >= 1:
-            blambda_ += ((27/200)*g1**4 + (9/20)*g1**2*g2**2 - 9/5*g1**2*lambda_ + (9/8)*g2**4 - 9*g2**2*lambda_ + 24*lambda_**2 + 12*lambda_*abs(yb)**2 + 12*lambda_*abs(yt)**2 + 4*lambda_*abs(ytau)**2 - 6*abs(yb)**4 - 6*abs(yt)**4 - 2*abs(ytau)**4)*self.kappa(1)*np.log(10)
+            blambda_ += beta_lambda_(1, g1,g2,yt,yb,ytau,lambda_,g3)*self.kappa(1)*np.log(10)
         if self.loops['QuarticTerms'] >= 2:
-            blambda_ += (-3411/2000*g1**6 - 1677/400*g1**4*g2**2 + (1887/200)*g1**4*lambda_ + (9/20)*g1**4*abs(yb)**2 - 171/100*g1**4*abs(yt)**2 - 9/4*g1**4*abs(ytau)**2 - 289/80*g1**2*g2**4 + (117/20)*g1**2*g2**2*lambda_ + (27/10)*g1**2*g2**2*abs(yb)**2 + (63/10)*g1**2*g2**2*abs(yt)**2 + (33/10)*g1**2*g2**2*abs(ytau)**2 + (108/5)*g1**2*lambda_**2 + (5/2)*g1**2*lambda_*abs(yb)**2 + (17/2)*g1**2*lambda_*abs(yt)**2 + (15/2)*g1**2*lambda_*abs(ytau)**2 + (4/5)*g1**2*abs(yb)**4 - 8/5*g1**2*abs(yt)**4 - 12/5*g1**2*abs(ytau)**4 + (305/16)*g2**6 - 73/8*g2**4*lambda_ - 9/4*g2**4*abs(yb)**2 - 9/4*g2**4*abs(yt)**2 - 3/4*g2**4*abs(ytau)**2 + 108*g2**2*lambda_**2 + (45/2)*g2**2*lambda_*abs(yb)**2 + (45/2)*g2**2*lambda_*abs(yt)**2 + (15/2)*g2**2*lambda_*abs(ytau)**2 + 80*g3**2*lambda_*abs(yb)**2 + 80*g3**2*lambda_*abs(yt)**2 - 32*g3**2*abs(yb)**4 - 32*g3**2*abs(yt)**4 - 312*lambda_**3 - 144*lambda_**2*abs(yb)**2 - 144*lambda_**2*abs(yt)**2 - 48*lambda_**2*abs(ytau)**2 - 3*lambda_*abs(yb)**4 - 42*lambda_*abs(yb)**2*abs(yt)**2 - 3*lambda_*abs(yt)**4 - lambda_*abs(ytau)**4 + 30*abs(yb)**6 - 6*abs(yb)**4*abs(yt)**2 - 6*abs(yb)**2*abs(yt)**4 + 30*abs(yt)**6 + 10*abs(ytau)**6)*self.kappa(2)**2*np.log(10)
+            blambda_ += beta_lambda_(2, g1,g2,yt,yb,ytau,lambda_,g3)*self.kappa(2)*np.log(10)
 
         if self.loops['ScalarMasses'] >= 1:
-            bmu += (-9/10*g1**2*mu - 9/2*g2**2*mu + 12*lambda_*mu + 6*mu*abs(yb)**2 + 6*mu*abs(yt)**2 + 2*mu*abs(ytau)**2)*self.kappa(1)*np.log(10)
+            bmu += beta_mu(1, g1,g2,yt,yb,ytau,lambda_,mu,g3)*self.kappa(1)*np.log(10)
         if self.loops['ScalarMasses'] >= 2:
-            bmu += ((1671/400)*g1**4*mu + (9/8)*g1**2*g2**2*mu + (72/5)*g1**2*lambda_*mu + (5/4)*g1**2*mu*abs(yb)**2 + (17/4)*g1**2*mu*abs(yt)**2 + (15/4)*g1**2*mu*abs(ytau)**2 - 145/16*g2**4*mu + 72*g2**2*lambda_*mu + (45/4)*g2**2*mu*abs(yb)**2 + (45/4)*g2**2*mu*abs(yt)**2 + (15/4)*g2**2*mu*abs(ytau)**2 + 40*g3**2*mu*abs(yb)**2 + 40*g3**2*mu*abs(yt)**2 - 60*lambda_**2*mu - 72*lambda_*mu*abs(yb)**2 - 72*lambda_*mu*abs(yt)**2 - 24*lambda_*mu*abs(ytau)**2 - 27/2*mu*abs(yb)**4 - 21*mu*abs(yb)**2*abs(yt)**2 - 27/2*mu*abs(yt)**4 - 9/2*mu*abs(ytau)**4)*self.kappa(2)**2*np.log(10)
+            bmu += beta_mu(2, g1,g2,yt,yb,ytau,lambda_,mu,g3)*self.kappa(2)*np.log(10)
 
         if self.loops['Vevs'] >= 1:
-            bv += ((3/5)*g1**2*v + 3*g2**2*v - 3*v*abs(yb)**2 - 3*v*abs(yt)**2 - v*abs(ytau)**2)*self.kappa(1)*np.log(10)
+            bv += beta_v(1, g1,g2,yt,yb,ytau,v,self.xiGauge,g3,lambda_)*self.kappa(1)*np.log(10)
         if self.loops['Vevs'] >= 2:
-            bv += (-1221/800*g1**4*v + (9/16)*g1**2*g2**2*v - 43/40*g1**2*v*abs(yb)**2 - 103/40*g1**2*v*abs(yt)**2 - 81/40*g1**2*v*abs(ytau)**2 + (199/32)*g2**4*v - 63/8*g2**2*v*abs(yb)**2 - 63/8*g2**2*v*abs(yt)**2 - 21/8*g2**2*v*abs(ytau)**2 - 20*g3**2*v*abs(yb)**2 - 20*g3**2*v*abs(yt)**2 - 6*lambda_**2*v + (27/4)*v*abs(yb)**4 - 3/2*v*abs(yb)**2*abs(yt)**2 + (27/4)*v*abs(yt)**4 + (9/4)*v*abs(ytau)**4)*self.kappa(2)**2*np.log(10)
+            bv += beta_v(2, g1,g2,yt,yb,ytau,v,self.xiGauge,g3,lambda_)*self.kappa(2)*np.log(10)
 
         return [bg1, bg2, bg3, byt, byb, bytau, blambda_, bmu, bv]
+
 
     def printInitialConditions(self, returnString=False):
         """ This function displays the current running scheme and the initial values of the couplings.
@@ -215,6 +231,7 @@ class RGEsolver():
             return outputString
 
         print(outputString)
+
 
     ##################
     # Solve function #
@@ -249,7 +266,7 @@ class RGEsolver():
         solver.set_initial_value(y0, t0)
 
         # Solve upwards
-        while solver.successful() and solver.t < tmax:
+        while solver.successful() and solver.t < tmax + dt/2:
             tList.append(solver.t)
             for i, c in enumerate(self.allCouplings):
                 y = solver.y[i]
@@ -271,7 +288,7 @@ class RGEsolver():
 
             solver.set_initial_value(y0, t0)
             # Solve downwards
-            while solver.successful() and solver.t > tmin:
+            while solver.successful() and solver.t > tmin - dt/2:
                 solver.integrate(solver.t-dt)
 
                 tList2.append(solver.t)
@@ -290,9 +307,17 @@ class RGEsolver():
             for c in self.allCouplings:
                 solutions[c.name] = solutions2[c.name][::-1] + solutions[c.name]
 
-        self.tList, self.solutions = tList, solutions
+        self.tList, self.solutions = np.array(tList), {k:np.array(v) for k,v in solutions.items()}
+
+        for k,v in self.matrixCouplings.items():
+            self.solutions[k] = np.zeros(v.shape).tolist()
+            for i, l in enumerate(self.solutions[k]):
+                for j in range(len(l)):
+                    self.solutions[k][i][j] = self.solutions[v[i,j]].tolist()
+            self.solutions[k] = np.array(self.solutions[k]).transpose([2,0,1])
 
         print(f"System of RGEs solved in {time.time()-time0:.3f} seconds.")
+
 
     #################
     # Plot function #
@@ -303,8 +328,8 @@ class RGEsolver():
               6: [231, 232, 233, 234, 235, 236],
               7: [241, 242, 243, 244, 231, 232, 233]}
 
-    def plot(self, figSize=(600, 600), subPlots=True, which=None, whichNot=None, printLoopLevel=True):
-        """ We finally plot the running couplings.
+    def plot(self, figSize=(600, 600), subPlots=True, which={}, whichNot={}, printLoopLevel=True):
+        """ Plot the running couplings.
 
         Several options may be given to this function:
             - figSize=(x,y):
@@ -313,14 +338,18 @@ class RGEsolver():
                 If True, plot all the various couplings in the same window. If False,
                 produces one figure by coupling type.
             - which=... :
-                The user may want to plot only one or several types of couplings. Usage:
+                The user may want to plot only one or several (types of) couplings. Usage:
 
                 >>> which='GaugeCouplings'
 
                 >>> which=('GaugeCouplings', 'QuarticTerms')
 
+                >>> which={'GaugeCouplings': 'all', 'Yukawas': ['yt', 'yb']}
+
+                >>> which={'GaugeCouplings': ['g1', 'g2], 'Yukawas': 'Yu_{33}'}
             - whichNot=... :
-                Which coupling types are NOT to be plotted. Same usage as which.
+                Which types of coupling types are NOT to be plotted. Same usage as which.
+                Note that 'which' and 'whichNot' cannot be used simultaneously.
             - printLoopLevel=True/False :
                 The loop-levels of the computation are displayed in the title of the plots.
         """
@@ -335,23 +364,68 @@ class RGEsolver():
             if not all([el == 0 for el in self.solutions[c.name]]):
                 allCouplingsByType[c.type].append(c)
 
-        # Remove the coupling types with only identically vanishing couplings
-        # + take into account 'which' and 'whichNot' keywords
+        if which != {} and whichNot != {}:
+            print("Error in 'plot' function: Arguments 'which' and 'whichNot' cannot be used simultaneously.")
+            return
+
+        ########################################
+        # Identify the couplings to be plotted #
+        ########################################
+
         if type(which) == str:
-            which = (which,)
+            which = {which: 'all'}
+        elif type(which) == tuple:
+            which = {el: 'all' for el in which}
         if type(whichNot) == str:
-            whichNot = (whichNot,)
+            which = {which: 'all'}
+        elif type(whichNot) == tuple:
+            whichNot = {el: 'all' for el in whichNot}
 
         for cType, cList in list(allCouplingsByType.items()):
+            couplingsToDelete = []
             toDelete = False
             if cList == []:
                 toDelete = True
-            if which is not None and cType not in which:
-                toDelete = True
-            if whichNot is not None and cType in whichNot:
-                toDelete = True
+            if which != {}:
+                if cType not in which:
+                    toDelete = True
+                elif which[cType] != 'all':
+                    if type(which[cType]) == str:
+                        which[cType] = [which[cType]]
+                    tmpList = []
+                    for el in which[cType]:
+                        if el not in self.matrixCouplings:
+                            tmpList.append(el)
+                        else:
+                            tmpList += [*self.matrixCouplings[el].flat]
+                    couplingsToDelete = [c for c in cList if c.name not in tmpList]
+            if whichNot != {}:
+                if cType in whichNot:
+                    if whichNot[cType] == 'all':
+                        toDelete = True
+                    else:
+                        if type(whichNot[cType]) == str:
+                            whichNot[cType] = [whichNot[cType]]
+                        tmpList = []
+                        for el in whichNot[cType]:
+                            if el not in self.matrixCouplings:
+                                tmpList.append(el)
+                            else:
+                                tmpList += [*self.matrixCouplings[el].flat]
+                        couplingsToDelete = [c for c in cList if c.name in tmpList]
+
             if toDelete:
                 del allCouplingsByType[cType]
+
+            if couplingsToDelete != []:
+                for c in couplingsToDelete:
+                    if c in allCouplingsByType[cType]:
+                        allCouplingsByType[cType].remove(c)
+
+
+        ###################
+        # Actual plotting #
+        ###################
 
         if subPlots:
             plt.figure(figsize=(figSize[0]/80., figSize[0]/80.), dpi=80)
@@ -380,4 +454,62 @@ class RGEsolver():
 
             plt.legend(cNames)
             plt.xlabel(r't',fontsize=17-len(allCouplingsByType))
+
+
+    #########################
+    # Save / load functions #
+    #########################
+
+    def save(self, fileName):
+        try:
+            import pickle
+        except:
+            print("Error: unable to load the 'pickle' module.")
+            return
+
+        storeKappa = self.kappa
+        self.kappa = None
+
+        try:
+            if '.' not in fileName:
+                fileName += '.save'
+            print(f"Saving the RGE object in file '{fileName}'...", end='')
+            file = open(fileName, 'wb')
+            pickle.dump(self, file)
+        except BaseException as e:
+            print("\nAn error occurred while saving the rge object :")
+            print(e)
+            return
+        else:
+            file.close()
+            print(" Done.")
+
+        self.kappa = storeKappa
+
+    def load(fileName):
+        import os
+        try:
+            import pickle
+        except:
+            print("Error: unable to load the 'pickle' module.")
+            return
+
+        if not os.path.exists(fileName):
+            print(f"Error: The file '{fileName}' doesn't exist.")
+            return None
+
+        try:
+            print(f"Loading the RGE object from file '{fileName}'...", end='')
+            file = open(fileName, 'rb')
+            rge = pickle.load(file)
+        except BaseException as e:
+            print("\nAn error occurred while loading the rge object :")
+            print(e)
+        else:
+            print(" Done.")
+        finally:
+            file.close()
+
+        rge.kappa = eval('lambda n:' + rge.kappaString)
+        return rge
 
