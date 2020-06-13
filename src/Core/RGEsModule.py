@@ -609,40 +609,40 @@ class RGEsModule():
         loggingInfo("Checking gauge invariance ...", end=' ')
         t0 = time.time()
 
-        fermionGauge = tensorAdd(tensorContract(self.T(A_,i_,j_),
-                                                self.T(B_,j_,k_),
-                                                freeDummies=[A_,B_,i_,k_],
-                                                doit=True) ,
-                                  tensorMul(-1, tensorContract(self.T(B_,i_,j_),
-                                                              self.T(A_,j_,k_),
-                                                              freeDummies=[A_,B_,i_,k_],
-                                                              doit=True)) ,
-                                  tensorMul(-I, tensorContract(self.f(A_,B_,C_),
-                                                              self.T(C_,i_,k_),
-                                                              freeDummies=[A_,B_,i_,k_],
-                                                              doit=True)))
+        # fermionGauge = tensorAdd(tensorContract(self.T(A_,i_,j_),
+        #                                         self.T(B_,j_,k_),
+        #                                         freeDummies=[A_,B_,i_,k_],
+        #                                         doit=True) ,
+        #                           tensorMul(-1, tensorContract(self.T(B_,i_,j_),
+        #                                                       self.T(A_,j_,k_),
+        #                                                       freeDummies=[A_,B_,i_,k_],
+        #                                                       doit=True)) ,
+        #                           tensorMul(-I, tensorContract(self.f(A_,B_,C_),
+        #                                                       self.T(C_,i_,k_),
+        #                                                       freeDummies=[A_,B_,i_,k_],
+        #                                                       doit=True)))
 
-        scalarGauge = tensorAdd(tensorContract(self.Ts(A_,i_,j_),
-                                                self.Ts(B_,j_,k_),
-                                                freeDummies=[A_,B_,i_,k_],
-                                                doit=True) ,
-                                tensorMul(-1, tensorContract(self.Ts(B_,i_,j_),
-                                                              self.Ts(A_,j_,k_),
-                                                              freeDummies=[A_,B_,i_,k_],
-                                                              doit=True)) ,
-                                tensorMul(-I, tensorContract(self.f(A_,B_,C_),
-                                                              self.Ts(C_,i_,k_),
-                                                              freeDummies=[A_,B_,i_,k_],
-                                                              doit=True)))
+        # scalarGauge = tensorAdd(tensorContract(self.Ts(A_,i_,j_),
+        #                                         self.Ts(B_,j_,k_),
+        #                                         freeDummies=[A_,B_,i_,k_],
+        #                                         doit=True) ,
+        #                         tensorMul(-1, tensorContract(self.Ts(B_,i_,j_),
+        #                                                       self.Ts(A_,j_,k_),
+        #                                                       freeDummies=[A_,B_,i_,k_],
+        #                                                       doit=True)) ,
+        #                         tensorMul(-I, tensorContract(self.f(A_,B_,C_),
+        #                                                       self.Ts(C_,i_,k_),
+        #                                                       freeDummies=[A_,B_,i_,k_],
+        #                                                       doit=True)))
 
-        if fermionGauge != {}:
-            loggingCritical("Basic Lie algebra commutation relations are not satisfied among fermions.\n"
-                            +"Please contact the author.")
-            exit()
-        if scalarGauge != {}:
-            loggingCritical("Basic Lie algebra commutation relations are not satisfied among scalars.\n"
-                            +"Please contact the author.")
-            exit()
+        # if fermionGauge != {}:
+        #     loggingCritical("Basic Lie algebra commutation relations are not satisfied among fermions.\n"
+        #                     +"Please contact the author.")
+        #     exit()
+        # if scalarGauge != {}:
+        #     loggingCritical("Basic Lie algebra commutation relations are not satisfied among scalars.\n"
+        #                     +"Please contact the author.")
+        #     exit()
 
 
         yuk = tensorAdd(tensorMul(-1, tensorContract(self.Tt(A_,i_,j_),

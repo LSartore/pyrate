@@ -371,13 +371,17 @@ class Inputs():
 
             while cursor < len(s):
                 cursor += 1
-                if s[cursor] == '{':
-                    depth +=1
-                elif s[cursor] == '}':
-                    if depth > 0:
-                        depth -=1
-                    else:
-                        return (findKw+opening, findKw+cursor+1)
+                try:
+                    if s[cursor] == '{':
+                        depth +=1
+                    elif s[cursor] == '}':
+                        if depth > 0:
+                            depth -=1
+                        else:
+                            return (findKw+opening, findKw+cursor+1)
+                except IndexError:
+                    print("Error while parsing the model file : a bracket was opened and never closed.")
+                    exit()
 
         def insertQuotes(s, kw, dic=True):
             # print("Insert quotes : ", kw)

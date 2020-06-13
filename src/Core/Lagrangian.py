@@ -209,8 +209,8 @@ class Lagrangian():
 
         if 'Definitions' in settings['Potential'] and settings['Potential']['Definitions'] != {}:
             for k,v in settings['Potential']['Definitions'].items():
-                # print('\n\n->', k, ':', v)
                 obj = self.parseExpression(v, name=k)
+
                 if obj is not None:
                     self.definitions[str(obj.symbol)] = obj
 
