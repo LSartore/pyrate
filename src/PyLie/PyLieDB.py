@@ -492,10 +492,10 @@ class PyLieDB():
         """ get() is the main and easiest way to retrieve info from the DB.
         If the info is not already present in the DB, it will be computed and
         stored before being returned. Examples of usage :
-            - db['SU2', 'rank']
-            - db['SU2', 'cartanMatrix']
-            - db['SU2', 'invariants', [[1], [1,True]]]
-            - db['SU2', 'repMatrices', [1]]
+            - db.get('SU2', 'rank')
+            - db.get('SU2', 'cartanMatrix')
+            - db.get('SU2', 'invariants', [[1], [1,True]])
+            - db.get('SU2', 'repMatrices', [1])
 
         """
 
@@ -526,19 +526,22 @@ class PyLieDB():
         if error is not False:
             raise TypeError(error)
 
-
         # Final enhancements to the result
         if type(ret) == tuple:
             ret, objType, algebra = ret
 
-            # This is mainly for interactive IPython notebooks
-            if objType == 'invariants' and 'fields' in kwargs:
-                for i, inv in enumerate(ret):
-                    try:
-                        inv.setFields(kwargs['fields'])
-                        ret[i] = inv.expr()
-                    except:
-                        pass
+            if objType == 'invariants':
+                if 'ordering' in kwargs:
+                    for i, inv in enumerate(ret):
+                        ret[i] = inv.permute(kwargs['ordering'])
+                if 'fields' in kwargs:
+                    for i, inv in enumerate(ret):
+                        try:
+                            inv.setFields(kwargs['fields'])
+                            ret[i] = inv.expr()
+                        except:
+                            pass
+
             # Remove the True argument for dynkin labels of real reps
             if (objType == 'dynkinlabels' or objType == 'conjugate') and 'realBasis' in kwargs:
                 if ret[-1] is True and algebra._goToRealBasis(ret[:-1], kwargs['realBasis']):
@@ -783,15 +786,24 @@ class PyLieDB():
                 else:
                     RBsequence += '0'
 
+              # Determine the ordering and the final permutation to apply
+            ordering = sorted(range(len(tag)), key=lambda i: (tag[i], conjSequence[i], RBsequence[i]))
+            kwargs['ordering'] = [ordering.index(i) for i in range(len(tag))]
+
+              # Sort the reps
+            arg = [tag[i] for i in ordering]
+            conjSequence = ''.join([conjSequence[i] for i in ordering])
+            RBsequence = ''.join([RBsequence[i] for i in ordering])
+
             # Reps
-            tag = tuple(tag)
+            tag = tuple(arg)
 
             storeName = str(tag).replace(' ', '')
             storeName += ';' + conjSequence
             storeName += ';' + str(int(pyNorm))
             storeName += ';' + RBsequence
 
-            return storeName, (arg,), {k:v for k,v in kwargs.items() if k != 'fields'}
+            return storeName, (arg,), {k:v for k,v in kwargs.items() if k not in ('fields', 'ordering')}
 
         if dataType == 'repmatrices':
             # StoreName :
@@ -904,9 +916,9 @@ class PyLieDB():
         return None, args, kwargs
 
 
-    ###############################
-    # Custom requests to the DB   #
-    ###############################
+    #############################
+    # Custom requests to the DB #
+    #############################
 
     def dimR(self, algebra, rep):
         """ Improved version of algebra.dimR, taking into account
