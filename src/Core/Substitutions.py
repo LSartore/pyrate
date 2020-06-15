@@ -364,11 +364,11 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
 
             # Identity substitutions
             if identitySubs != {}:
-                shape = self.couplingStructure[str(atoms[0])][0]
                 comm = 1
                 noncomm = []
+                trElements = splitPow(tr.args[0])
 
-                for el in splitPow(tr.args[0]):
+                for el in trElements:
                     mat = list(el.atoms())[0]
                     if mat in identitySubs:
                         if isinstance(el, adjoint) or isinstance(el, conjugate):
@@ -382,6 +382,7 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
                             noncomm.append(el.__class__(mat))
 
                 if noncomm == []:
+                    shape = self.couplingStructure[str(trElements[0])][0]
                     ret = shape*comm
                 else:
                     ret = comm*traceSub(trace(Mul(*noncomm)))
@@ -424,7 +425,6 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
 
             # Identity substitutions
             if identitySubs != {}:
-                shape = self.couplingStructure[str(atoms[0])][0]
                 comm = 1
                 noncomm = []
 
@@ -439,10 +439,10 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
                         if mat == el:
                             noncomm.append(el)
                         else:
-                            print(el, mat, el.__class__)
                             noncomm.append(el.__class__(mat))
 
                 if noncomm == []:
+                    shape = self.couplingStructure[str(mats[0])][0]
                     ret = comm*Identity(shape)
                 else:
                     ret = comm*matSub(tuple(noncomm))
@@ -573,8 +573,8 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
                             if newRGE[1] != 0 or noIdentity != []:
                                 loggingCritical("Waring : After substitution, the RGE of the diagonal Yukawa matrix '" + c + "' may not be in the form   y*Identity . Keeping its original form.")
 
-                                for el in noIdentity:
-                                    loggingCritical("\t" + str(el))
+                                # for el in noIdentity:
+                                #     loggingCritical("\t" + str(el))
 
                                 if cType not in self.NonZeroDiagRGEs:
                                     self.NonZeroDiagRGEs[cType] = {}

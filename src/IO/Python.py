@@ -46,7 +46,7 @@ class PythonExport():
         self.inconsistentRGset = (model.NonZeroCouplingRGEs != {} or model.NonZeroDiagRGEs != {})
 
         if self.inconsistentRGset:
-            raise TypeError("     -> Error : The RGE set is inconsistent. Please refer to the latex output.")
+            raise TypeError("The RGE set is inconsistent. Please refer to the latex output.")
 
         self.gaugeFixing = False
         self.RGfileString = {}
