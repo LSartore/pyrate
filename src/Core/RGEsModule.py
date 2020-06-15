@@ -742,7 +742,7 @@ class RGEsModule():
     #########################
 
     def nonZeroGauge(self, A, B):
-        if not A in self.Ugauge or not B in self.Ugauge:
+        if not A in self.Ugauge or not B in self.Ugauge or not self.kinMix:
             return (A==B)
         return True
 
