@@ -38,7 +38,9 @@ def getSubstitutions(self, substitutions):
             return (' ' not in v and
                     '+' not in v and
                     ('*' not in v or '^*' in v or '^{*}' in v) and
-                    '[' not in v and ']' not in v)
+                    '[' not in v and ']' not in v and
+                    '(' not in v and ')' not in v and
+                    not isinstance(self.parseMathExpr(v), Mul))
         elif case == 'yukMat':
             try:
                 return (type(self.parseMathExpr(v)) == list)
@@ -51,7 +53,7 @@ def getSubstitutions(self, substitutions):
                                isinstance(x, Symbol)))(self.parseMathExpr(v))
                     and (' ' not in k and
                          '+' not in k and
-                         ('*' not in k or '^*' in v or '^{*}' in v)))
+                         ('*' not in k or '^*' in k or '^{*}' in k)))
         elif case == 'zero':
             return (v == '0')
         elif case == 'diag':
