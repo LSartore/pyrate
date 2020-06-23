@@ -261,8 +261,8 @@ class GaugeBetaFunction(BetaFunction):
     def g3_26(self, A,B):
         return tensorContract(self.T(A,i_,j_),
                               self.yt(a_,j_,k_),
-                              self.T(B,l_,m_),
                               self.y(b_,k_,l_),
+                              self.T(B,l_,m_),
                               self.yt(b_,m_,n_),
                               self.y(a_,n_,i_),
                               doTrace=True,
