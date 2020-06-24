@@ -551,7 +551,11 @@ class Lagrangian():
             iRange = iRange[0].range[iRange[1]]
             ranges.append(iRange)
 
-        return TensorObject(copy=(Lbase, ranges, rhsResult), fromDef=name, expr=expr)
+        try:
+            return TensorObject(copy=(Lbase, ranges, rhsResult), fromDef=name, expr=expr)
+        except:
+            loggingCritical(f"\nError while parsing the term '{originalExpr}': please check the consistency of contracted indices.")
+            exit()
 
     def expand(self):
         """ Performs a first level of expansion of the Lagrangian. More precisely, replaces
