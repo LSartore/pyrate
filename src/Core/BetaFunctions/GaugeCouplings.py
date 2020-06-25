@@ -7,14 +7,27 @@ from Definitions import tensorContract
 
 class GaugeBetaFunction(BetaFunction):
 
+    def __init__(self, *args):
+        BetaFunction.__init__(self, *args)
+
+        if self.kinMix:
+            self.store = True
+
     def compute(self, A,B, nLoops):
         ret = 0
 
+        if A != B:
+            for C,D in self.gaugeIndices(A,B):
+                ret += self.G[A,C]*self.Beta(C,D, nLoops=nLoops)*self.G[D,B]
+                ret += self.G[B,C]*self.Beta(C,D, nLoops=nLoops)*self.G[D,A]
+
+            return r(1,2)*ret
+
         for C,D in self.gaugeIndices(A,B):
             ret += self.G[A,C]*self.Beta(C,D, nLoops=nLoops)*self.G[D,B]
-            ret += self.G[B,D]*self.Beta(D,C, nLoops=nLoops)*self.G[C,A]
 
-        return r(1,2)*ret
+        return ret
+
 
     def fDefinitions(self):
         """ Functions definition """

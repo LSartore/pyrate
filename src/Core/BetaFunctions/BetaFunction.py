@@ -6,6 +6,8 @@ class BetaFunction():
     def __init__(self, model, RGmodule, fieldContent, nLoops):
         self.rm = RGmodule
         self.nLoops = nLoops
+        self.store = False
+        self.storeDic = {}
 
         self.Content = fieldContent
 
@@ -22,6 +24,16 @@ class BetaFunction():
 
 
     def Beta(self, *args, nLoops=1):
+
+        # Possibly store the result of the computation. This is useful to
+        # speed up the computation in presence of kinetic mixing
+        storeAfter = False
+        if self.store:
+            key = tuple([*args, nLoops])
+            if key in self.storeDic:
+                return self.storeDic[key]
+            storeAfter = True
+
         ret = 0
         for j, coeff in enumerate(self.coefficients[nLoops]):
             if coeff != 0:
@@ -36,5 +48,8 @@ class BetaFunction():
                     loggingCritical(f"## Error while computing {self.functions[nLoops][j].__name__}. ##")
                     loggingCritical('>> ' + str(e))
                     exit()
+
+        if storeAfter:
+            self.storeDic[key] = ret
 
         return ret
