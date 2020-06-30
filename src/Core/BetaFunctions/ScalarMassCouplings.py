@@ -202,8 +202,8 @@ class ScalarMassBetaFunction(BetaFunction):
                               self.G(C_,D_),
                               self.T(D_,i_,j_),
                               self.T(B_,j_,k_),
-                              self.M(k_,l_),
-                              self.Mt(l_,i_),
+                              self.Mt(k_,l_),
+                              self.M(l_,i_),
                               doTrace=True, yukSorting=self.model.YukPos)
 
     def m2_20(self, a,b):

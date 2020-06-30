@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from sympy import Identity as sympyIdentity, MatMul, Mul, Symbol, Rational as r, conjugate, transpose
+from sympy import Identity as sympyIdentity, MatMul, Mul, Symbol, Rational as r
 from .BetaFunction import BetaFunction
 from Definitions import tensorContract, Identity
 
@@ -197,44 +197,44 @@ class FermionAnomalous(BetaFunction):
     ######################
 
     def gF1_1(self, i, j):
-        return self.matrixToSymbol(self.C2F[i,j])
+        return self.matrixToSymbol(self.C2Ft[i,j])
 
     def gF1_2(self, i, j):
-        return self.Y2Ft[j,i]
+        return self.Y2F[i,j]
 
     ######################
     #  2-loop functions  #
     ######################
 
     def gF2_1(self, i, j):
-        return self.Y2FYFt[i,j]
+        return self.Y2FYF[i,j]
 
     def gF2_2(self, i, j):
-        return self.Y2FYSt[i,j]
+        return self.Y2FYS[i,j]
 
     def gF2_3(self, i, j):
-        return conjugate(self.Y2FCS[i,j])
+        return self.Y2FCS[i,j]
 
     def gF2_4(self, i, j):
-        return tensorContract(self.Y2Ft(i, k_),
-                              self.C2F(k_, j))
+        return tensorContract(self.C2Ft(i,k_),
+                              self.Y2F(k_,j))
 
     def gF2_5(self, i, j):
-        return conjugate(self.Y2FCF[i,j])
+        return self.Y2FCF[i,j]
 
     def gF2_6(self, i, j):
-        return self.matrixToSymbol(self.C2FG[i,j])
+        return self.matrixToSymbol(self.C2FGt[i,j])
 
     def gF2_7(self, i, j):
-        return self.matrixToSymbol(self.C2FF[i,j])
+        return self.matrixToSymbol(self.C2FFt[i,j])
 
     def gF2_8(self, i, j):
-        return self.matrixToSymbol(self.C2FS[i,j])
+        return self.matrixToSymbol(self.C2FSt[i,j])
 
     def gF2_9(self, i, j):
         return self.matrixToSymbol(
-                tensorContract(self.C2F(i, k_),
-                               self.C2F(k_, j)))
+                tensorContract(self.C2Ft(i, k_),
+                               self.C2Ft(k_, j)))
 
 
     def matrixToSymbol(self, expr):

@@ -57,8 +57,23 @@ class RGEsModule():
         self.constructT()
 
         # Remove 'True' from tuples with adjoint Yuk/FM matrices
-        self.YDic = {k[:3]:v for k,v in self.YDic.items()}
-        self.MFdic = {k[:2]:v for k,v in self.MFdic.items()}
+        for k in list(self.YDic.keys()):
+            if k[-1] is True:
+                newK = k[:3]
+                if newK not in self.YDic:
+                    self.YDic[newK] = 0
+                self.YDic[newK] += self.YDic[k]
+                del self.YDic[k]
+
+        for k in list(self.MFdic.keys()):
+            if k[-1] is True:
+                newK = k[:2]
+                if newK not in self.MFdic:
+                    self.MFdic[newK] = 0
+                self.MFdic[newK] += self.MFdic[k]
+                del self.MFdic[k]
+        # self.YDic = {k[:3]:v for k,v in self.YDic.items()}
+        # self.MFdic = {k[:2]:v for k,v in self.MFdic.items()}
 
         #Initialize tensors
         self.initTensors()
@@ -322,13 +337,6 @@ class RGEsModule():
         for k,val in self.Vdic.items():
             self.v.dic[k] = val
 
-        # # Anomalous dimensions
-
-        # self.v = Tensor((self.nS,))
-        # for k,val in self.Vdic.items():
-        #     self.v.dic[k] = val
-
-
         #############################################
         #####  Definition of 2-point functions  #####
         #############################################
@@ -374,7 +382,7 @@ class RGEsModule():
 
             self.Y2F = Tensor((self.nF, self.nF),
                                 tensorContract(self.y(a_,i_,k_),
-                                              self.yt(a_,k_,j_)))
+                                               self.yt(a_,k_,j_)))
 
             self.Y2Ft = Tensor((self.nF, self.nF))
             self.Y2Ft.dic = self.dicTilde(self.Y2F.dic, [0,1])
@@ -391,8 +399,8 @@ class RGEsModule():
 
             self.Y2S = Tensor((self.nS, self.nS),
                                 tensorContract(self.y(a_,i_,j_),
-                                              self.yt(b_,j_,i_),
-                                              doTrace=True, yukSorting=self.model.YukPos))
+                                               self.yt(b_,j_,i_),
+                                               doTrace=True, yukSorting=self.model.YukPos))
 
         ################
         # 2-loop gauge #
@@ -415,6 +423,7 @@ class RGEsModule():
                                 tensorContract(self.C2S(a_,b_),
                                                self.Ts(A_,b_,c_),
                                                self.Ts(B_,c_,a_)))
+
             self.S2SYS = Tensor((self.nGi, self.nGi),
                                 tensorContract(self.Y2S(a_,b_),
                                                self.Ts(A_,b_,c_),
@@ -428,39 +437,39 @@ class RGEsModule():
         if requirement(3,2,None):
             self.C2FG = Tensor((self.nF, self.nF),
                                 tensorContract(self.G(A_,C_),
-                                              self.C2G(C_,D_),
-                                              self.G(D_,B_),
-                                              self.T(A_,i_,j_),
-                                              self.T(B_,j_,k_)))
+                                               self.C2G(C_,D_),
+                                               self.G(D_,B_),
+                                               self.T(A_,i_,j_),
+                                               self.T(B_,j_,k_)))
 
             self.C2FS = Tensor((self.nF, self.nF),
                                 tensorContract(self.G(A_,C_),
-                                              self.S2S(C_,D_),
-                                              self.G(D_,B_),
-                                              self.T(A_,i_,j_),
-                                              self.T(B_,j_,k_)))
+                                               self.S2S(C_,D_),
+                                               self.G(D_,B_),
+                                               self.T(A_,i_,j_),
+                                               self.T(B_,j_,k_)))
 
             self.C2FF = Tensor((self.nF, self.nF),
                                 tensorContract(self.G(A_,C_),
-                                              self.S2F(C_,D_),
-                                              self.G(D_,B_),
-                                              self.T(A_,i_,j_),
-                                              self.T(B_,j_,k_)))
+                                               self.S2F(C_,D_),
+                                               self.G(D_,B_),
+                                               self.T(A_,i_,j_),
+                                               self.T(B_,j_,k_)))
 
             self.Y2FCF = Tensor((self.nF, self.nF),
                                 tensorContract(self.y(a_,i_,j_),
-                                                self.C2F(j_,k_),
-                                                self.yt(a_,k_,l_)))
+                                               self.C2F(j_,k_),
+                                               self.yt(a_,k_,l_)))
 
             self.Y2FCS = Tensor((self.nF, self.nF),
                                 tensorContract(self.y(a_,i_,j_),
-                                                self.yt(b_,j_,k_),
-                                                self.C2S(a_,b_)))
+                                               self.yt(b_,j_,k_),
+                                               self.C2S(a_,b_)))
 
             self.Y2FYF = Tensor((self.nF, self.nF),
                                 tensorContract(self.y(a_,i_,j_),
-                                                self.Y2Ft(j_,k_),
-                                                self.yt(a_,k_,l_)))
+                                               self.Y2Ft(j_,k_),
+                                               self.yt(a_,k_,l_)))
 
             self.Y2FYFt = Tensor((self.nF, self.nF))
             self.Y2FYFt.dic = self.dicTilde(self.Y2FYF.dic, [0,1])
@@ -468,8 +477,8 @@ class RGEsModule():
 
             self.Y2FYS = Tensor((self.nF, self.nF),
                                 tensorContract(self.Y2S(a_,b_),
-                                                self.y(a_,i_,j_),
-                                                self.yt(b_,j_,k_) ))
+                                               self.y(a_,i_,j_),
+                                               self.yt(b_,j_,k_) ))
 
             self.Y2FYSt = Tensor((self.nF, self.nF))
             self.Y2FYSt.dic = self.dicTilde(self.Y2FYS.dic, [0,1])
@@ -477,10 +486,19 @@ class RGEsModule():
 
             self.Y4F = Tensor((self.nF, self.nF),
                               tensorContract(self.y(a_,i_,j_),
-                                              self.yt(b_,j_,k_),
-                                              self.y(a_,k_,l_),
-                                              self.yt(b_,l_,m_)))
+                                             self.yt(b_,j_,k_),
+                                             self.y(a_,k_,l_),
+                                             self.yt(b_,l_,m_)))
 
+            if self.model.fermionAnomalous != {}:
+                self.C2FGt = Tensor((self.nF, self.nF))
+                self.C2FGt.dic = self.dicTilde(self.C2FG.dic, [0,1])
+
+                self.C2FSt = Tensor((self.nF, self.nF))
+                self.C2FSt.dic = self.dicTilde(self.C2FS.dic, [0,1])
+
+                self.C2FFt = Tensor((self.nF, self.nF))
+                self.C2FFt.dic = self.dicTilde(self.C2FF.dic, [0,1])
 
         #################
         # 2-loop scalar #
