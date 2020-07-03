@@ -91,7 +91,7 @@ def generateYukTerm(couplings, indices, ranges, conj=()):
     return [couplings[0] + [conjugate(cPos)(c(pInd[i[0]], pInd[i[1]])) for cPos, (c, i) in enumerate(zip(couplings[1], indices))] + couplings[2] for pInd in indsProduct]
 """
 
-    def UFOsubstitutions(self, model):
+    def UFOsubstitutions(self, model, inconsistentRGEerror=True):
         """ Transform the UFO mapping dict into substitutions, and apply them to the RGEs """
 
         subsDic = {}
@@ -119,7 +119,7 @@ def generateYukTerm(couplings, indices, ranges, conj=()):
             subsDic[k] = str(matList).replace("\\'", "'")
 
         subsDic = getSubstitutions(model, subsDic)
-        doSubstitutions(model, subsDic)
+        doSubstitutions(model, subsDic, inconsistentRGEerror=inconsistentRGEerror)
 
     def prepareRGEs(self, model):
         """ Gather all the terms of the RGES by coupling type and by value of the numerical coeff """
