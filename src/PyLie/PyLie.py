@@ -287,10 +287,10 @@ class LieAlgebra(object):
 
     def _simpleProduct(self, v1, v2, cmID):
         # Scalar product from two vector and a matrix
-        if type(v2) == list:
-            v2 = np.array(v2)
         if type(v1) == list:
             v1 = np.array(v1)
+        if type(v2) == list:
+            v2 = np.array(v2)
         return Rational(1, 2) * (np.dot(np.dot(v1, cmID), v2.transpose())[0, 0])
 
     def _positiveRoots(self):
@@ -497,8 +497,10 @@ class LieAlgebra(object):
         if not (type(irrep) == np.ndarray):
             irrep = np.array([irrep])
         delta = Rational(1, 2) * self._deltaTimes2
-        if (self.cartan._name == 'A' or self.cartan._name == 'B' or self.cartan._name == 'C') and self.cartan._id == 1:
+
+        if self.cartan._name in 'ABC' and self.cartan._id == 1 and type(delta) != np.ndarray:
             delta = np.array([delta])
+
         result = np.prod([self._simpleProduct([self.proots[i - 1]], irrep + delta, self._cmID) /
                           self._simpleProduct([self.proots[i - 1]], [delta], self._cmID)
                              for i in range(1, len(self.proots) + 1)], axis=0)
