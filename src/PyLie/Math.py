@@ -539,20 +539,6 @@ class sMat(SparseMatrix):
 
         return m
 
-    def multiply(self, m2):
-        """ Element-wise matrix multiplication """
-
-        if self.shape != m2.shape:
-            print("Shapes do not match")
-            return
-
-        m = sMat(*self.shape)
-
-        for k,v in self._smat.items():
-            if k in m2._smat:
-                m[k] = v*m2._smat[k]
-
-        return m
 
     def kroneckerProduct(self, m2, simplify=False):
         m = sMat(self.shape[0]*m2.shape[0], self.shape[1]*m2.shape[1])
