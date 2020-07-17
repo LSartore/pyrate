@@ -1815,6 +1815,11 @@ class LieAlgebra(object):
 
             aux4 = GramSchmidt(aux4, True)
 
+            # Sympy 1.6 compatibility
+            for i, el in enumerate(aux4):
+                if not isinstance(el, sMat):
+                    aux4[i] = sMat(el)
+
             if newStates == []:
                 newStates = aux4[0]
                 for el in aux4[1:]:
