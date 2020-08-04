@@ -20,18 +20,15 @@ welcomemessage = (
 """
 ============================================================================
 
-             PyR@TE version 3.0-beta1  released  April 8th 2020
+             PyR@TE version 3.0 released August 4th 2020
 
        L. Sartore,
 
        F. Lyonnet, I. Schienbein (version 2)
        and F.Staub, A.Wingerter (version 1)
-    Please cite: arXiv:20xx.xxxxx , arXiv:1608.07274 and arXiv:1309.7030
+    Please cite arXiv:2007.12700
+    Also, please consider citing 1906.04625 when using the 3-loop results
 
-! Disclaimer !
-    This is a beta-version. If you encounter any bug or have any trouble
-    running PyR@TE, please contact the author at : sartore at lpsc.in2p3.fr
-    Also, please consider downloading the most recent version regularly.
 ============================================================================
 """ )
 print(welcomemessage)
@@ -51,10 +48,6 @@ import traceback
 from PyLieDB import PyLieDB
 from ModelsClass import Model
 from RGEsModule import RGEsModule
-
-# The following should be removed later
-from sympy import init_printing
-init_printing(forecolor='White', wrap_line=False, use_unicode=False)
 
 t0 = time.time()
 

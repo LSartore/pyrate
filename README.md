@@ -1,4 +1,4 @@
-# PyR@TE 3 (beta-version)
+# PyR@TE 3
 
 ### New in v3.0:
 
@@ -30,15 +30,15 @@ The only thing to do is to clone this repository, and begin working in PyR@TE 3'
 
 PyR@TE is a Python code that computes the renormalization group equations (RGEs) for any renormalizable non-supersymmetric model. After the gauge groups, the particle content and the Lagrangian of have been defined in a model file, PyR@TE calculates the RGEs for all of the couplings at the one- or two-loop level, and up to the three-loop level for gauge couplings.  
 
-### How to run PyR@TE
+### How to use PyR@TE
 
-While there is no official documentation available yet for the version 3, please refer yourself to the example notebooks in `doc/` :
-- `Tutorial.ipynb` explains some of the general features of PyR@TE 3 and shows how to use it ;
-- `PyLieDatabase.ipynb` explains how to interact with PyLie's database and to use Clebsch-Gordan coefficients (CGCs) when building a Lagrangian 
+An official documentation is available at <a href="https://arxiv.org/abs/2007.12700">2007.12700</a>. In addition, two example notebooks are provided with the software and can be found in `doc/`:
+- `Tutorial.ipynb` explains some of the general features of PyR@TE 3 and shows how to run it ;
+- `PyLieDatabase.ipynb` explains how to interact with PyLie's database and to use Clebsch-Gordan coefficients (CGCs) when building a Lagrangian.
 
-Please note that these two notebooks do not cover the entirety of PyR@TE 3's functionalities, but may still serve as a useful starting point. A comprehensive documentation is currently in preparation.
+Note: When using the 3-loop gauge results, please consider citing <a href="https://arxiv.org/abs/1906.04625">1906.04625</a> in addition to <a href="https://arxiv.org/abs/2007.12700">2007.12700</a>.
 
-
+### Contact
 
 For suggestions, bug reports or any comments please contact the author at : 
 
