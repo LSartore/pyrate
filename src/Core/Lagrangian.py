@@ -339,6 +339,10 @@ class Lagrangian():
                                pyrateNormalization=True,
                                realBasis=GaugeGroup.realBasis)
 
+            if len(cgc) == 0:
+                loggingCritical(f"Error: no invariant can be formed from the reps provided in '{name}'.")
+                exit()
+
             result = cgc[N]
 
             shape = result.dim[:result.rank]
