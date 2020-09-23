@@ -70,8 +70,7 @@ class Tensor():
                         contractedDummies[i] = (dummies[i], pos)
                         del dummies[i]
                     else:
-                        print(f"Error: Index {i} cannot appear more than two times here.")
-                        exit()
+                        raise ValueError(f"The index {i} cannot appear more than two times here.")
 
         dummList = list(dummies.keys())
         retList = []
@@ -156,7 +155,7 @@ def readContraction(*tensorsWithInds, depth=0):
                         raise ValueError(f"Inconsistent ranges for indice {i} : {tensors[p1].range[p2]} and {dummies[i][0][2]} .")
                     dummies[i].append((p1,p2, tensors[p1].range[p2]))
                 else:
-                    print(f"Error: dummy index {i} appears more than twice...")
+                    raise ValueError(f"The dummy index {i} appears more than twice...")
                     break
 
     freeDummies = []

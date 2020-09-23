@@ -584,7 +584,13 @@ class Lagrangian():
             for coupling, term in list(terms.items()):
                 TensorObject.globalTensorCount = 1
                 parsedTerm = []
-                expTerm = self.parseExpression(term, expandedTerm=parsedTerm).dic[()]
+
+                try:
+                    expTerm = self.parseExpression(term, expandedTerm=parsedTerm).dic[()]
+                except BaseException as e:
+                    loggingCritical(f"\nError while expanding the term '{coupling}':")
+                    loggingCritical(f" -> {str(e)}")
+                    exit()
 
                 self.expandedPotential[couplingType][coupling] = parsedTerm[0]
                 self.fullyExpandedPotential[couplingType][coupling] = expTerm
