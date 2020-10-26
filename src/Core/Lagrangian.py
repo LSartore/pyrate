@@ -229,6 +229,7 @@ class Lagrangian():
         are printed if needed."""
 
         originalExpr = expr
+        errorExpr = (name + ' : ' if name is not None else '') + str(originalExpr)
 
         ##########
         # Case 1 : expr is a representation matrix
@@ -376,7 +377,7 @@ class Lagrangian():
 
         def sympyParse(expr):
             if '^' in expr:
-                loggingCritical(f"\nError in expression '{originalExpr}' : powers must be written using the '**' operator")
+                loggingCritical(f"\nError in expression '{errorExpr}' : powers must be written using the '**' operator")
                 exit()
             return parse_expr(expr, local_dict = localDict,
                               transformations=standard_transformations[1:] + (implicit_multiplication,),
@@ -396,7 +397,7 @@ class Lagrangian():
         try:
             expr = sympyParse(expr)
         except:
-            loggingCritical("\nError while parsing the term " + str(originalExpr) + ".")
+            loggingCritical(f"\nError while parsing the term '{errorExpr}'.")
             exit()
 
         rep = {}
@@ -563,7 +564,7 @@ class Lagrangian():
         try:
             return TensorObject(copy=(Lbase, ranges, rhsResult), fromDef=name, expr=expr)
         except:
-            loggingCritical(f"\nError while parsing the term '{originalExpr}': please check the consistency of contracted indices.")
+            loggingCritical(f"\nError while parsing the term '{errorExpr}': please check the consistency of contracted indices.")
             exit()
 
     def expand(self):
@@ -592,9 +593,12 @@ class Lagrangian():
 
                 try:
                     expTerm = self.parseExpression(term, expandedTerm=parsedTerm).dic[()]
+                except KeyboardInterrupt:
+                    raise KeyboardInterrupt
                 except BaseException as e:
-                    loggingCritical(f"\nError while expanding the term '{coupling}':")
-                    loggingCritical(f" -> {str(e)}")
+                    if str(e) != '':
+                        loggingCritical(f"\nError while expanding the term '{coupling}':")
+                        loggingCritical(f" -> {e}")
                     exit()
 
                 self.expandedPotential[couplingType][coupling] = parsedTerm[0]

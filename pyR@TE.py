@@ -75,6 +75,9 @@ try:
     RGmodule.initialize()
 except SystemExit:
     exit()
+except KeyboardInterrupt:
+    error = True
+    track = ''
 except:
     error = True
     track = traceback.format_exc()
@@ -82,7 +85,7 @@ finally:
     idb.close()
     if error:
         print(track)
-        exit(1)
+        exit()
 
 
 # Actual beta-function computation
