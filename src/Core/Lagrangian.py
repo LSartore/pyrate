@@ -65,7 +65,6 @@ class TensorObject(Tensor):
                                        for x,field in zip(p.realComponents, p.realFields)])
         else:
             self.symbol = IndexedBase(str(p._name))
-
             inds = itertools.product(*[range(i) for i in self.range])
 
             for i in inds:
@@ -320,9 +319,12 @@ class Lagrangian():
             # The CGC call contains a pos
             if args != []:
                 if len(args) == 1:
-                    N = int(args[0])
+                    N = int(args[0])-1
                 else:
                     loggingCritical(f"\nError in {name}: {expr} ; too much arguments to cgc() function.")
+                    exit()
+                if N < 0:
+                    loggingCritical(f"\nError in {name}: {expr} ; the position argument must be a non-zero positive integer.")
                     exit()
 
             if not isinstance(N, int):
@@ -341,6 +343,9 @@ class Lagrangian():
 
             if len(cgc) == 0:
                 loggingCritical(f"Error: no invariant can be formed from the reps provided in '{name}'.")
+                exit()
+            if N > len(cgc)-1:
+                loggingCritical(f"\nError in {name}: {expr} ; the position argument cannot be larger than {len(cgc)} here.")
                 exit()
 
             result = cgc[N]
