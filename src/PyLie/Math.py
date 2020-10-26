@@ -8,8 +8,8 @@ import itertools
 from functools import reduce
 
 from sympy.combinatorics import Permutation
-from sympy import (Add, I, Mul, SparseMatrix, Symbol, Rational,
-                   conjugate, factorial, flatten, im, sqrt)
+from sympy import (Add, IndexedBase, Mul, SparseMatrix, Symbol, Rational,
+                   conjugate, factorial, flatten, im, re, sqrt)
 
 from sympy import simplify as sSimplify
 
@@ -428,6 +428,12 @@ class sMat(SparseMatrix):
                     self.rowDic[k[0]] = {}
                 self.rowDic[k[0]][k[1]] = v
 
+    def __getitem__(self, key):
+        """ Mimics numpy's ndarray.__getitem__() behavior """
+        if isinstance(key, slice):
+            return self[key, :]
+        return super().__getitem__(key)
+
     def id(n, v=1, rowDic=False):
         """ Static function returning identity (times v) """
 
@@ -552,25 +558,13 @@ class sMat(SparseMatrix):
 
         return m
 
-    # This function will be useful in PyR@TE when computing the repMats
-    # of complex scalars
-    def complexToReal(self):
-        R = sMat([[1, I],[-I, 1]])
 
-        m = sMat(self.shape[0]*R.shape[0], self.shape[1]*R.shape[1])
+    def real(self):
+        return sMat(*self.shape, {k:re(v) for k,v in self._smat.items()})
 
-        for k1, v1 in R._smat.items():
-            for k2, v2 in self._smat.items():
-                k = (k1[0]*self.shape[0]+k2[0], k1[1]*self.shape[1]+k2[1])
-                m._smat[k] = I*im(v1*v2)
+    def imag(self):
+        return sMat(*self.shape, {k:im(v) for k,v in self._smat.items()})
 
-        return m
-
-    def __getitem__(self, key):
-        """ Mimic numpy's ndarray.__getitem__ behavior """
-        if isinstance(key, slice):
-            return self[key, :]
-        return super().__getitem__(key)
 
     def nullSpace(self, vecForm=False, progress=False):
         rowDic = {}
@@ -770,16 +764,6 @@ def sEye(n, v=1):
 
 
 
-
-
-
-
-
-
-
-
-from sympy import IndexedBase
-
 class sTensor():
     baseSymbs = [IndexedBase(name) for name in 'abcd']
 
@@ -791,7 +775,6 @@ class sTensor():
         self.forceSub = forceSub
 
         self.symbs = self.baseSymbs
-        # print("dim : ", self.dim)
 
         self.nMax = 1
         for d in self.dim:
@@ -810,19 +793,8 @@ class sTensor():
                 for k,v in dic.items():
                     self.fillSubDics(self.pad(k),v)
 
-        # for i, d in enumerate(self.subDics):
-        #     if d != {}:
-        #         for k,v in d.keys():
-        #             key = i*(None,) + (k,) + (3-i)*(None,)
-        #             subDim = (self.dim[:i] + self.dim[i+1:])
-        #             self.subTensors[key] = sTensor(*subDim, dic=v)
-                #     self.subTensor[i*(None,) + (i,) + (3-i)*(None,)] = v
-
-        # for i in range(self.rank):
-        #     self.subTensors[i].dic = self.subDics[i]
 
     def pad(self, key, right=False):
-        # Test: keys are always 4-dim tuples, with None values if rank < 4
         if len(key) == 4:
             return key
         if right:
@@ -866,9 +838,6 @@ class sTensor():
                     subDim = list(self.dim)
                     subDim[j] = None
                     self.subTensors[key] = sTensor(*subDim, dic=subDic[k[j]])
-                # else:
-                    # if self.subDics[i][k[j]] != self.subTensors[key].dic:
-                        # exit()
 
     def keyToSymbol(self, key):
         tmp = 1
@@ -906,19 +875,11 @@ class sTensor():
         return str(self.expr())
 
     def __getitem__(self, key):
-        # for i, el in enumerate(key):
-        #     if el >= self.dim[i]:
-        #         raise ValueError(f"Value {el} in {key} is larger than tensor dimensions : {self.dim}.")
-
         if key in self.dic:
             return self.dic[self.pad(key)]
         return 0
 
     def __setitem__(self, key, val):
-        # for i, el in enumerate(key):
-        #     if el is not None and el >= self.dim[i]:
-        #         raise ValueError(f"Value {el} in {key} is larger than tensor dimensions : {self.dim}.")
-
         if val == 0:
             if key in self.dic:
                 del self.dic[key]
@@ -966,13 +927,10 @@ class sTensor():
             if i is not None:
                 newDim[pos] = self.dim[i]
 
-        # print(self.dim, perm, newDim)
-
         ret = sTensor(*newDim)
 
         for k,v in self.dic.items():
             key = tuple([(k[el] if el is not None else None) for el in perm])
-            # print(f"{k} goes to {key}")
             ret[key] = v
 
         return ret

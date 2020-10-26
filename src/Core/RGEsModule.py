@@ -3,14 +3,14 @@
 from Logging import loggingInfo, loggingCritical
 from sys import exit
 
-from sympy import (BlockMatrix, I, Identity, Matrix, Rational, SparseMatrix, Symbol,
+from sympy import (I, Identity, Matrix, Rational, SparseMatrix, Symbol,
                    re, im, transpose)
 import itertools
 
 from Definitions import TensorDic, Tensor, tensorContract, tensorAdd, tensorMul
+from Math import sMat, sEye as eye
 
 import time
-from sympy import pprint
 
 class RGEsModule():
     """ This class contains information about the various tensor quantities
@@ -53,8 +53,9 @@ class RGEsModule():
         loggingInfo("Initializing tensor quantities...", end=' ')
         t0 = time.time()
 
-        self.constructTs()
+        # Build the representation matrices for the whole (semi)simple gauge group
         self.constructT()
+        self.constructTs()
 
         # Remove 'True' from tuples with adjoint Yuk/FM matrices
         for k in list(self.YDic.keys()):
@@ -72,8 +73,6 @@ class RGEsModule():
                     self.MFdic[newK] = 0
                 self.MFdic[newK] += self.MFdic[k]
                 del self.MFdic[k]
-        # self.YDic = {k[:3]:v for k,v in self.YDic.items()}
-        # self.MFdic = {k[:2]:v for k,v in self.MFdic.items()}
 
         #Initialize tensors
         self.initTensors()
@@ -116,25 +115,18 @@ class RGEsModule():
                     if dimR == 1:
                         continue
 
+                    padding = model.allFermions[fName + '[' + ', '.join(['0']*len(f.indexStructure)) + ']'][0]
                     repMat = g.repMat(f.Qnb[gName])
 
-                    if len(f.indexStructure) > 1:
-                        baseIndsList = list(itertools.product(*[(range(d) if pos != nAbelPos else [-1]) for pos, d in enumerate(f.fullIndexStructure) if d > 1]))
-                        indsList = [[[(i if i != -1 else ind) for i in el] for ind in range(dimR)] for el in baseIndsList]
-                    else:
-                        indsList = [[[d] for d in range(dimR)]]
+                    for A in range(g.dim):
+                        kdMats = [(repMat[A] if iPos == nAbelPos else eye(iRange)) for iPos, iRange in enumerate(f.fullIndexStructure)]
 
-                    for inds in indsList:
-                        mapping = {}
-                        for gp, ind in enumerate(inds):
-                            field = model.allFermions[str(f)+str(ind)]
-                            mapping[field[0]] = gp
+                        rMat = kdMats[0]
+                        for m in kdMats[1:]:
+                            rMat = rMat.kroneckerProduct(m)
 
-                        for A in range(g.dim):
-                            for r1, i1 in mapping.items():
-                                for r2, i2 in mapping.items():
-                                    if repMat[A][i1,i2] != 0:
-                                        self.TDic[((gPos,A), r1, r2)] = identity(f.gen)*repMat[A][i1,i2]
+                        for (i, j), val in rMat._smat.items():
+                            self.TDic[((gPos,A), padding + i, padding + j)] = identity(f.gen)*val
 
     def constructTs(self):
         """ Construct the scalar gauge generators """
@@ -143,22 +135,19 @@ class RGEsModule():
         repMat = []
         dimR = 0
         nonAbelGroupNames = [gName for gName, g in model.gaugeGroups.items() if g.abelian is False]
+
+        O = sMat([[1, I], [-I, 1]])
+
         for gPos, (gName, g) in enumerate(model.gaugeGroups.items()):
 
             ###################
             #  Real  scalars  #
             ###################
-            if g.abelian:
-                for sName, s in model.allScalars.items():
-                    if s[1].fromCplx != False:
-                        continue
-                    if s[1].Qnb[gName] != 0:
-                        self.TsDic[((gPos,0), s[0], s[0])] = Rational(s[1].Qnb[gName])
 
-            else:
+            if not g.abelian:
                 nAbelPos = nonAbelGroupNames.index(gName)
                 for sName, s in model.Scalars.items():
-                    if s.fromCplx != False:
+                    if s.fromCplx:
                         continue
 
                     dimR = g.dimR(s.Qnb[gName])
@@ -166,25 +155,18 @@ class RGEsModule():
                     if dimR == 1:
                         continue
 
+                    padding = model.allScalars[sName + '[' + ', '.join(['0']*len(s.indexStructure)) + ']'][0]
                     repMat = g.repMat(s.Qnb[gName])
 
-                    if len(s.indexStructure) > 1:
-                        baseIndsList = list(itertools.product(*[(range(d) if pos != nAbelPos else [-1]) for pos, d in enumerate(s.fullIndexStructure) if d > 1]))
-                        indsList = [[[(i if i != -1 else ind) for i in el] for ind in range(dimR)] for el in baseIndsList]
-                    else:
-                        indsList = [[[d] for d in range(dimR)]]
+                    for A in range(g.dim):
+                        kdMats = [(repMat[A] if iPos == nAbelPos else eye(iRange)) for iPos, iRange in enumerate(s.fullIndexStructure)]
 
-                    for inds in indsList:
-                        mapping = {}
-                        for gp, ind in enumerate(inds):
-                            field = model.allScalars[str(s)+str(ind)]
-                            mapping[field[0]] = gp
+                        rMat = kdMats[0]
+                        for m in kdMats[1:]:
+                            rMat = rMat.kroneckerProduct(m)
 
-                        for A in range(g.dim):
-                            for r1, i1 in mapping.items():
-                                for r2, i2 in mapping.items():
-                                    if repMat[A][i1,i2] != 0:
-                                        self.TsDic[((gPos,A), r1, r2)] = repMat[A][i1,i2]#Identity(s.gen)*repMat[A][i1,i2]
+                        for (i, j), val in rMat._smat.items():
+                            self.TsDic[((gPos,A), padding + i, padding + j)] = val
 
             ###################
             # Complex scalars #
@@ -196,56 +178,41 @@ class RGEsModule():
 
                 if not g.abelian:
                     nAbelPos = nonAbelGroupNames.index(gName)
-
                     dimR = g.dimR(s.Qnb[gName])
 
                     if dimR == 1:
                         continue
 
+                padding = model.allScalars[str(s.realFields[0]) + '[' + ', '.join(['0']*len(s.indexStructure)) + ']'][0]
+
                 if g.abelian:
                     t = s.Qnb[gName]
 
-                    reRepMat = I*Matrix([ [im(t),  re(t)],
-                                          [-re(t), im(t)] ])
+                    if t == 0:
+                        continue
 
-                    reFields = []
-                    indsList = itertools.product(*[range(d) for d in s.indexStructure])
-                    for ind in indsList:
-                        mapping = {}
-                        reFields.append([str(r)+str(list(ind)) for r in s.realFields])
-                        for p,r in enumerate(s.realFields):
-                            if s.indexStructure != ():
-                                reF = model.allScalars[str(r)+str(list(ind))]
-                            else:
-                                reF = model.allScalars[str(r)]
-                            mapping[reF[0]] = p
-                        for r1, i1 in mapping.items():
-                            for r2, i2 in mapping.items():
-                                if reRepMat[i1,i2] != 0:
-                                    self.TsDic[((gPos,0), r1, r2)] = reRepMat[i1,i2]
+                    reRepMat = I * (O*t).imag()
+
+                    rMat = reRepMat
+                    for iRange in s.fullIndexStructure:
+                        rMat = rMat.kroneckerProduct(eye(iRange))
+
+                    for (i, j), val in rMat._smat.items():
+                        self.TsDic[((gPos,0), padding + i, padding + j)] = val
 
                 else:
                     repMat = g.repMat(s.Qnb[gName])
-                    reRepMat = [r.complexToReal() for r in repMat]
 
-                    if len(s.indexStructure) > 1:
-                        baseIndsList = list(itertools.product(*[(range(d) if pos != nAbelPos else [-1]) for pos, d in enumerate(s.fullIndexStructure) if d > 1]))
-                        indsList = [[[(i if i != -1 else ind) for i in el] for ind in range(dimR)] for el in baseIndsList]
-                    else:
-                        indsList = [[[d] for d in range(dimR)]]
+                    for A in range(g.dim):
+                        kdMats = [(repMat[A] if iPos == nAbelPos else eye(iRange)) for iPos, iRange in enumerate(s.fullIndexStructure)]
 
-                    for inds in indsList:
-                        mapping = {}
-                        for gp, ind in enumerate(inds):
-                            for p,r in enumerate(s.realFields):
-                                reF = model.allScalars[str(r)+str(ind)]
-                                mapping[reF[0]] = gp + p*dimR
+                        rMat = O
+                        for m in kdMats:
+                            rMat = rMat.kroneckerProduct(m)
 
-                        for A in range(g.dim):
-                            for r1, i1 in mapping.items():
-                                for r2, i2 in mapping.items():
-                                    if reRepMat[A][i1,i2] != 0:
-                                        self.TsDic[((gPos,A), r1, r2)] = reRepMat[A][i1,i2]
+                        rMat = I*rMat.imag()
+                        for (i, j), val in rMat._smat.items():
+                            self.TsDic[((gPos,A), padding + i, padding + j)] = val
 
     def initTensors(self):
         ############################
@@ -626,42 +593,6 @@ class RGEsModule():
     def checkGaugeInvariance(self):
         loggingInfo("Checking gauge invariance ...", end=' ')
         t0 = time.time()
-
-        # fermionGauge = tensorAdd(tensorContract(self.T(A_,i_,j_),
-        #                                         self.T(B_,j_,k_),
-        #                                         freeDummies=[A_,B_,i_,k_],
-        #                                         doit=True) ,
-        #                           tensorMul(-1, tensorContract(self.T(B_,i_,j_),
-        #                                                       self.T(A_,j_,k_),
-        #                                                       freeDummies=[A_,B_,i_,k_],
-        #                                                       doit=True)) ,
-        #                           tensorMul(-I, tensorContract(self.f(A_,B_,C_),
-        #                                                       self.T(C_,i_,k_),
-        #                                                       freeDummies=[A_,B_,i_,k_],
-        #                                                       doit=True)))
-
-        # scalarGauge = tensorAdd(tensorContract(self.Ts(A_,i_,j_),
-        #                                         self.Ts(B_,j_,k_),
-        #                                         freeDummies=[A_,B_,i_,k_],
-        #                                         doit=True) ,
-        #                         tensorMul(-1, tensorContract(self.Ts(B_,i_,j_),
-        #                                                       self.Ts(A_,j_,k_),
-        #                                                       freeDummies=[A_,B_,i_,k_],
-        #                                                       doit=True)) ,
-        #                         tensorMul(-I, tensorContract(self.f(A_,B_,C_),
-        #                                                       self.Ts(C_,i_,k_),
-        #                                                       freeDummies=[A_,B_,i_,k_],
-        #                                                       doit=True)))
-
-        # if fermionGauge != {}:
-        #     loggingCritical("Basic Lie algebra commutation relations are not satisfied among fermions.\n"
-        #                     +"Please contact the author.")
-        #     exit()
-        # if scalarGauge != {}:
-        #     loggingCritical("Basic Lie algebra commutation relations are not satisfied among scalars.\n"
-        #                     +"Please contact the author.")
-        #     exit()
-
 
         yuk = tensorAdd(tensorMul(-1, tensorContract(self.Tt(A_,i_,j_),
                                                      self.y(a_,j_,k_),
