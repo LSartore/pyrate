@@ -887,15 +887,18 @@ class Model(object):
                         print_progress(count, self.nCouplings, prefix=' '*4, bar_length=20, printTime=self.times, logProgress=True)
 
                     if newRank == len(coeffList):
+                        self.lagrangianMapping[couplingType] = Matrix(mappingMatrix).inv() * self.betaFactor
                         break
+                else:
+                    # The mapping matrix is not invertible
+                    ns = mappingMatrix.nullspace()
+                    cVec = Matrix([Symbol('O(' + el + ')') for el in coeffList]).transpose()
 
-                try:
-                    self.lagrangianMapping[couplingType] = Matrix(mappingMatrix).inv() * self.betaFactor
-                except:
-                    # from sympy import pretty
-                    loggingCritical("\nError in Lagrangian mapping : matrix of couplings is not invertible.")
-                    loggingCritical("\tCoupling type : " + couplingType)
-                    # loggingCritical("\t\t" + pretty(mappingMatrix).replace("\n", "\n\t\t"))
+                    errorMess = "\n\nError in Lagrangian mapping: matrix of couplings is not invertible. "
+                    errorMess += f"The following operators in '{couplingType}' are linearly dependent:\n\n"
+                    for vec in ns:
+                        errorMess += f"  {(cVec*vec)[0,0]} = 0\n"
+                    loggingCritical(errorMess[:-1])
                     exit()
 
                 self.toCalculate[couplingType] = dicList
