@@ -859,29 +859,34 @@ class Model(object):
                 continue
             if ( couplingType in translation and self.potential[couplingType] != {}
              and translation[couplingType] != {}):
-                coeffList = []
-                dicList = []
-                mappingMatrix = []
-                sortedList = []
-
                 coeffList = [c for c in self.potential[couplingType].keys()]
-
                 mappingMatrix = SparseMatrix(len(coeffList), len(coeffList), 0)
-                sortedList = sorted([(key, val) for key, val in translation[couplingType].items() if not(type(key[-1]) == bool and key[-1] == True)],
-                                     key=lambda x: (len(set(x[0])), len(x[1].as_coeff_add()[1]), x[0]))
+                dicList = []
 
-                trys = 0
-                for el in sortedList:
-                    trys += 1
-                    matTry = self.fillMappingMatrix(mappingMatrix, coeffList, el)
-                    if(matTry.rank() > mappingMatrix.rank()):
+                auxDic = {}
+                sortFunc = lambda x: (len(set(x[0])), len(x[1].as_coeff_add()[1]), x[0])
+
+                for key, val in translation[couplingType].items():
+                    if key[-1] is True:
+                        continue
+                    if val not in auxDic:
+                        auxDic[val] = key
+                    elif sortFunc((key, val)) < sortFunc((auxDic[val], val)):
+                        auxDic[val] = key
+
+                rank = 0
+                for v, k in auxDic.items():
+                    matTry = self.fillMappingMatrix(mappingMatrix, rank, coeffList, (k,v))
+                    newRank = matTry.rank()
+                    if(newRank > rank):
                         mappingMatrix = matTry
-                        dicList.append(el[0])
+                        rank = newRank
+                        dicList.append(k)
 
                         count += 1
                         print_progress(count, self.nCouplings, prefix=' '*4, bar_length=20, printTime=self.times, logProgress=True)
 
-                    if matTry.rank() == len(coeffList):
+                    if newRank == len(coeffList):
                         break
 
                 try:
@@ -925,10 +930,8 @@ class Model(object):
             self.toCalculate[couplingType] = list(RGmodule.gammaSdic.keys())
 
 
-    def fillMappingMatrix(self, mappingMatrix, coeffList, newTerm):
-        newMat = copy.deepcopy(mappingMatrix)
-        j = mappingMatrix.rank()
-
+    def fillMappingMatrix(self, mappingMatrix, rank, coeffList, newTerm):
+        newMat = SparseMatrix(*mappingMatrix.shape, mappingMatrix._smat)
         pos = []
 
         for subTerm in newTerm[1].as_coeff_add()[1]:
@@ -938,10 +941,9 @@ class Model(object):
             pos.append((coeffList.index(coeff), Mul(*numeric)))
 
         for el in pos:
-            newMat[j, el[0]] = el[1]
+            newMat[rank, el[0]] = el[1]
 
         return newMat
-
 
     ##################
     # Beta-functions #
