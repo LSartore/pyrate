@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from .GaugeGroup import GaugeGroup
-from .Math import expand
+from .Math import expand, flattenedTensorPos, flattenedTensorInds
 from .Symbols import mSymbol, mMul, Identity
 from .Tensors import TensorDic, Tensor, tensorContract, tensorAdd, tensorMul
 from .Trace import Trace, trace

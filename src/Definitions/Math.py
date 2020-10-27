@@ -1,4 +1,4 @@
-from sympy import MatAdd, MatMul, flatten
+from sympy import MatAdd, MatMul, Mul, flatten
 from sympy import expand as sympyExpand
 
 import itertools
@@ -105,3 +105,24 @@ def expand(expr, factor=1, depth=0):
 
             ret.append(tmp)
         return MatAdd(*ret)
+
+
+def flattenedTensorPos(ranges, indices):
+    weights = [1]
+    for i in range(len(ranges)-1):
+        weights.insert(0, Mul(*ranges[-1-i:]))
+
+    return sum([weights[i]*indices[i] for i in range(len(ranges))])
+
+def flattenedTensorInds(ranges, pos):
+    N = len(ranges)
+    ret = [0 for _ in range(N)]
+
+    i = N-1
+    p = pos
+    while i >= 0:
+        (p, ret[i]) = (p // ranges[i], p % ranges[i])
+        i -= 1
+
+    return tuple(ret)
+

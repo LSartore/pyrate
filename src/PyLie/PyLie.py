@@ -1651,6 +1651,24 @@ class LieAlgebra(object):
 
         return rotMat
 
+    def _pseudoMetric(self, rep):
+        if rep[-1] is True:
+            cj = True
+            rep = rep[:-1]
+        else:
+            cj = False
+
+        if self.frobeniusSchurIndicator(rep) != -1:
+            print(f"Representation {rep} is not pseudo-real.")
+            return
+
+        quadraticInv = self.invariants([rep, rep])[0]
+        metric = sMat(*quadraticInv.dim[:2], {k[:2]: v for k,v in quadraticInv.dic.items()})
+
+        if not cj:
+            return metric
+        return -1*metric.transpose()
+
     def _rotateInvariants(self, reps, realBasis, invs, conj, maxinds):
         """ Rotate invariants to real basis """
 
@@ -2045,4 +2063,3 @@ class LieAlgebra(object):
             return array._smat == {}
 
         exit("What type of array ?")
-

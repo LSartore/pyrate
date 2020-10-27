@@ -435,19 +435,50 @@ class Model(object):
             elif key == 'RealScalars':
                 # Copy the particles in the class
                 for part, qnb in value.items():
-                    if 'Gen' not in qnb:
+                    norm = None
+                    if 'Norm' in qnb:
+                        norm = self.parseMathExpr(qnb['Norm'])
+                    if 'Qnb' not in qnb:
                         Qnb = {'Gen': 1, 'Qnb': qnb}
                     else :
                         Qnb = qnb
+
                     completeTrivialReps(Qnb)
                     self.Scalars[part] = Particle(part, Qnb, self.gaugeGroups, self.idb)
+
+                    # Now check that the representations are compatible with a real scalar
+                    for gName, g in self.gaugeGroups.items():
+                        if g.abelian and self.Scalars[part].Qnb[gName] != 0:
+                            loggingCritical(f"\nError: real scalar '{part}' cannot be charged under the abelian gauge factor {gName}")
+                            exit()
+                        if not g.abelian:
+                            rep = self.Scalars[part].Qnb[gName]
+                            dimR = g.dimR(rep)
+                            if dimR == 1:
+                                continue
+
+                            fs = self.idb.get(g.type, 'frobenius', rep)
+
+                            if fs == 1:
+                                loggingCritical(f"\nError: real scalar '{part}' cannot transform under the complex representation '{dimR}' of {gName}")
+                                exit()
+                            elif fs == -1:
+                                self.Scalars[part].pseudoRealReps.append((gName, g, rep, dimR))
+
+                    if self.Scalars[part].pseudoRealReps != []:
+                        if norm is None:
+                            loggingInfo(f"Warning: self-conjugate scalar '{part}' should be given a norm. Assuming 1/sqrt(2) by default.")
+                            norm = 1/sqrt(2)
+                        self.Scalars[part].pseudoNorm = norm
+                    elif norm is not None:
+                        loggingInfo(f"Warning: ignoring the unnecessary 'Norm' keyword in real scalar '{part}'.")
+
             elif key == 'Potential':
                 self.potential = value
 
         self.Particles.update(self.Fermions)
         self.Particles.update(self.Scalars)
 
-        # Now that the Real Scalars have been created we can create the Cplx one associated
         if 'ComplexScalars' in settings:
             for part, setts in settings['ComplexScalars'].items():
                 setts['Norm'] = self.parseMathExpr(setts['Norm'])
@@ -485,10 +516,15 @@ class Model(object):
                 self.allScalars[sName] = (nS, s, tuple([-1]*len(ranges)))
                 nS += 1
             else :
+                storeNs = nS
                 for el in itertools.product(*[(list(range(r)) if r != 0 else [-1]) for r in ranges]):
                     tup = [nS, s, tuple(el), parse_expr(str(sName) + str([n for n in el if n != -1]), local_dict={str(s._name): IndexedBase(str(s._name))})]
                     self.allScalars[sName + str([n for n in el if n != -1])] = tuple(tup)
                     nS += 1
+
+                # If the real scalar transforms under pseudo-real reps, some more work is needed
+                if s.pseudoRealReps != []:
+                    s.pseudoScalarHandling(list(self.allScalars.items()), storeNs)
 
         self.symbolicGen = any([isinstance(p.gen, Symbol) for p in self.Particles.values()])
 

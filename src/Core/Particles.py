@@ -1,12 +1,15 @@
-#!/usr/bin/env python
-from sympy import Symbol, I
+from sys import exit
+
+from sympy import Symbol, I, sqrt
 
 from Logging import loggingCritical
 
 from sympy.parsing.sympy_parser import parse_expr
 from copy import copy
 
-from Definitions import GaugeGroup
+from Definitions import GaugeGroup, flattenedTensorPos, flattenedTensorInds
+
+from Math import sMat, sEye as eye
 
 
 class Particle(object):
@@ -23,6 +26,7 @@ class Particle(object):
         self.cplx = False
         self.fromCplx = fromCplx
         self.conj = False
+        self.pseudoRealReps = []
 
         self.indicesRange = {}
         self.indexStructure = []
@@ -103,6 +107,61 @@ class Particle(object):
                 antiP.Qnb[gName] = -1 * qnb
 
         return antiP
+
+    def pseudoScalarHandling(self, allScalars, scalarPos):
+        gNabelList = [gName for gName, g in self.groups.items() if self.Qnb[gName] != 0 and g.dimR(self.Qnb[gName]) > 1]
+
+        self.pseudoRanges = [el[3] for el in self.pseudoRealReps]
+        self.pseudoRepsPos = [gNabelList.index(el[0]) for el in self.pseudoRealReps]
+        self.pseudoRealReps = [(el[0], el[2]) for el in self.pseudoRealReps]
+
+        # First, check that a solution to X = pseudoRealConjugate(X) = C.X exists
+        C = sMat([[1, 0], [0, -1]])
+
+        for gName in gNabelList:
+            g = self.groups[gName]
+            rep = self.Qnb[gName]
+
+            if (gName, rep) in self.pseudoRealReps:
+                m = self.idb.get(g.type, '_pseudoMetric', rep)
+            else:
+                m = eye(g.dimR(rep))
+
+            C = C.kroneckerProduct(m)
+
+        N = C.shape[0]
+        ns = (eye(N) - C).nullSpace()
+
+        if ns == {}:
+            loggingCritical(f"Error: real scalar '{self._name}' cannot be self-conjugate.")
+            exit()
+
+        nsMat = sMat(N, N//2)
+        for r, rowDic in ns.items():
+            for c, v in rowDic.items():
+                nsMat._smat[c, r] = v * self.pseudoNorm
+
+
+        self.pseudoNS = nsMat
+        self.pseudoNSadj = 1/(self.pseudoNorm**2 * 2) * nsMat.adjoint()
+        pseudoTransfo = eye(N//2).append(I*eye(N//2), axis=1) * nsMat
+
+        self.pseudoTransfo = {}
+        for k,v in pseudoTransfo._smat.items():
+            if k[0] not in self.pseudoTransfo:
+                self.pseudoTransfo[k[0]] = {}
+            self.pseudoTransfo[k[0]][k[1]] = v
+
+        def computeExpr(inds, symb):
+            res = 0
+
+            for k, v in self.pseudoTransfo[flattenedTensorPos(self.indexStructure, inds)].items():
+                res += v * symb[flattenedTensorInds(self.indexStructure, k)]
+
+            return res
+
+        self.computeComponents = computeExpr
+
 
 class ComplexScalar(Particle):
     def __init__(self, name, dic, Groups, idb):

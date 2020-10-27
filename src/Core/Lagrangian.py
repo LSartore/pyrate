@@ -67,12 +67,16 @@ class TensorObject(Tensor):
             self.symbol = IndexedBase(str(p._name))
             inds = itertools.product(*[range(i) for i in self.range])
 
-            for i in inds:
-                if not p.cplx:
-                    self.dic[i] = self.symbol[i]
-                else:
-                    self.dic[i] = p.norm*sum([x*IndexedBase(str(field._name))[i]
-                                          for x,field in zip(p.realComponents, p.realFields)])
+            if p.pseudoRealReps == []:
+                for i in inds:
+                    if not p.cplx:
+                        self.dic[i] = self.symbol[i]
+                    else:
+                        self.dic[i] = p.norm*sum([x*IndexedBase(str(field._name))[i]
+                                              for x,field in zip(p.realComponents, p.realFields)])
+            else:
+                for i in inds:
+                    self.dic[i] = p.computeComponents(i, self.symbol)
 
 
     def initFromString(self, s):
@@ -199,7 +203,14 @@ class Lagrangian():
         # Particles #
         #############
 
-        particleTensors = {name: TensorObject(p) for name, p in self.model.Particles.items()}
+        particleTensors = {}
+        for name, p in self.model.Particles.items():
+            particleTensors[name] = TensorObject(p)
+
+            # Self-conjugate scalars have a complex conjugate counterpart
+            if p.pseudoRealReps != []:
+                particleTensors[name + 'bar'] = TensorObject(p).getConjugate()
+
         self.definitions.update(particleTensors)
 
         ########################
@@ -218,9 +229,9 @@ class Lagrangian():
 
                     if str(type(obj.expr)) == 't':
                         self.definitions[str(obj.symbol)+'bar'] = obj.getConjugate()
-
                 else:
                     loggingCritical(f"Warning : unable to read the definition '{k}: {v}'. Skipping.")
+
 
     def parseExpression(self, expr, name=None, expandedTerm=None):
         """ This function handles the convertion from str to TensorObject of
@@ -259,7 +270,6 @@ class Lagrangian():
             if isinstance(rep, int):
                 rep = self.idb.get(gp.type, 'dynkinLabels', rep)
 
-            # repMats = self.idb.get(gp, 'repMatrices', rep, realBasis=GaugeGroup.realBasis)
             repMats = gp.repMat(tuple(rep))
 
             shape = tuple([len(repMats), *repMats[0].shape])
@@ -490,12 +500,19 @@ class Lagrangian():
                 if isinstance(field, Symbol):
                     continue
                 try:
-                    inds += list(field.indices)
+                    fieldInds = field.indices
                 except AttributeError:
                     loggingCritical(f"\nError (in term '{expr}') while reading the quantity '{field}'. It seems that indices are missing.")
                     exit()
+
+                fieldDef = self.definitions[str(field.base)]
+                if fieldDef.dim is not None and len(fieldInds) != fieldDef.dim:
+                    loggingCritical(f"\nError (in term '{expr}'): the quantity {field.base} should carry exactly {fieldDef.dim} indices")
+                    exit()
+
+                inds += list(fieldInds)
                 for p, ind in enumerate(field.indices):
-                    indRanges[ind] = (self.definitions[str(field.base)], p)
+                    indRanges[ind] = (fieldDef, p)
 
             freeInds = []
             for ind in set(inds):

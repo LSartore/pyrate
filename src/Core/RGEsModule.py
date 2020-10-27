@@ -161,9 +161,18 @@ class RGEsModule():
                     for A in range(g.dim):
                         kdMats = [(repMat[A] if iPos == nAbelPos else eye(iRange)) for iPos, iRange in enumerate(s.fullIndexStructure)]
 
-                        rMat = kdMats[0]
-                        for m in kdMats[1:]:
-                            rMat = rMat.kroneckerProduct(m)
+                        if (gName, s.Qnb[gName]) not in s.pseudoRealReps:
+                            # Real scalar
+                            rMat = kdMats[0]
+                            for m in kdMats[1:]:
+                                rMat = rMat.kroneckerProduct(m)
+                        else:
+                            # Self-conjugate complex scalar
+                            rMat = O
+                            for m in kdMats:
+                                rMat = rMat.kroneckerProduct(m)
+                            rMat = I*rMat.imag()
+                            rMat = s.pseudoNSadj*rMat*s.pseudoNS
 
                         for (i, j), val in rMat._smat.items():
                             self.TsDic[((gPos,A), padding + i, padding + j)] = val
