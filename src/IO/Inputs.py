@@ -208,7 +208,7 @@ class Inputs():
         if settings['VerboseLevel'] == 'Info':
             settings['vInfo'], settings['vDebug'], settings['vCritical'] = True, False, True
         elif settings['VerboseLevel'] == 'Debug':
-            settings['vInfo'], settings['vDebug'], settings['vCritical'] = False, True, True
+            settings['vInfo'], settings['vDebug'], settings['vCritical'] = True, True, True
         elif settings['VerboseLevel'] == 'Critical':
             settings['vInfo'], settings['vDebug'], settings['vCritical'] = False, False, True
         elif settings['VerboseLevel'] == '':

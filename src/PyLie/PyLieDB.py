@@ -233,9 +233,10 @@ class PyLieDB():
         cm = CartanMatrix(name)
         fn = cm._fullName
         if fn not in self.algebras:
-            self.loggingDebug(f"Loading {name} algebra...")
+            self.loggingDebug(f"\nLoading {name} algebra...")
             self.algebras[fn] = LieAlgebra(cm)
             self.algebras[fn].fn = fn
+            self.loggingDebug(f"Done.")
 
         # Basic info such as dim, rank, cartan matrix, ... is systematically
         # stored in the DB. Not that this info is computationally costly, but
@@ -273,9 +274,18 @@ class PyLieDB():
         if self.raiseErrors:
             raise BaseException(mess)
 
+    # def loggingDebug(self, mess):
+    #     if self.logging['debug']:
+    #         print(mess)
+
     def loggingDebug(self, mess):
         if self.logging['debug']:
-            print(mess)
+            if mess[0] == "\n":
+                mess = mess[1:]
+                init = "\n[-DB-]"
+            else:
+                init = "[-DB-]"
+            print(init, mess)
 
     ##################################
     # Write data : general functions #
@@ -549,8 +559,6 @@ class PyLieDB():
 
         return ret
 
-
-
     def __getitem__(self, item):
         args, kwargs = item
         if len(args) == 1:
@@ -634,7 +642,6 @@ class PyLieDB():
                 call += ','.join([str(k)+'='+str(v) for k,v in kwargs.items()])
             call += ')'
 
-            print("Calling function : '" + call + "'")
             return eval(call)
         except:
             print("Request '" + call + "' failed.")
@@ -875,7 +882,7 @@ class PyLieDB():
                 return
 
             if arg[-1] is False or arg[-1] is True:
-                if arg[-1] is True:
+                if arg[-1] is True and dataType == 'conjugaterep':
                     kwargs['conj'] = True
                 arg = arg[:-1]
 

@@ -16,7 +16,7 @@ except:
     raise SystemExit("Error while importing one of the modules `sys, os, yaml`")
 
 
-welcomemessage = (
+print(
 """
 ============================================================================
 
@@ -30,8 +30,8 @@ welcomemessage = (
     Also, please consider citing 1906.04625 when using the 3-loop results
 
 ============================================================================
-""" )
-print(welcomemessage)
+"""
+)
 
 try:
     from Logging import loggingInfo
@@ -52,7 +52,7 @@ from RGEsModule import RGEsModule
 t0 = time.time()
 
 # Create the interactive database instance
-idb = PyLieDB(raiseErrors=True)
+idb = PyLieDB(raiseErrors=True, logLevel=runSettings['VerboseLevel'])
 
 error = False
 # Whatever happens (errors or not) the DB is properly closed
@@ -76,8 +76,7 @@ try:
 except SystemExit:
     exit()
 except KeyboardInterrupt:
-    error = True
-    track = ''
+    exit()
 except:
     error = True
     track = traceback.format_exc()
