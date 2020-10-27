@@ -115,7 +115,9 @@ class RGEsModule():
                     if dimR == 1:
                         continue
 
-                    padding = model.allFermions[fName + '[' + ', '.join(['0']*len(f.indexStructure)) + ']'][0]
+                    padding = model.allFermions[fName + ('[' + ', '.join(['0']*len(f.indexStructure))
+                                                       + ']' if len(f.indexStructure) != 0 else '')][0]
+
                     repMat = g.repMat(f.Qnb[gName])
 
                     for A in range(g.dim):
@@ -155,7 +157,9 @@ class RGEsModule():
                     if dimR == 1:
                         continue
 
-                    padding = model.allScalars[sName + '[' + ', '.join(['0']*len(s.indexStructure)) + ']'][0]
+                    padding = model.allScalars[sName + ('[' + ', '.join(['0']*len(s.indexStructure))
+                                                      + ']' if len(s.indexStructure) != 0 else '')][0]
+
                     repMat = g.repMat(s.Qnb[gName])
 
                     for A in range(g.dim):
@@ -192,7 +196,8 @@ class RGEsModule():
                     if dimR == 1:
                         continue
 
-                padding = model.allScalars[str(s.realFields[0]) + '[' + ', '.join(['0']*len(s.indexStructure)) + ']'][0]
+                padding = model.allScalars[str(s.realFields[0]) + ('[' + ', '.join(['0']*len(s.indexStructure))
+                                                                 + ']' if len(s.indexStructure) != 0 else '')][0]
 
                 if g.abelian:
                     t = s.Qnb[gName]
