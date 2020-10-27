@@ -347,7 +347,7 @@ class RGEsolver():
 
             solver.set_initial_value(y0, t0)
             # Solve downwards
-            while solver.successful() and solver.t > tmin - dt/2:
+            while solver.successful() and solver.t > tmin + dt/2:
                 solver.integrate(solver.t-dt)
 
                 tList2.append(solver.t)
