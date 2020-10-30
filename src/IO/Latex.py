@@ -574,8 +574,7 @@ r""" \\[.1cm] \hline
                 if type(term) != list:
                     lag.append(term)
                 else:
-                    for el in term:
-                        lag.append(el)
+                    lag += term
 
             lagExpr = self.totex(lag).replace(r'\left', r'\big').replace(r'\right', r'\big')
 
@@ -1038,11 +1037,14 @@ class Printer(LatexPrinter):
     def _print_Add(self, expr):
         args = expr.args
 
+        if Symbol('_hc') in args and self.baseAdd:
+            return super()._print_Add(expr-Symbol('_hc')) + ' \n+ \\mathrm{h.c.}'
+
+        elif self.baseAdd:
+            return super()._print_Add(expr)
+
         if self.sort:
             args = self.sortTerms(args)
-
-        if self.baseAdd:
-            return super()._print_Add(expr)
 
         return self.splitEquation(args)
 

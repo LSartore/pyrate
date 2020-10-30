@@ -169,6 +169,7 @@ class Lagrangian():
         self.potential = model.potential
         self.translateContent = model.translateContent
         self.translateDic = model.translateDic
+        self.assumptions = model.assumptions
 
         self.dicToFill = {}
         self.currentPotentialDic = {}
@@ -621,12 +622,15 @@ class Lagrangian():
                 self.expandedPotential[couplingType][coupling] = parsedTerm[0]
                 self.fullyExpandedPotential[couplingType][coupling] = expTerm
 
-                self.fillTensorDic(coupling, expTerm, content)
-
                 if isComplex(couplingType, coupling, expTerm):
-                    self.conjugateScalarTerm(couplingType, coupling, content)
-                    count += 1
+                    if not ('real' in self.assumptions[coupling] and self.assumptions[coupling]['real'] is True):
+                        self.conjugateScalarTerm(couplingType, coupling, content)
+                        count += 1
+                    else:
+                        self.expandedPotential[couplingType][coupling] += Symbol('_hc')
+                        self.fullyExpandedPotential[couplingType][coupling] += expTerm.subs(I, -I)
 
+                self.fillTensorDic(coupling, expTerm, content)
                 count += 1
                 print_progress(count, self.model.nCouplings, prefix=' '*4, bar_length=20, printTime=self.model.times, logProgress=True)
 
@@ -649,7 +653,6 @@ class Lagrangian():
         self.fillTensorDic(cStar, expTerm, content)
 
         self.model.assumptions[cStar] = self.model.assumptions[c]
-
 
     def fillTensorDic(self, coupling, expTerm, content):
         subTerms = expTerm.as_coeff_add()[1]
