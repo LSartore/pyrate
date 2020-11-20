@@ -13,7 +13,6 @@ from Math import sMat, sTensor
 from sympy import Add, Pow, Rational, sqrt, I, Symbol
 
 import numpy as np
-npStr = np.string_
 
 import h5py
 import gzip
@@ -386,7 +385,7 @@ class PyLieDB():
         if allStr:
             s = str(val)
             s = s.replace('sqrt', 's')
-            return npStr(s)
+            return s.encode('ASCII')
         else:
             if val is True:
                 return -1
@@ -488,14 +487,14 @@ class PyLieDB():
 
         if isinstance(val, str):
             return val
-        if not isinstance(val, npStr):
+        if not isinstance(val, bytes):
             if objType == 'dynkinlabels' and isinstance(val, np.ndarray):
                 return val.tolist()
             elif objType == 'dynkinlabels' and int(val) == val and val == -1:
                 return True
             return int(val)
         else:
-            return PyLieDB.sympify(str(val, 'utf-8'))
+            return PyLieDB.sympify(str(val, 'ASCII'))
 
 
     def get(self, *args, **kwargs):
