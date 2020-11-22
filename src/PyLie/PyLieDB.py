@@ -487,6 +487,7 @@ class PyLieDB():
 
         if isinstance(val, str):
             return val
+
         if not isinstance(val, bytes):
             if objType == 'dynkinlabels' and isinstance(val, np.ndarray):
                 return val.tolist()
@@ -494,7 +495,10 @@ class PyLieDB():
                 return True
             return int(val)
         else:
-            return PyLieDB.sympify(str(val, 'ASCII'))
+            if objType is None or objType not in ('name', 'fullname'):
+                return PyLieDB.sympify(str(val, 'ASCII'))
+            else:
+                return str(val, 'ASCII')
 
 
     def get(self, *args, **kwargs):
@@ -669,19 +673,15 @@ class PyLieDB():
         This occurs once in a run, and no info will be written if the algebra is
         already present in the database. """
 
-        self.writeObject(algebra, 'fullName', overWrite=overWrite)
-        self.writeObject(algebra, 'name', overWrite=overWrite)
-        self.writeObject(algebra, 'rank', overWrite=overWrite)
-        self.writeObject(algebra, 'dimension', overWrite=overWrite)
-        self.writeObject(algebra, 'cartanMatrix', overWrite=overWrite)
-        self.writeObject(algebra, 'adjointRep', overWrite=overWrite)
+        for obj in self.basicTranslations:
+            self.writeObject(algebra, obj, overWrite=overWrite)
 
 
     def readBasicInfo(self, algebra, item):
         """ Read basic information from the DB. If not already stored in, the info
             will be retrieved and stored via self.loadAlgebra """
 
-        return PyLieDB.parse(self.f[algebra.fn][item])
+        return PyLieDB.parse(self.f[algebra.fn][item], objType=item)
 
 
     def handleInput(self, algebra, dataType, args, kwargs):
