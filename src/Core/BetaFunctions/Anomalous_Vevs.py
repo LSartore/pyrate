@@ -34,9 +34,9 @@ class VevBetaFunction(BetaFunction):
 
         ## 2-loop
 
-        self.coefficients.append( [r(35,3) - r(3,2)*xi  - r(3,2)*xi**2, r(-10,12), r(-11,12),
+        self.coefficients.append( [r(35,3) + r(3,2)*xi  - r(3,4)*xi**2, r(-10,12), r(-11,12),
                                    r(-3,2) + r(2)*xi + r(2)*xi**2, r(-1,12),
-                                   r(3,4), r(1,2), r(-10,4), r(-1,2)*xi] )
+                                   r(3,4), r(1,2), r(-10,4), r(-1)*xi] )
 
     ######################
     #  1-loop functions  #
