@@ -32,7 +32,13 @@ def splitPow(expr, deep=False):
         else:
            return flatten([splitPow(el, deep=deep) for el in expr if not el.is_number])
     if isinstance(expr, Pow):
-        res = expr.args[1]*[expr.args[0]]
+        if not isinstance(expr.args[1], Symbol):
+            res = expr.args[1]*[expr.args[0]]
+        else:
+            if isinstance(expr.args[0], Pow):
+                return expr.args[0].args[1]*[expr.args[0].args[0]**expr.args[1]]
+            return [expr]
+
         if not deep:
             return res
         return flatten([splitPow(el, deep=deep) for el in res])

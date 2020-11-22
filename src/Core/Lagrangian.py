@@ -435,11 +435,11 @@ class Lagrangian():
         commonFreeInds = None
 
         for term in termList:
-            coeff, terms = term.as_coeff_mul()
+            split = splitPow(term)
 
-            rationalFactors = [el for el in terms if el.is_number]
-            terms = tuple([el for el in terms if el not in rationalFactors])
-            coeff *= Mul(*rationalFactors)
+            rationalFactors = [el for el in split if el.is_number]
+            terms = tuple([el for el in split if el not in rationalFactors])
+            coeff = Mul(*rationalFactors)
 
             # Handle expr**N now
             newTerms = []
@@ -453,15 +453,8 @@ class Lagrangian():
                     if indexed != set():
                         indices = flatten([el.indices for el in indexed])
 
-                        if len(indices) == 1 and isinstance(base, Indexed):
-                                newTerms += [base]*exp
-                                continue
-
                         indCopies = {}
                         for i in indices:
-                            if base.count(i) != 2:
-                                loggingCritical(f"\nError in expression {subTerm} : all indices must be contracted.")
-                                exit()
                             if i not in indCopies:
                                 indCopies[i] = [Symbol(str(i)+f'_{p}') for p in range(1,exp)]
 
