@@ -2,7 +2,7 @@
 
 from Logging import loggingCritical, loggingInfo
 
-from sympy import (Mul, Pow, Symbol, adjoint, conjugate, diag, Matrix, sqrt, root, solveset,
+from sympy import (Mul, Pow, Symbol, adjoint, conjugate, diag, Matrix, root,
                    Abs, DiagonalMatrix, diff, flatten, MatMul, Integer, transpose)
 
 from Definitions import mSymbol, expand, Trace, trace, replaceKey, insertKey, Identity, splitPow
@@ -349,20 +349,21 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
             toExplicit = {}
 
             atoms = set([list(el.atoms())[0] for el in splitPow(tr.args[0])])
-            for el in atoms:
-                if not isinstance(el, mSymbol):
-                    continue
-                if str(el) in substitutionDic['yukMat']:
-                    sub = substitutionDic['yukMat'][str(el)][1]
+            if any([str(el) in substitutionDic['yukMat'] for el in atoms]):
+                for el in atoms:
+                    if not isinstance(el, mSymbol):
+                        continue
+                    if str(el) in substitutionDic['yukMat']:
+                        sub = substitutionDic['yukMat'][str(el)][1]
 
-                    if not hasattr(sub, 'find') or sub.find(Identity) == {}:
-                        subDic[el] = sub
+                        if not hasattr(sub, 'find') or sub.find(Identity) == {}:
+                            subDic[el] = sub
+                        else:
+                            identitySubs[el] = sub.args_cnc()[0][0]
                     else:
-                        identitySubs[el] = sub.args_cnc()[0][0]
-                else:
-                    toExplicit[el] = el.as_explicit()
-                    if el not in self.ExplicitMatrices:
-                        self.ExplicitMatrices.append(el)
+                        toExplicit[el] = el.as_explicit()
+                        if el not in self.ExplicitMatrices:
+                            self.ExplicitMatrices.append(el)
 
             # Identity substitutions
             if identitySubs != {}:
@@ -410,20 +411,21 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
             identitySubs = {}
 
             atoms = flatten([m.atoms() for m in mats])
-            for el in atoms:
-                if not isinstance(el, mSymbol):
-                    continue
-                if str(el) in substitutionDic['yukMat']:
-                    sub = substitutionDic['yukMat'][str(el)][1]
+            if any([str(el) in substitutionDic['yukMat'] for el in atoms]):
+                for el in atoms:
+                    if not isinstance(el, mSymbol):
+                        continue
+                    if str(el) in substitutionDic['yukMat']:
+                        sub = substitutionDic['yukMat'][str(el)][1]
 
-                    if not hasattr(sub, 'find') or sub.find(Identity) == {}:
-                        subDic[el] = sub
+                        if not hasattr(sub, 'find') or sub.find(Identity) == {}:
+                            subDic[el] = sub
+                        else:
+                            identitySubs[el] = sub.args_cnc()[0][0]
                     else:
-                        identitySubs[el] = sub.args_cnc()[0][0]
-                else:
-                    toExplicit[el] = el.as_explicit()
-                    if el not in self.ExplicitMatrices:
-                        self.ExplicitMatrices.append(el)
+                        toExplicit[el] = el.as_explicit()
+                        if el not in self.ExplicitMatrices:
+                            self.ExplicitMatrices.append(el)
 
             # Identity substitutions
             if identitySubs != {}:

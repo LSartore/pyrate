@@ -4,7 +4,7 @@ from .GaugeGroup import GaugeGroup
 from .Math import expand, flattenedTensorPos, flattenedTensorInds
 from .Symbols import mSymbol, mMul, Identity
 from .Tensors import TensorDic, Tensor, tensorContract, tensorAdd, tensorMul
-from .Trace import Trace, trace
+from .Trace import Trace, trace, sortYukTrace
 
 from sympy import flatten, Function, Mul, Pow, Symbol, Wild
 
