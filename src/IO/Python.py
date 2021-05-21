@@ -9,7 +9,7 @@ from Definitions import mSymbol, splitPow
 from Logging import loggingCritical
 
 class PythonExport():
-    def __init__(self, model, latexSubs={}):
+    def __init__(self, model, latexSubs={}, cpp=None):
         self._Name = model._Name.replace('-', '').replace('+', '')
         if self._Name[0].isdigit():
             self._Name = '_' + self._Name
@@ -38,8 +38,6 @@ class PythonExport():
 
         self.couplingStructure = {pycode(model.allCouplings[k][1]): v for k,v in model.couplingStructure.items()}
 
-        self.yukLikeCouplings = {}
-
         self.conjugatedCouplings = {}
         self.cDic = {}
 
@@ -65,6 +63,11 @@ class PythonExport():
 
         if self.symbolicGens != []:
             self.genFix = ' = '.join([str(el) for el in self.symbolicGens]) + ' = 3'
+
+        if cpp is not None:
+            self.cpp = cpp
+        else:
+            self.cpp = False
 
         self.preamble(model)
         self.RGsolver(model)
@@ -126,16 +129,18 @@ class PythonExport():
 #########################################################
 """
         self.string += """
+import os
 import time
 import numpy as np
 from sympy import flatten
 from scipy.integrate import ode
 import matplotlib.pyplot as plt
+""" + ('from math import ceil\nfrom ctypes import cdll, c_double, c_int' if self.cpp else '') + """
 
 class Coupling():
     couplings = {}
 
-    def __init__(self, name, couplingType, latex=None, shape = (), fromMat=None, cplx=False, init=0, pos=None):
+    def __init__(self, name, couplingType, latex=None, shape = (), fromMat=None, cplx=False, isCplx=False, init=0, pos=None):
         self.name = name
         self.type = couplingType
 
@@ -148,6 +153,7 @@ class Coupling():
         self.is_matrix = ( shape != () )
         self.nb = self.shape[0]*self.shape[1] if self.is_matrix else 1
         self.cplx = cplx
+        self.isCplx = isCplx
 
         self.initialValue = init if shape == () else np.zeros(shape)
 
@@ -168,13 +174,26 @@ class Coupling():
 
         nameFunc = lambda x: self.name+'_{' + str(1 + x // self.shape[1]) + str(1 + x % self.shape[1]) + '}'
         initFunc = lambda x: list(self.initialValue)[x // self.shape[1]][x % self.shape[1]]
-        arrayFunc = np.vectorize(lambda x: Coupling(nameFunc(x), self.type, fromMat=self, init=initFunc(x), pos=self.pos+x))
+        arrayFunc = np.vectorize(lambda x: Coupling(nameFunc(x), self.type, fromMat=self, init=initFunc(x), pos=self.pos+x, isCplx=self.isCplx))
         array = arrayFunc(np.reshape(range(self.nb), self.shape))
 
         if not toList:
             return array
 
         return [*array.flat]
+
+    def getInitialValue(self, splitCplx=False):
+        if self.is_matrix:
+            if splitCplx and self.isCplx:
+                [(np.real(el), np.imag(el)) for el in self.initialValue.flat]
+            else:
+                return [*self.initialValue.flat]
+        if splitCplx and self.isCplx:
+            return (np.real(self.initialValue), np.imag(self.initialValue))
+
+        if not self.isCplx and np.imag(self.initialValue) != 0:
+            raise ValueError(f"Error: the coupling {self.name} should not take complex values")
+        return self.initialValue
 
 """
 
@@ -234,7 +253,13 @@ class RGEsolver():
         self.couplings = Coupling.couplings
         self.matrixCouplings = {c.name: np.vectorize(lambda x: x.name)(c.as_explicit())
                                 for cList in self.couplings.values()
-                                for c in cList if c.is_matrix}
+                                for c in cList if c.is_matrix}"""
+
+        if self.cpp:
+            s += """
+        self.cppArrayToCouplings = []"""
+
+        s += """
 
 
     def extractCouplings(self, couplingsArray, couplingType):
@@ -305,7 +330,7 @@ class RGEsolver():
         self.allCouplings = flatten([c.as_explicit(toList=True) for cList in self.couplings.values() for c in cList])
 
         time0 = time.time()
-        y0 = flatten([(c.initialValue if not c.is_matrix else [*c.initialValue.flat]) for c in self.allCouplings])
+        y0 = flatten([c.getInitialValue() for c in self.allCouplings])
 
         tmin = self.tmin
         tmax = self.tmax
@@ -375,8 +400,114 @@ class RGEsolver():
                     self.solutions[k][i][j] = self.solutions[v[i,j]].tolist()
             self.solutions[k] = np.array(self.solutions[k]).transpose([2,0,1])
 
+        self.cppSolved = False
         print(f"System of RGEs solved in {time.time()-time0:.3f} seconds.")
+'''
+        if self.cpp:
+            s += """
+    def cppSolve(self, step=.1, Npoints=None):
+        self.allCouplings = flatten([c.as_explicit(toList=True) for cList in self.couplings.values() for c in cList])
 
+        time0 = time.time()
+        y0 = flatten([c.getInitialValue(True) for c in self.allCouplings])
+
+        tmin = self.tmin
+        tmax = self.tmax
+        t0 = self.initialScale
+
+        if Npoints is not None:
+            step = (tmax-tmin)/(Npoints-1)
+
+        solutions = {}
+        for c in self.allCouplings:
+            solutions[c.name] = []
+
+        lib = cdll.LoadLibrary(os.path.join(os.path.abspath(os.path.dirname(__file__)), '""" + self.cpp.soName + '.so' + """'))
+
+        nmax = ceil((tmax-tmin)/step) + 3
+
+        cy0 = (c_double * len(y0))(*y0)
+        cresArray = (c_double * (nmax*len(y0)))()
+        ctArray = (c_double * nmax)()
+
+        cng, cny, cnq = c_int(self.loops['GaugeCouplings']), c_int(self.loops['Yukawas']), c_int(self.loops['QuarticTerms'])
+
+        actualN = lib.solver(c_double(t0), c_double(tmin), c_double(tmax), c_double(step),
+                             cy0, ctArray, cresArray,
+                             cng, cny, cnq)
+
+        landau = False
+        if actualN < 0:
+            landau = True
+            actualN *= -1
+
+        tArray = ctArray[:actualN]
+        resArray = cresArray[:actualN*len(y0)]
+
+        ordering = sorted(range(actualN), key=lambda x: tArray[x])
+        self.tList = np.array([tArray[i] for i in ordering])
+        self.solutions = {}
+
+        self.cppArrayToCouplings = []
+        for c in self.allCouplings:
+            initList = []
+            if c.shape == ():
+                self.cppArrayToCouplings.append((c.name,0))
+
+                if c.isCplx:
+                    self.cppArrayToCouplings.append((c.name,1))
+                    initList = np.ndarray(actualN, dtype=complex)
+                else:
+                    initList = np.ndarray(actualN)
+
+            else:
+                for i in range(c.shape[0]):
+                    for j in range(c.shape[1]):
+                        self.cppArrayToCouplings.append((c.name,0, (i,j)))
+                        if c.isCplx:
+                            self.cppArrayToCouplings.append((c.name,1, (i,j)))
+                if not c.isCplx:
+                    initList = np.ndarray((actualN, c.shape[0], c.shape[1]))
+                else:
+                    initList = np.ndarray((actualN, c.shape[0], c.shape[1]), dtype=complex)
+
+            self.solutions[c.name] = initList
+
+
+        cplxInit = set()
+        cPos = 0
+        for p, dest in enumerate(self.cppArrayToCouplings):
+            if dest[0] not in cplxInit:
+                cPos = len(cplxInit)
+                self.allCouplings[cPos].cplx = False
+                cplxInit.add(dest[0])
+
+            for n,N in enumerate(ordering):
+                val = resArray[p + n*len(y0)]
+                if len(dest) == 2:
+                    if dest[1] == 0:
+                        self.solutions[dest[0]][N] = val
+                    else:
+                        self.solutions[dest[0]][N] += 1j*val
+                        if not self.allCouplings[cPos].cplx and abs(val) > 1e-12:
+                            self.allCouplings[cPos].cplx = True
+                else:
+                    if dest[1] == 0:
+                        self.solutions[dest[0]][N, dest[2][0], dest[2][1]] = val
+                    else:
+                        self.solutions[dest[0]][N, dest[2][0], dest[2][1]] += 1j*val
+                        if not self.allCouplings[cPos].cplx and abs(val) > 1e-12:
+                            self.allCouplings[cPos].cplx = True
+
+        self.resArray = resArray
+        self.cppSolved = True
+
+        print(f"System of RGEs solved in {time.time()-time0:.3f} seconds. (C++ solver)")
+        if landau:
+            print("Warning: Landau poles were encountered")
+
+"""
+        s += r'''
 
     #################
     # Plot function #
@@ -503,7 +634,10 @@ class RGEsolver():
             cNames = []
             for c in cList:
                 if not c.cplx:
-                    plt.plot(self.tList, self.solutions[c.name])
+                    if 'complex' not in str(self.solutions[c.name].dtype):
+                        plt.plot(self.tList, self.solutions[c.name])
+                    else:
+                        plt.plot(self.tList, np.real(self.solutions[c.name]))
                     cNames.append('$' + c.latex + '$')
                 else:
                     plt.plot(self.tList, np.real(self.solutions[c.name]))
@@ -621,6 +755,8 @@ class RGEsolver():
                     s += ", latex='" + self.latex[cName].replace('\\', '\\\\').replace("'", "\\'") + "'"
                 if isinstance(c, mSymbol):
                     s += ', shape=' + str(c.shape).replace(' ', '')
+                if self.cpp and cName in self.cpp.complexCouplings:
+                    s += ', isCplx=True'
                 s += ')'
 
         return s

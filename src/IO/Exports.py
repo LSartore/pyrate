@@ -34,6 +34,22 @@ def exports(runSettings, model):
         mathematica.write(os.path.join(path, model._Name + '.m'))
         loggingInfo("Done.")
 
+    if runSettings['CppOutput'] is True:
+        from Cpp import CppExport
+
+        loggingInfo("\tExporting to C++...", end=' ')
+        try:
+            cpp = CppExport(model)
+            cpp.write(path)
+        except TypeError as e:
+            print('\nError : ' + str(e))
+            cpp = None
+        else:
+            loggingInfo("Done.")
+    else:
+        cpp = None
+
+
     if runSettings['PythonOutput'] is True:
         from Python import PythonExport
 
@@ -45,12 +61,13 @@ def exports(runSettings, model):
 
         loggingInfo("\tExporting to Python...", end=' ')
         try:
-            python = PythonExport(model, latexSubs=latex.latex)
+            python = PythonExport(model, latexSubs=latex.latex, cpp=cpp)
             python.write(path)
         except TypeError as e:
             print('\nError : ' + str(e))
         else:
             loggingInfo("Done.")
+
 
     if runSettings['UFOfolder'] is not None:
         from UFO import UFOExport
@@ -79,11 +96,17 @@ def exports(runSettings, model):
 
     # Now apply possible user-defined commands from 'default.settings'
     commands = [cmd.strip() for cmd in runSettings['EndCommands'].replace('[name]', model._Name).split(',')]
+    if cpp is not None and runSettings['CppSolverMake'] is True:
+        cpp.buildCommands(commands)
     loggingInfo("Running user-defined commands : ")
     os.chdir(path)
+
     shell = (sys.platform.startswith('win'))
     for cmd in commands:
         loggingInfo("\t-> '" + cmd + "'")
+        if cmd[:2] == 'cd':
+            os.chdir(cmd[3:])
+            continue
         try:
             run(cmd.split(' '), shell=shell, stdout=DEVNULL, stderr=STDOUT, check=True)
         except CalledProcessError as e:
@@ -93,5 +116,9 @@ def exports(runSettings, model):
     os.chdir(tmpWD)
 
     # This is for debugging, remove later
-    model.latex = latex
+    # model.latex = latex
+    # loggingInfo("test6")
     # model.python = python
+    # loggingInfo("test7")
+    # model.cpp = cpp
+    # loggingInfo("test8")

@@ -34,6 +34,8 @@ class Inputs():
         for k,v in runSettings.items():
             settings[k] = v
 
+        settings['pyrateDir'] = wd
+
         if os.path.abspath(settings['Results']) != settings['Results']:
             settings['Results'] = os.path.abspath(os.path.join(wd, settings['Results']))
         if not (os.path.exists(settings['Results'])):
@@ -172,6 +174,13 @@ class Inputs():
         parser.add_argument('--no-PythonOutput', '-no-py', dest='PythonOutput', action='store_false', default=None,
                             help='Switch off Python output')
         parser.set_defaults(PythonOutput=default['PythonOutput'])
+
+            # C++
+        parser.add_argument('--CppOutput', '-cpp', dest='CppOutput', action='store_true', default=None,
+                            help='Produce C++ output')
+        parser.add_argument('--no-CppOutput', '-no-cpp', dest='CppOutput', action='store_false', default=None,
+                            help='Switch off C++ output')
+        parser.set_defaults(CppOutput=default['CppOutput'])
 
             # UFO export
         parser.add_argument('--UFOfolder', '-ufo', dest='UFOfolder', action='store', default=None,
@@ -560,6 +569,8 @@ MathematicaOutput : True
 MathematicaSolver : True
 
 PythonOutput : True
+CppOutput : False
+CppSolverMake : False
 
 # User-defined commands to run after the computation
 
