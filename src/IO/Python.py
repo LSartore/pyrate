@@ -513,6 +513,7 @@ class RGEsolver():
 
             plt.legend(cNames)
             plt.xlabel(r't',fontsize=17-len(allCouplingsByType))
+        plt.show()
 
 
     #########################
