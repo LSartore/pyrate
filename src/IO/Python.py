@@ -504,7 +504,17 @@ class RGEsolver():
             for c in cList:
                 if not c.cplx:
                     plt.plot(self.tList, self.solutions[c.name])
+                    if c.name == 'lambda_':
+                        xData = '1.7874963 2.0758104 2.504295 3.0269127 3.9198892 4.859418 5.89025 7.290156 9.105171 11.289003 13.423454 16.296309 19.351768 23.146149 24.858028'.split()
+                        yData = '0.30351463 0.2746137 0.24219716 0.2055556 0.16894542 0.13163367 0.097857125 0.067639306 0.041689612 0.020004116 0.0067803916 -3.135441E-5 2.273195E-4 0.005487022 0.0084539335'.split() 
+                        for i in range(len(xData)):
+                            xData[i]=float(xData[i])
+                            yData[i]=float(yData[i])
+                        plt.scatter(xData, yData, c='r', marker='+')
                     cNames.append('$' + c.latex + '$')
+                    if c.name == 'lambda_':
+                        pass
+                    
                 else:
                     plt.plot(self.tList, np.real(self.solutions[c.name]))
                     plt.plot(self.tList, np.imag(self.solutions[c.name]))
