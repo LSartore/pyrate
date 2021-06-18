@@ -6,7 +6,7 @@ from sympy import Abs, I, Mul, Symbol, conjugate
 
 from Definitions import splitPow, trace, Trace, sortYukTrace, mSymbol
 
-from Logging import loggingCritical
+from Logging import loggingCritical, loggingInfo
 
 class CppExport():
     def __init__(self, model, latexSubs={}):
@@ -88,9 +88,63 @@ class CppExport():
             return
         self.file.close()
 
+
+        # If the cpplist argument was given, export the list of couplings
+        if self.model.runSettings['CppCouplingsList'] is True:
+            fileName = os.path.join(path, 'PythonOuput', 'couplings')
+            try:
+                self.file = open(fileName, 'w')
+                self.file.write(self.couplingListString())
+            except:
+                loggingCritical('ERROR while creating the list of couplings. Skipping.')
+                return
+            self.file.close()
+
     def buildCommands(self, commands):
         path = os.path.join(self.storePath, 'PythonOuput')
         commands += ['cd ' + path, 'make']
+
+
+    def makeFileString(self):
+        includeDir = os.path.join(self.model.runSettings['pyrateDir'], 'src', 'IO', 'include')
+
+        soName = 'lib' + self._Name
+        self.soName = soName
+
+        s = soName + """\
+.so: """ + soName + """.o
+	g++ -shared -o $@ $+ -larmadillo -llapack -lblas -std=c++11 -I """ + includeDir + '\n' + soName + """\
+.o: """ + self._Name + """.cpp
+	g++ -fPIC -c -o $@ $< -std=c++11 -I """ + includeDir + '\n' + soName + """\
+clean :
+	rm *.o
+	rm *.so
+"""
+        return s
+
+    def couplingListString(self):
+        totString = '{'
+
+        for i, c in enumerate(self.arrayToCouplings.values()):
+            cString = c[0]
+            if len(c) == 3:
+                cString += str(c[2][0]+1) + 'x' + str(c[2][1]+1)
+            if c[0] in self.complexCouplings:
+                if c[1] == 0:
+                    cString = 'Re[' + cString + ']'
+                elif c[1] == 1:
+                    cString = 'Im[' + cString + ']'
+            if i < len(self.arrayToCouplings) - 1:
+                cString += ','
+                if (i+1)%5 != 0:
+                    cString += ' '
+                else:
+                    cString += '\n'
+            totString += cString
+
+        totString += '}\n'
+
+        return totString
 
 
     def generateCppFile(self, model):
@@ -573,24 +627,6 @@ struct BetaFunction
 }
 """
 
-    def makeFileString(self):
-        includeDir = os.path.join(self.model.runSettings['pyrateDir'], 'src', 'IO', 'include')
-
-        soName = 'lib' + self._Name
-        self.soName = soName
-
-        s = soName + """\
-.so: """ + soName + """.o
-	g++ -shared -o $@ $+ -larmadillo -llapack -lblas -std=c++11 -I """ + includeDir + '\n' + soName + """\
-.o: """ + self._Name + """.cpp
-	g++ -fPIC -c -o $@ $< -std=c++11 -I """ + includeDir + '\n' + soName + """\
-clean :
-	rm *.o
-	rm *.so
-"""
-        return s
-
-
 class Printer(CXX11CodePrinter):
     preDefined = {'a': set(), 'c': set(), 't': set(), 'm': {}, 'tr': {}}
     defineI = False
@@ -629,7 +665,7 @@ class Printer(CXX11CodePrinter):
         return ccode(expr.args[0]) + '_adj'
 
     def _print_conjugate(self, expr):
-        if isinstance(expr, mSymbol):
+        if isinstance(expr.args[0], mSymbol):
             if expr not in Printer.preDefined['c']:
                 Printer.preDefined['c'].add(expr)
 

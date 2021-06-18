@@ -182,6 +182,9 @@ class Inputs():
                             help='Switch off C++ output')
         parser.set_defaults(CppOutput=default['CppOutput'])
 
+        parser.add_argument('--CppCouplingsList', '-cpplist', dest='CppCouplingsList', action='store_true', default=False,
+                            help='Request the C++ solver to export a list of running couplings (mainly designed for the FeynRules interface)')
+
             # UFO export
         parser.add_argument('--UFOfolder', '-ufo', dest='UFOfolder', action='store', default=None,
                             help='Ask PyR@TE to produce a UFO \'running.py\' file in the specified folder')
