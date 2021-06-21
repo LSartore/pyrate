@@ -75,11 +75,11 @@ class PythonExport():
     def write(self, path):
         tmpDir = os.getcwd()
 
-        if not os.path.exists(os.path.join(path, 'PythonOuput')):
-            os.makedirs(os.path.join(path, 'PythonOuput'))
+        if not os.path.exists(os.path.join(path, 'PythonOutput')):
+            os.makedirs(os.path.join(path, 'PythonOutput'))
 
         # First : write the Python solver module
-        fileName = os.path.join(path, 'PythonOuput', self._Name + '.py')
+        fileName = os.path.join(path, 'PythonOutput', self._Name + '.py')
         try:
             self.file = open(fileName, 'w')
         except:
@@ -90,7 +90,7 @@ class PythonExport():
         self.file.close()
 
         # Then, create the file containing the expression of the beta-functions
-        fileName = os.path.join(path, 'PythonOuput', 'RGEs.py')
+        fileName = os.path.join(path, 'PythonOutput', 'RGEs.py')
         try:
             self.file = open(fileName, 'w')
             self.file.write(self.RGEfileString())
@@ -100,11 +100,11 @@ class PythonExport():
         self.file.close()
 
         # Finally create and write the run.py file
-        os.chdir(os.path.join(path, 'PythonOuput'))
-        self.runString(self.model, os.path.join(path, 'PythonOuput'))
+        os.chdir(os.path.join(path, 'PythonOutput'))
+        self.runString(self.model, os.path.join(path, 'PythonOutput'))
         os.chdir(tmpDir)
 
-        fileName = os.path.join(path, 'PythonOuput', 'run.py')
+        fileName = os.path.join(path, 'PythonOutput', 'run.py')
         try:
             self.file = open(fileName, 'w')
             self.file.write(self.stringRun)

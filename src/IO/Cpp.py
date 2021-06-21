@@ -64,11 +64,11 @@ class CppExport():
     def write(self, path):
         self.storePath = path
 
-        if not os.path.exists(os.path.join(path, 'PythonOuput')):
-            os.makedirs(os.path.join(path, 'PythonOuput'))
+        if not os.path.exists(os.path.join(path, 'PythonOutput')):
+            os.makedirs(os.path.join(path, 'PythonOutput'))
 
         # First : write the C++ solver file
-        fileName = os.path.join(path, 'PythonOuput', self._Name + '.cpp')
+        fileName = os.path.join(path, 'PythonOutput', self._Name + '.cpp')
         try:
             self.file = open(fileName, 'w')
         except:
@@ -79,7 +79,7 @@ class CppExport():
         self.file.close()
 
         # Then, create the makefile
-        fileName = os.path.join(path, 'PythonOuput', 'Makefile')
+        fileName = os.path.join(path, 'PythonOutput', 'Makefile')
         try:
             self.file = open(fileName, 'w')
             self.file.write(self.makeFileString())
@@ -91,7 +91,7 @@ class CppExport():
 
         # If the cpplist argument was given, export the list of couplings
         if self.model.runSettings['CppCouplingsList'] is True:
-            fileName = os.path.join(path, 'PythonOuput', 'couplings')
+            fileName = os.path.join(path, 'PythonOutput', 'couplings')
             try:
                 self.file = open(fileName, 'w')
                 self.file.write(self.couplingListString())
@@ -101,7 +101,7 @@ class CppExport():
             self.file.close()
 
     def buildCommands(self, commands):
-        path = os.path.join(self.storePath, 'PythonOuput')
+        path = os.path.join(self.storePath, 'PythonOutput')
         commands += ['cd ' + path, 'make']
 
 
