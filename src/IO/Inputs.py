@@ -211,7 +211,7 @@ class Inputs():
             for handler in logging.root.handlers:
                 logging.root.removeHandler(handler)
 
-            logging.basicConfig(filename=logFile, level='DEBUG', format="%(message)s")
+            logging.basicConfig(filename=logFile, level='INFO', format="%(message)s")
 
         if settings['Quiet'] is True:
             settings['VerboseLevel'] = 'Critical'
