@@ -340,7 +340,7 @@ DiscardZeroCouplings[range_, solutions_] := Block[{N, testPoints},
 
 (* Plotting function handling both real and complex quantities *)
 
-ComplexPlot[funcs_, {min_, max_}, legends_, plotRange_] := Block[{cplxPos, newFuncs, newLegends},
+Complexplot[funcs_, {min_, max_}, legends_, plotRange_] := Block[{cplxPos, newFuncs, newLegends},
 	cplxPos = If[Head[Chop[funcs[[#]] /. t -> 1/2(max-min)]] === Complex,#, Nothing]& /@ Range[Length[funcs]];
 	newFuncs = If[MemberQ[cplxPos, #], Sequence @@ {Re@funcs[[#]], Im@funcs[[#]]}, funcs[[#]]]& /@ Range[Length[funcs]];
 	newLegends = If[MemberQ[cplxPos, #], Sequence @@ {Re@legends[[#]], Im@legends[[#]]}, legends[[#]]]& /@ Range[Length[funcs]];
@@ -356,7 +356,7 @@ RGplot[range_, solutions_] := Block[{selectType, toPlot},
             s += '\n\n\ttoPlot = selectType[' + self.cListNames[cType] + '];\n'
             s += '\tIf[toPlot =!= {},\n'
             s += '\t\tPrint["### ' + self.translation[cType] + ' ###"];\n'
-            s += '\t\tPrint @ ComplexPlot[toPlot[[All, 2]], range, toPlot[[All, 1]], All];\n'
+            s += '\t\tPrint @ Complexplot[toPlot[[All, 2]], range, toPlot[[All, 1]], All];\n'
             s += '\t];'
 
         s += "\n];"
