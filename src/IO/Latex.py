@@ -617,11 +617,12 @@ r""" \\[.1cm] \hline
             else:
                 beta = r'\mu \frac{d}{d \mu}\left(' + latex(self.betaFactor*X) + r'\right)'
 
-
         self.string += r'\beta\left(X\right) \equiv ' + beta
 
         if model.betaExponent(Symbol('n')) != 0:
-            self.string += r'\equiv' + '+'.join([latex(sympify(f'1/(4*pi)**({model.betaExponent(n)})', evaluate=False))+'\\beta^{('+str(n)+')}(X)' for n in range(1, 1+max(model.nLoops))])
+            sList = [latex(sympify(f'1/(4*pi)**({model.betaExponent(n)})', evaluate=False))+'\\beta^{('+str(n)+')}(X)' for n in range(1, 1+max(model.nLoops))]
+            sList = [s if s[:2] != '1 ' else s[2:] for s in sList]
+            self.string += r'\equiv' + '+'.join(sList)
         else:
             self.string += r'\equiv' + '+'.join(['\\beta^{('+str(n)+')}(X)' for n in range(1, 1+max(model.nLoops))])
 
