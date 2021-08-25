@@ -18,6 +18,7 @@ try:
 except ImportError:
     exit("Error while importing 'Logging' module")
 
+from Dependencies import checkDependencies
 
 
 class Inputs():
@@ -50,6 +51,8 @@ class Inputs():
             os.makedirs(settings['LogFolder'])
 
         self.initLogging(settings)
+
+        checkDependencies()
 
         # A useful check before going on : no export was selected
         if not any((settings['LatexOutput'], settings['MathematicaOutput'], settings['PythonOutput'], settings['UFOfolder'])):
