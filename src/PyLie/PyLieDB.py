@@ -21,15 +21,18 @@ class PyLieDB():
     """ This is the main class used to communicate with the Pylie module and
         the associated database. """
 
-    def __init__(self, path=None, logLevel='Info', raiseErrors=False):
+    def __init__(self, path=None, logLevel='Info', raiseErrors=False, altDB=False):
         global wd
 
         if path is not None:
             self.path = path
+        elif altDB is True:
+            self.path = os.path.join(wd, 'altPyLieDB.hd5f.gz')
         else:
             self.path = os.path.join(wd, 'PyLieDB.hd5f.gz')
 
-        self.tmpPath = self.path.replace('PyLieDB.hd5f.gz', '._PyLieDB.hd5f')
+        # self.tmpPath = self.path.replace('PyLieDB.hd5f.gz', '._PyLieDB.hd5f')
+        self.tmpPath = os.path.join(os.path.dirname(self.path), '._' + os.path.basename(self.path).replace('.gz', ''))
 
         self.gzf = None
         self.f = None

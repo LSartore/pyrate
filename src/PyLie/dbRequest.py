@@ -44,7 +44,7 @@ except:
     sys.exit(2)
 
 try:
-    db = PyLieDB()
+    db = PyLieDB(altDB = True)
     db.load(force=True)
 except:
     sys.exit(3)
