@@ -57,7 +57,7 @@ class CppExport():
         if self.symbolicGens != []:
             self.genFix = ' = '.join([str(el) for el in self.symbolicGens]) + ' = 3'
 
-
+        self.lightSolver = model.runSettings['LightCppSolver']
         self.generateCppFile(model)
 
 
@@ -89,16 +89,32 @@ class CppExport():
         self.file.close()
 
 
-        # If the cpplist argument was given, export the list of couplings
-        if self.model.runSettings['CppCouplingsList'] is True:
-            fileName = os.path.join(path, 'PythonOutput', 'couplings')
+        # Optional: write the light Cpp output
+        if self.lightSolver:
+            fileName = os.path.join(self.lightSolver, 'RGEsolver.cpp')
             try:
                 self.file = open(fileName, 'w')
-                self.file.write(self.couplingListString())
             except:
-                loggingCritical('ERROR while creating the list of couplings. Skipping.')
+                loggingCritical('ERROR while creating the light C++ output file. Skipping.')
                 return
+
+            self.file.write(self.lallStr)
             self.file.close()
+
+
+
+        # # If the cpplist argument was given, export the list of couplings
+        # if self.model.runSettings['CppCouplingsList'] is True:
+        #     fileName = os.path.join(path, 'PythonOutput', 'couplings')
+        #     try:
+        #         self.file = open(fileName, 'w')
+        #         self.file.write(self.couplingListString())
+        #     except:
+        #         loggingCritical('ERROR while creating the list of couplings. Skipping.')
+        #         return
+        #     self.file.close()
+
+
 
     def buildCommands(self, commands):
         path = os.path.join(self.storePath, 'PythonOutput')
@@ -122,29 +138,29 @@ clean :
 """
         return s
 
-    def couplingListString(self):
-        totString = '{'
+    # def couplingListString(self):
+    #     totString = '{'
 
-        for i, c in enumerate(self.arrayToCouplings.values()):
-            cString = c[0]
-            if len(c) == 3:
-                cString += str(c[2][0]+1) + 'x' + str(c[2][1]+1)
-            if c[0] in self.complexCouplings:
-                if c[1] == 0:
-                    cString = 'Re[' + cString + ']'
-                elif c[1] == 1:
-                    cString = 'Im[' + cString + ']'
-            if i < len(self.arrayToCouplings) - 1:
-                cString += ','
-                if (i+1)%5 != 0:
-                    cString += ' '
-                else:
-                    cString += '\n'
-            totString += cString
+    #     for i, c in enumerate(self.arrayToCouplings.values()):
+    #         cString = c[0]
+    #         if len(c) == 3:
+    #             cString += str(c[2][0]+1) + 'x' + str(c[2][1]+1)
+    #         if c[0] in self.complexCouplings:
+    #             if c[1] == 0:
+    #                 cString = 'Re[' + cString + ']'
+    #             elif c[1] == 1:
+    #                 cString = 'Im[' + cString + ']'
+    #         if i < len(self.arrayToCouplings) - 1:
+    #             cString += ','
+    #             if (i+1)%5 != 0:
+    #                 cString += ' '
+    #             else:
+    #                 cString += '\n'
+    #         totString += cString
 
-        totString += '}\n'
+    #     totString += '}\n'
 
-        return totString
+    #     return totString
 
 
     def generateCppFile(self, model):
@@ -154,6 +170,9 @@ clean :
         self.preamble()
 
         self.allStr = self.initString + self.betaString + self.solverString
+
+        if self.lightSolver:
+            self.lallStr = self.linitString + self.betaString + self.lsolverString
 
     def preamble(self):
         mats = (self.couplingStructure != {})
@@ -172,6 +191,8 @@ using namespace asc;
         if mats:
             self.initString += 'using namespace arma;\n'
 
+        self.linitString = self.initString + '\n'
+
         self.initString += """
 extern "C"{
     extern """ + self.solverPrototype + """;
@@ -179,6 +200,8 @@ extern "C"{
 }
 
 """
+
+
 
 
 
@@ -497,8 +520,9 @@ struct BetaFunction
     def cppSolver(self):
         self.solverPrototype = 'int solver(double t0, double tmin, double tmax, double step, double* initialCouplings, double* tArray, double* resArray, int nG, int nY, int nQ)'
         self.psolverPrototype = 'int psolver(double t0, double t1, double step, double* initialCouplings, double* resArray, int nG, int nY, int nQ)'
+        self.ppsolverPrototype = 'int ppsolver(double t0, double t1, double step, double* initialCouplings, double** resArray, int nG, int nY, int nQ)'
 
-        self.solverString = self.solverPrototype + """{
+        solverStr = """{
     state_t x;
 
     double t = t0;
@@ -573,7 +597,9 @@ struct BetaFunction
     return -1*(n+1);
 }
 
-""" + self.psolverPrototype + """{
+"""
+
+        psolverStr = """{
     state_t x;
 
     double t = t0;
@@ -625,7 +651,16 @@ struct BetaFunction
         return 1;
     return -1;
 }
+
 """
+        ppsolverStr = psolverStr.replace('resArray[i] = x.at(i);', '(*resArray[i]) = x.at(i);')
+
+        self.solverString = self.solverPrototype + solverStr + self.psolverPrototype + psolverStr
+
+        if self.lightSolver:
+            self.lsolverString = self.psolverPrototype + psolverStr + self.ppsolverPrototype + ppsolverStr
+
+
 
 class Printer(CXX11CodePrinter):
     preDefined = {'a': set(), 'c': set(), 't': set(), 'm': {}, 'tr': {}}

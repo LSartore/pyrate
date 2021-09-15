@@ -179,14 +179,27 @@ class Inputs():
         parser.set_defaults(PythonOutput=default['PythonOutput'])
 
             # C++
+        # Produce C++ output
         parser.add_argument('--CppOutput', '-cpp', dest='CppOutput', action='store_true', default=None,
                             help='Produce C++ output')
         parser.add_argument('--no-CppOutput', '-no-cpp', dest='CppOutput', action='store_false', default=None,
                             help='Switch off C++ output')
         parser.set_defaults(CppOutput=default['CppOutput'])
 
-        parser.add_argument('--CppCouplingsList', '-cpplist', dest='CppCouplingsList', action='store_true', default=False,
-                            help='Request the C++ solver to export a list of running couplings (mainly designed for the FeynRules interface)')
+        # Enable/Disable automatic compilation
+        parser.add_argument('--CppMake', '-make', dest='CppSolverMake', action='store_true', default=None,
+                            help='Automatically run the C++ output makefile')
+        parser.add_argument('--no-CppMake', '-no-make', dest='CppSolverMake', action='store_false', default=None,
+                            help='Do not run the C++ output makefile')
+        parser.set_defaults(CppSolverMake=default['CppSolverMake'])
+
+        # Optional lighter cpp solver
+        parser.add_argument('--LightCppSolver', '-lcpp', dest='LightCppSolver', action='store', default=False,
+                            help='Provide the path of an optional lighter Cpp solver. This is mainly intended to be used with the FeynRules/MadGraph interface.')
+
+
+        # parser.add_argument('--CppCouplingsList', '-cpplist', dest='CppCouplingsList', action='store_true', default=False,
+        #                     help='Request the C++ solver to export a list of running couplings (mainly designed for the FeynRules interface)')
 
             # UFO export
         parser.add_argument('--UFOfolder', '-ufo', dest='UFOfolder', action='store', default=None,
