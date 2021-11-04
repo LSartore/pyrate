@@ -456,6 +456,7 @@ r""" \\[.1cm] \hline
                 newArgs.insert(1, scalar)
 
             newArgs = remain + newArgs
+            newArgs = [el for el in newArgs if el != 0]
 
             if cSymb in self.latex:
                 cSymb = Symbol(str(self.latex[cSymb]) + '{}_{f_1,f_2}', commutative=False)
