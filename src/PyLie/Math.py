@@ -552,12 +552,30 @@ class sMat(SparseMatrix):
         for k1, v1 in self._smat.items():
             for k2, v2 in m2._smat.items():
                 k = (k1[0]*m2.shape[0]+k2[0], k1[1]*m2.shape[1]+k2[1])
-                m._smat[k] = v1*v2
+                tmp = v1*v2
                 if simplify :
-                    m._smat[k] = sSimplify(m._smat[k])
+                    m._smat[k] = sSimplify(tmp)
+                else:
+                    m._smat[k] = tmp
 
         return m
 
+    def kroneckerSum(self, m2):
+        m = sMat(self.shape[0]*m2.shape[0], self.shape[1]*m2.shape[1])
+
+        for k1, v1 in self._smat.items():
+            for k2 in range(m2.shape[0]):
+                m._smat[(k1[0]*m2.shape[0]+k2, k1[1]*m2.shape[0]+k2)] = v1
+
+        for k2, v2 in m2._smat.items():
+            for k1 in range(self.shape[0]):
+                k = (k1*m2.shape[0]+k2[0], k1*m2.shape[0]+k2[1])
+                if k not in m._smat:
+                    m._smat[k] = v2
+                else:
+                    m._smat[k] += v2
+
+        return m
 
     def real(self):
         return sMat(*self.shape, {k:re(v) for k,v in self._smat.items()})
