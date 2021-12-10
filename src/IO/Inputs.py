@@ -581,6 +581,7 @@ CopyModelFile : False
 
 LatexOutput : True
 AbsReplacements : True   #Automatic replacements x*conjugate(x) -> \\abs{x}^2
+
 GroupTheoryInfo : True
 MoreGroupTheoryInfo : False
 

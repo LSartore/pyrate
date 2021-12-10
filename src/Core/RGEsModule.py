@@ -127,7 +127,7 @@ class RGEsModule():
                         for m in kdMats[1:]:
                             rMat = rMat.kroneckerProduct(m)
 
-                        for (i, j), val in rMat._smat.items():
+                        for (i, j), val in rMat.todok().items():
                             self.TDic[((gPos,A), padding + i, padding + j)] = identity(f.gen)*val
 
     def constructTs(self):
@@ -178,7 +178,7 @@ class RGEsModule():
                             rMat = I*rMat.imag()
                             rMat = s.pseudoNSadj*rMat*s.pseudoNS
 
-                        for (i, j), val in rMat._smat.items():
+                        for (i, j), val in rMat.todok().items():
                             self.TsDic[((gPos,A), padding + i, padding + j)] = val
 
             ###################
@@ -211,7 +211,7 @@ class RGEsModule():
                     for iRange in s.fullIndexStructure:
                         rMat = rMat.kroneckerProduct(eye(iRange))
 
-                    for (i, j), val in rMat._smat.items():
+                    for (i, j), val in rMat.todok().items():
                         self.TsDic[((gPos,0), padding + i, padding + j)] = val
 
                 else:
@@ -225,7 +225,7 @@ class RGEsModule():
                             rMat = rMat.kroneckerProduct(m)
 
                         rMat = I*rMat.imag()
-                        for (i, j), val in rMat._smat.items():
+                        for (i, j), val in rMat.todok().items():
                             self.TsDic[((gPos,A), padding + i, padding + j)] = val
 
     def initTensors(self):

@@ -32,6 +32,7 @@ CopyModelFile : False
 
 LatexOutput : True
 AbsReplacements : True   #Automatic replacements x*conjugate(x) -> \abs{x}^2
+
 GroupTheoryInfo : False
 MoreGroupTheoryInfo : False
 
@@ -39,8 +40,8 @@ MathematicaOutput : True
 MathematicaSolver : True
 
 PythonOutput : True
-CppOutput : True
-CppSolverMake : True
+CppOutput : False
+CppSolverMake : False
 
 # User-defined commands to run after the computation
 

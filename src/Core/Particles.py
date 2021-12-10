@@ -139,7 +139,7 @@ class Particle(object):
         nsMat = sMat(N, N//2)
         for r, rowDic in ns.items():
             for c, v in rowDic.items():
-                nsMat._smat[c, r] = v * self.pseudoNorm
+                nsMat[c, r] = v * self.pseudoNorm
 
 
         self.pseudoNS = nsMat
@@ -147,7 +147,7 @@ class Particle(object):
         pseudoTransfo = eye(N//2).append(I*eye(N//2), axis=1) * nsMat
 
         self.pseudoTransfo = {}
-        for k,v in pseudoTransfo._smat.items():
+        for k,v in pseudoTransfo.todok().items():
             if k[0] not in self.pseudoTransfo:
                 self.pseudoTransfo[k[0]] = {}
             self.pseudoTransfo[k[0]][k[1]] = v

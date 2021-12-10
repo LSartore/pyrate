@@ -307,10 +307,10 @@ class MathGroup:
                     matL[i, j] = 0
             matD[i, i] = matrix[i, i] - sum([matL[i, k] * np.conjugate(matL[i, k]) * matD[k, k] for k in range(i)])
         # get the sqrt of the diagonal matrix:
-        if not all([k[0] == k[1] for k in matD._smat]):
+        if not all([k[0] == k[1] for k in matD.todok()]):
             exit("Error, the matD is not diagonal : cannot take the sqrt.")
         else:
-            matDsqr = sMat(n, n, {k:sqrt(v) for k,v in matD._smat.items()})
+            matDsqr = sMat(n, n, {k:sqrt(v) for k,v in matD.todok().items()})
             result = matL * matDsqr
 
         #  Make the resulting matrix as small as possible by eliminating null columns
@@ -423,7 +423,7 @@ class sMat(SparseMatrix):
 
         if self.computeRowDic:
             self.sh = list(self.shape)
-            for k,v in self._smat.items():
+            for k,v in self.todok().items():
                 if k[0] not in self.rowDic:
                     self.rowDic[k[0]] = {}
                 self.rowDic[k[0]][k[1]] = v
@@ -443,7 +443,7 @@ class sMat(SparseMatrix):
         rows = {}
         smat = {}
 
-        for k,v in self._smat.items():
+        for k,v in self.todok().items():
             if k[0] not in rows:
                 rows[k[0]] = len(rows)
             smat[rows[k[0]], k[1]] = v
@@ -451,10 +451,10 @@ class sMat(SparseMatrix):
         return sMat(len(rows), self.shape[1], smat)
 
     def empty(self):
-        return self._smat == {}
+        return self.todok() == {}
 
     def symmetric(self):
-        for k,v in self._smat.items():
+        for k,v in self.todok().items():
             if k[0] >= k[1]:
                 continue
             if self[k] != self[k[::-1]]:
@@ -465,7 +465,7 @@ class sMat(SparseMatrix):
         cols = {}
         smat = {}
 
-        for k,v in self._smat.items():
+        for k,v in self.todok().items():
             if k[1] not in cols:
                 cols[k[1]] = len(cols)
             smat[k[0], cols[k[1]]] = v
@@ -478,9 +478,9 @@ class sMat(SparseMatrix):
                 print("Shapes do not match")
                 return
 
-            m = sMat(self.rows+m2.rows, self.cols, self._smat)
+            m = sMat(self.rows+m2.rows, self.cols, self.todok())
 
-            for k,v in m2._smat.items():
+            for k,v in m2.todok().items():
                 m[k[0]+self.rows, k[1]] = v
 
         elif axis == 1:
@@ -488,9 +488,9 @@ class sMat(SparseMatrix):
                 print("Shapes do not match")
                 return
 
-            m = sMat(self.rows, self.cols+m2.cols, self._smat)
+            m = sMat(self.rows, self.cols+m2.cols, self.todok())
 
-            for k,v in m2._smat.items():
+            for k,v in m2.todok().items():
                 m[k[0], k[1]+self.cols] = v
         else:
             print(f"Axis should be 0 or 1, not {axis}")
@@ -506,10 +506,10 @@ class sMat(SparseMatrix):
 
             m = sMat(self.rows+m2.rows, self.cols)
 
-            for k,v in self._smat.items():
+            for k,v in self.todok().items():
                 m[k[0]+m2.rows, k[1]] = v
 
-            for k,v in m2._smat.items():
+            for k,v in m2.todok().items():
                 m[k[0], k[1]] = v
 
         elif axis == 1:
@@ -519,10 +519,10 @@ class sMat(SparseMatrix):
 
             m = sMat(self.rows, self.cols+m2.cols)
 
-            for k,v in self._smat.items():
+            for k,v in self.todok().items():
                 m[k[0], k[1]+m2.cols] = v
 
-            for k,v in m2._smat.items():
+            for k,v in m2.todok().items():
                 m[k[0], k[1]] = v
         else:
             print(f"Axis should be 0 or 1, not {axis}")
@@ -539,7 +539,7 @@ class sMat(SparseMatrix):
 
         m = sMat(self.shape[0] + sum(w[0]), self.shape[1] + sum(w[1]), {})
 
-        for k,v in self._smat.items():
+        for k,v in self.todok().items():
             newK = (k[0] + w[0][0], k[1] + w[1][0])
             m[newK[0], newK[1]] = v
 
@@ -549,39 +549,39 @@ class sMat(SparseMatrix):
     def kroneckerProduct(self, m2, simplify=False):
         m = sMat(self.shape[0]*m2.shape[0], self.shape[1]*m2.shape[1])
 
-        for k1, v1 in self._smat.items():
-            for k2, v2 in m2._smat.items():
+        for k1, v1 in self.todok().items():
+            for k2, v2 in m2.todok().items():
                 k = (k1[0]*m2.shape[0]+k2[0], k1[1]*m2.shape[1]+k2[1])
                 tmp = v1*v2
                 if simplify :
-                    m._smat[k] = sSimplify(tmp)
+                    m[k[0],k[1]] = sSimplify(tmp)
                 else:
-                    m._smat[k] = tmp
+                    m[k[0],k[1]] = tmp
 
         return m
 
     def kroneckerSum(self, m2):
         m = sMat(self.shape[0]*m2.shape[0], self.shape[1]*m2.shape[1])
 
-        for k1, v1 in self._smat.items():
+        for k1, v1 in self.todok().items():
             for k2 in range(m2.shape[0]):
-                m._smat[(k1[0]*m2.shape[0]+k2, k1[1]*m2.shape[0]+k2)] = v1
+                m[k1[0]*m2.shape[0]+k2, k1[1]*m2.shape[0]+k2] = v1
 
-        for k2, v2 in m2._smat.items():
+        for k2, v2 in m2.todok().items():
             for k1 in range(self.shape[0]):
                 k = (k1*m2.shape[0]+k2[0], k1*m2.shape[0]+k2[1])
-                if k not in m._smat:
-                    m._smat[k] = v2
+                if k not in m.todok():
+                    m[k[0],k[1]] = v2
                 else:
-                    m._smat[k] += v2
+                    m[k[0],k[1]] += v2
 
         return m
 
     def real(self):
-        return sMat(*self.shape, {k:re(v) for k,v in self._smat.items()})
+        return sMat(*self.shape, {k:re(v) for k,v in self.todok().items()})
 
     def imag(self):
-        return sMat(*self.shape, {k:im(v) for k,v in self._smat.items()})
+        return sMat(*self.shape, {k:im(v) for k,v in self.todok().items()})
 
 
     def nullSpace(self, vecForm=False, progress=False):
@@ -592,7 +592,7 @@ class sMat(SparseMatrix):
                 return [sMat(self.shape[1], 1, {(k,0):v for k,v in dic.items()}) for r, dic in H.items()]
             return H
 
-        for k,v in self._smat.items():
+        for k,v in self.todok().items():
             if k[0] not in rowDic:
                 rowDic[k[0]] = {}
             rowDic[k[0]][k[1]] = v
@@ -675,7 +675,7 @@ class sMat(SparseMatrix):
         return retH
 
     def sqrt(self):
-        return sMat(*self.shape, {k:sqrt(v) for k,v in self._smat.items()})
+        return sMat(*self.shape, {k:sqrt(v) for k,v in self.todok().items()})
 
     def takagi(self):
         matrix = self
@@ -699,7 +699,7 @@ class sMat(SparseMatrix):
 
         eigenVec = sMat(n, n)
         for c, v in enumerate(auxVec):
-            for k,val in v._smat.items():
+            for k,val in v.todok().items():
                 eigenVec[c, k[0]] = val
 
         for i in range(n-1):
@@ -749,7 +749,7 @@ class sMat(SparseMatrix):
         pos1 = set(range(n))
         pos2 = set()
 
-        for k in vec._smat:
+        for k in vec.todok():
             pos1.discard(k[0])
             pos2.add(k[0])
 

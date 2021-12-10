@@ -28,7 +28,7 @@ The only thing to do is to clone this repository, and begin working in PyR@TE 3'
 
 ### Description:
 
-PyR@TE is a Python code that computes the renormalization group equations (RGEs) for any renormalizable non-supersymmetric model. After the gauge groups, the particle content and the Lagrangian of have been defined in a model file, PyR@TE calculates the RGEs for all of the couplings at the one- or two-loop level, and up to the three-loop level for gauge couplings.  
+PyR@TE is a Python code that computes the renormalization group equations (RGEs) for any renormalizable non-supersymmetric model. After the gauge groups, the particle content and the Lagrangian have been defined in a model file, PyR@TE calculates the RGEs for all of the couplings at the one- or two-loop level, and up to the three-loop level for gauge couplings.  
 
 ### How to use PyR@TE
 

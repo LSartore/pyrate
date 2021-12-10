@@ -970,7 +970,7 @@ class Model(object):
 
 
     def fillMappingMatrix(self, mappingMatrix, rank, coeffList, newTerm):
-        newMat = SparseMatrix(*mappingMatrix.shape, mappingMatrix._smat)
+        newMat = SparseMatrix(*mappingMatrix.shape, mappingMatrix.todok())
         pos = []
 
         for subTerm in newTerm[1].as_coeff_add()[1]:

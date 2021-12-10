@@ -351,7 +351,7 @@ class LieAlgebra(object):
             Brows, Bcols = {}, {}
             Crows, Ccols = {}, {}
 
-            for k,v in B._smat.items():
+            for k,v in B.todok().items():
                 if k[0] not in Brows:
                     Brows[k[0]] = {}
                 if k[1] not in Bcols:
@@ -359,7 +359,7 @@ class LieAlgebra(object):
                 Brows[k[0]][k[1]] = v
                 Bcols[k[1]][k[0]] = v
 
-            for k,v in C._smat.items():
+            for k,v in C.todok().items():
                 if k[0] not in Crows:
                     Crows[k[0]] = {}
                 if k[1] not in Ccols:
@@ -367,7 +367,7 @@ class LieAlgebra(object):
                 Crows[k[0]][k[1]] = v
                 Ccols[k[1]][k[0]] = v
 
-            for (i,j), va in A._smat.items():
+            for (i,j), va in A.todok().items():
                 if j in Brows and i in Ccols:
                     for k in set(Brows[j]).intersection(Ccols[i]):
                         res += va*Brows[j][k]*Ccols[i][k]
@@ -1565,7 +1565,7 @@ class LieAlgebra(object):
 
         aux = aux.inv() * sqrt(repDims)
 
-        for k,v in list(aux._smat.items()):
+        for k,v in list(aux.todok().items()):
             aux[k] = expand(v)
 
         # Finally perform matrix multiplication aux*invs
@@ -1688,7 +1688,7 @@ class LieAlgebra(object):
             if real:
                 subs = {}
                 rotMat = self._realBasisRotation(reps[i])
-                for k,v in rotMat._smat.items():
+                for k,v in rotMat.todok().items():
                     subFrom = tuple([k[0] if p==i else None for p in range(4)])
                     subTo = tuple([k[1] if p==i else None for p in range(4)])
 
@@ -1849,7 +1849,7 @@ class LieAlgebra(object):
         result = [0]*len(invs)
 
         # Performing matrix multiplication transpose(newStates)*invs
-        for k,v in newStates._smat.items():
+        for k,v in newStates.todok().items():
             if result[k[1]] == 0:
                 result[k[1]] = v*invs[k[0]]
             else:
@@ -2060,6 +2060,6 @@ class LieAlgebra(object):
         if array == 0:
             return True
         if isinstance(array, sMat):
-            return array._smat == {}
+            return array.todok() == {}
 
         exit("What type of array ?")

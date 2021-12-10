@@ -1127,7 +1127,7 @@ class sMatDB():
             self.shape = arg.shape
 
             # Read the sparse matrix
-            for k,v in arg._smat.items():
+            for k,v in arg.todok().items():
                 self.keys.append(tuple([int(el) for el in k]))
                 self.values.append(PyLieDB.convert(v, allStr=True))
 
@@ -1136,7 +1136,7 @@ class sMatDB():
             self.shape = (len(arg),) + arg[0].shape
 
             for i, mat in enumerate(arg):
-                for k,v in mat._smat.items():
+                for k,v in mat.todok().items():
                     self.keys.append((i,) + tuple([int(el) for el in k]))
                     self.values.append(PyLieDB.convert(v, allStr=True))
 
@@ -1146,7 +1146,7 @@ class sMatDB():
 
             for i, l in enumerate(arg):
                 for j, mat in enumerate(arg):
-                    for k,v in mat._smat.items():
+                    for k,v in mat.todok().items():
                         self.keys.append((i, j) + tuple([int(el) for el in k]))
                         self.values.append(PyLieDB.convert(v, allStr=True))
 

@@ -276,7 +276,7 @@ class Lagrangian():
             shape = tuple([len(repMats), *repMats[0].shape])
             dic = {}
             for i, mat in enumerate(repMats):
-                for k,v in mat._smat.items():
+                for k,v in mat.todok().items():
                     dic[(i,*k)] = v
 
             # This is for latex output
