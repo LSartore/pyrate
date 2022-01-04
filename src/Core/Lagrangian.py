@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from sys import exit
 
+import copy
+
 from Logging import loggingCritical, print_progress
 from Definitions import GaugeGroup, Tensor, mSymbol, splitPow, tensorContract, insertKey
 from Particles import Particle
@@ -234,7 +236,7 @@ class Lagrangian():
                     loggingCritical(f"Warning : unable to read the definition '{k}: {v}'. Skipping.")
 
 
-    def parseExpression(self, expr, name=None, expandedTerm=None):
+    def parseExpression(self, expr, name=None, expandedTerm=None, coupling=None):
         """ This function handles the convertion from str to TensorObject of
         lagrangian expressions written by the user in the model file.
         As much as possible, the user input is validated and error messages
@@ -528,11 +530,16 @@ class Lagrangian():
 
             # Now that the term is validated, construct the resulting tensor object
             contractArgs = []
+            fermions = []
             for field in terms:
                 if not isinstance(field, Symbol):
                     base, inds = field.base, field.indices
                 else:
                     base, inds = field, []
+
+                # Store fermions to detect (anti-)symmetric Yukawas
+                if str(base) in self.model.Fermions:
+                    fermions.append(base)
 
                 tens = self.definitions[str(base)]
                 tens.update(len(inds))
@@ -541,10 +548,15 @@ class Lagrangian():
                 contractArgs.append(tens(*inds))
 
             freeDummies = [Wild(str(el)) for el in Linds]
-            tmp = tensorContract(*contractArgs, value=coeff, freeDummies=freeDummies, doit=True)
 
-            if not isinstance(tmp, dict):
-                tmp = expand(tmp)
+            # Handle (anti-)symmetric Yukawas
+            if len(set(fermions)) != len(fermions) and coupling is not None:
+                tmp = self.handleSymmetricYukawa(fermions, contractArgs, coeff, freeDummies, coupling)
+            else:
+                tmp = tensorContract(*contractArgs, value=coeff, freeDummies=freeDummies, doit=True)
+
+                if not isinstance(tmp, dict):
+                    tmp = expand(tmp)
 
             if rhsResult == 0:
                 rhsResult = tmp
@@ -578,6 +590,59 @@ class Lagrangian():
             loggingCritical(f"\nError while parsing the term '{errorExpr}': please check the consistency of contracted indices.")
             exit()
 
+
+    def handleSymmetricYukawa(self, fermions, contractArgs, coeff, freeDummies, coupling):
+        duplicateFermions = [el for el in fermions if fermions.count(el) == 2]
+
+        if len(duplicateFermions) != 2:
+            return expand(tensorContract(*contractArgs, value=coeff, freeDummies=freeDummies, doit=True))
+
+        expanded = []
+
+        duplicateFermion = duplicateFermions[0]
+        symbs = [el[0].symbol for el in contractArgs]
+        duplicatePos = [i for i, el in enumerate(symbs) if el == duplicateFermion]
+
+        for pos in duplicatePos:
+            duplicateTensor = copy.deepcopy(contractArgs[pos][0])
+
+            newDic = {}
+            for k, v in duplicateTensor.dic.items():
+                if isinstance(v, Symbol):
+                    newDic[k] = Symbol('df$' + str(v))
+                elif isinstance(v, Indexed):
+                    newDic[k] = Indexed('df$' + str(v.base), *v.indices)
+
+            duplicateTensor.dic = newDic
+            newcArgs = []
+            for i, el in enumerate(contractArgs):
+                if i != pos:
+                    newcArgs.append(el)
+                else:
+                    if len(contractArgs[pos]) > 1:
+                        newcArgs.append((duplicateTensor, contractArgs[pos][1]))
+                    else:
+                        newcArgs.append((duplicateTensor, ))
+
+            expanded.append(expand(tensorContract(*newcArgs, value=coeff, freeDummies=freeDummies, doit=True)))
+
+        if expand(expanded[0] + expanded[1]) == 0:
+            # Antisymmetric Yukawa matrix
+
+            # For one generation, the Yukawa operator simply vanishes.
+            # In this case an error should be raised eventually
+            if self.model.Fermions[str(duplicateFermion)].gen == 1:
+                return expand(tensorContract(*contractArgs, value=coeff, freeDummies=freeDummies, doit=True))
+
+
+            self.model.assumptions[coupling]['antisymmetric'] = True
+        else:
+            # Symmetric Yukawa matrix
+            self.model.assumptions[coupling]['symmetric'] = True
+
+        return expanded[0]
+
+
     def expand(self):
         """ Performs a first level of expansion of the Lagrangian. More precisely, replaces
         all the occurences of user-defined quantities with their expression."""
@@ -603,7 +668,7 @@ class Lagrangian():
                 parsedTerm = []
 
                 try:
-                    expTerm = self.parseExpression(term, expandedTerm=parsedTerm).dic[()]
+                    expTerm = self.parseExpression(term, expandedTerm=parsedTerm, coupling=coupling).dic[()]
                 except KeyboardInterrupt:
                     raise KeyboardInterrupt
                 except BaseException as e:
@@ -672,7 +737,7 @@ class Lagrangian():
             #For fermions, we have to be careful that the order in which the user wrote the terms
             # is preserved here. Inverting them would transpose the Yukawa / mass matrix
 
-            fermions = [self.model.allFermions[str(el)] for el in subTerm[1] if str(el) in self.model.allFermions ]
+            fermions = [self.model.allFermions[str(el).replace('df$', '')] for el in subTerm[1] if str(el).replace('df$', '') in self.model.allFermions]
 
             if fermions != []:
                 # Sort fermions according to their pos in the potential term
@@ -687,7 +752,6 @@ class Lagrangian():
             fGen = [f[1].gen for f in fermions]
             fermions = [f[0] for f in fermions]
 
-
             scalars = [self.model.allScalars[str(el)][0] for el in subTerm[1] if str(el) in self.model.allScalars ]
             # sGen = [self.model.allScalars[str(el)][1].gen for el in subTerm[1] if str(el) in self.model.allScalars]
 
@@ -697,13 +761,6 @@ class Lagrangian():
                     exit()
                 tensorInds = tuple(scalars + fermions)
                 coeff = subTerm[0] * 2/len(set(itertools.permutations(fermions, 2)))
-
-                # # Fermion1 = Fermion2 : the matrix is symmetric
-                # if self.allFermionsValues[fermions[0]][1] == self.allFermionsValues[fermions[1]][1]:
-                #     self.model.assumptions[str(coupling)]['symmetric'] = True
-                # # Fermion1 = Fermion2bar : the matrix is hermitian
-                # if self.allFermionsValues[fermions[0]][1] == self.allFermionsValues[self.antiFermionPos(fermions[1])][1]:
-                #     self.model.assumptions[str(coupling)]['hermitian'] = True
 
                 assumptionDic = self.model.assumptions[str(coupling)]
 
@@ -739,13 +796,6 @@ class Lagrangian():
                 tensorInds = tuple(fermions)
                 coeff = subTerm[0] * 2/len(set(itertools.permutations(tensorInds, 2)))
 
-                # # Fermion1 = Fermion2 : the matrix is symmetric
-                # if fermions[0] == fermions[1]:
-                #     self.model.assumptions[str(coupling)]['symmetric'] = True
-                # # Fermion1 = Fermion2bar : the matrix is hermitian
-                # if fermions[0] == self.antiFermionPos(fermions[1]):
-                #     self.model.assumptions[str(coupling)]['hermitian'] = True
-
                 assumptionDic = self.model.assumptions[str(coupling)]
 
                 coupling = mSymbol(str(coupling), fGen[0], fGen[1], **assumptionDic)
@@ -767,19 +817,37 @@ class Lagrangian():
 
                 self.model.allCouplings[str(coupling)] = tuple(tmp)
 
-            # If Yukawa / Fermion mass, add the hermitian conjugate to Dic
+            # If Yukawa / Fermion mass, properly fill the dictionary, taking into
+            # account possible sym/antisym couplings.
+            # Then, fill the conjugate part of y(a,i,j).
             if content == (2,1) or content == (2,0):
                 antiFermions = [self.antiFermionPos(f) for f in fermions]
                 antiFermions.reverse()
-                tensorInds = tuple(scalars + antiFermions + [True])
-                coeff = conjugate(coeff)
+                adjTensorInds = tuple(scalars + antiFermions + [True])
+                adjCoeff = conjugate(coeff)
                 adjCoupling = Adjoint(coupling).doit()
 
-                if tensorInds not in self.dicToFill:
-                    self.dicToFill[tensorInds] = adjCoupling*coeff
+                if adjTensorInds not in self.dicToFill:
+                    self.dicToFill[adjTensorInds] = adjCoupling*adjCoeff
                 else:
-                    self.dicToFill[tensorInds] += adjCoupling*coeff
+                    self.dicToFill[adjTensorInds] += adjCoupling*adjCoeff
 
+                if tensorInds[1] != tensorInds[2]:
+                    rev = self.reverseFermionInds(tensorInds)
+                    revAdj = tuple(list(self.reverseFermionInds(adjTensorInds[:-1])) + [True])
+
+                    if rev not in self.dicToFill:
+                        self.dicToFill[rev] = (coupling*coeff).transpose()
+                        self.dicToFill[revAdj] = (adjCoupling*adjCoeff).transpose()
+                    else:
+                        self.dicToFill[rev] += (coupling*coeff).transpose()
+                        self.dicToFill[revAdj] += (adjCoupling*adjCoeff).transpose()
+
+
+    def reverseFermionInds(self, tensorInds):
+        reversedInds = list(tensorInds)
+        (reversedInds[-1], reversedInds[-2]) = (reversedInds[-2], reversedInds[-1])
+        return tuple(reversedInds)
 
     def getFermionShape(self, i, j):
         return (lambda l: (l[i][1].gen, l[j][1].gen))(self.allFermionsValues)

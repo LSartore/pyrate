@@ -1,5 +1,7 @@
 from sympy import (Expr, sympify, Basic, MatrixBase, Mul, flatten,
-                   Add, transpose, adjoint, conjugate, expand, Symbol, Pow, Identity)
+                   Add, transpose, adjoint, conjugate, expand, Symbol, Pow)
+
+from sys import exit
 
 class Trace(Expr):
     is_Trace = True
@@ -43,6 +45,31 @@ def trace(expr):
     return ret
 
 
+def isTranspose(symb):
+    if isinstance(symb, Mul) and symb.args[0] == -1:
+        return isinstance(symb.args[1], transpose)
+    return isinstance(symb, transpose)
+
+def isConjugate(symb):
+    if isinstance(symb, Mul) and symb.args[0] == -1:
+        return isinstance(symb.args[1], conjugate)
+    return isinstance(symb, conjugate)
+
+def isAdjoint(symb):
+    if isinstance(symb, Mul) and symb.args[0] == -1:
+        return isinstance(symb.args[1], adjoint)
+    return isinstance(symb, adjoint)
+
+def getName(symb):
+    if isinstance(symb, Mul) and symb.args[0] == -1:
+        return getName(symb.args[1])
+
+    if isTranspose(symb) or isConjugate(symb) or isAdjoint(symb):
+        return symb.args[0].name
+
+    return symb.name
+
+
 def sortYukTrace(expr, yukPos, depth=0):
     expr = expand(expr)
     subTerms = flatten(expr.as_coeff_mul())
@@ -82,16 +109,18 @@ def sortYukTrace(expr, yukPos, depth=0):
         return expr
 
     try:
-        transp = [isinstance(el, transpose) for el in args]
-        conj = [isinstance(el, conjugate) for el in args]
+        transp = [isTranspose(el) for el in args]
+        conj = [isConjugate(el) for el in args]
 
         chooseTranspose = False
         if all(transp):
             args = tuple([transpose(el) for el in args])[::-1]
         elif any(transp) or any(conj):
             transposed = tuple([transpose(el) for el in args])[::-1]
-            if (not any([isinstance(el, transpose) for el in transposed])
-            and not any([isinstance(el, conjugate) for el in transposed])):
+            # if (not any([isinstance(el, transpose) for el in transposed])
+            # and not any([isinstance(el, conjugate) for el in transposed])):
+            if (not any([isTranspose(el) for el in transposed])
+            and not any([isConjugate(el) for el in transposed])):
                 args = transposed
             else:
                 count = str(args).count('transpose') + str(args).count('conjugate')
@@ -118,17 +147,17 @@ def sortYukTrace(expr, yukPos, depth=0):
         return sortYukTrace(trace(expand(tr.args[0])), yukPos, depth=depth+1)
 
 def yukSortKey(term, yukPos):
-    if isinstance(term, adjoint):
-        pos = yukPos[term.args[0].name]
-        return (2, pos)
-    elif isinstance(term, transpose):
-        pos = yukPos[term.args[0].name]
-        return (3, pos)
-    elif isinstance(term, conjugate):
-        pos = yukPos[term.args[0].name]
-        return (2, pos)
-    else:
-        pos = yukPos[term.name]
+    if isAdjoint(term):
+        pos = yukPos[getName(term)]
         return (1, pos)
+    elif isTranspose(term):
+        pos = yukPos[getName(term)]
+        return (2, pos)
+    elif isConjugate(term):
+        pos = yukPos[getName(term)]
+        return (1, pos)
+    else:
+        pos = yukPos[getName(term)]
+        return (3, pos)
 
 

@@ -9,7 +9,7 @@ from sympy import Symbol, Mul, MatMul, conjugate, SparseMatrix, Matrix, Pow, dia
 class mSymbol(Symbol):
     """ mSymbol(name, n, m, **assumptions) """
 
-    def __new__(cls, *args, symmetric=False, hermitian=False, real=False, unitary=False):
+    def __new__(cls, *args, symmetric=False, antisymmetric=False, hermitian=False, real=False, unitary=False):
         if args[1] != args[2]:
             if symmetric or hermitian or unitary:
                 loggingCritical("Matrix <" + args[0] + "> cannot be symmetric, hermitian or unitary since it is not a square matrix.")
@@ -18,6 +18,7 @@ class mSymbol(Symbol):
         if not args[1] == args[2] == 1:
             obj = Symbol.__new__(cls, args[0], commutative=False, hermitian=hermitian)
             obj.is_symmetric = symmetric
+            obj.is_antisymmetric = antisymmetric
             obj.is_realMatrix = real
             obj.is_unitary = unitary
         else:
@@ -28,11 +29,15 @@ class mSymbol(Symbol):
     def _eval_transpose(self):
         if self.shape == (1,1) or self.is_symmetric:
             return self
+        if self.is_antisymmetric:
+            return -1*self
         return super()._eval_transpose()
 
     def _eval_adjoint(self):
         if self.shape == (1,1) or self.is_symmetric:
             return conjugate(self)
+        if self.is_antisymmetric:
+            return -1*conjugate(self)
         return super()._eval_adjoint()
 
     def _eval_conjugate(self):
@@ -59,12 +64,15 @@ class mSymbol(Symbol):
                 else:
                     assump['complex'] = True
 
-
-                if i <= j:
+                if i == j and self.is_antisymmetric:
+                    mat[i,j] = 0
+                elif i <= j:
                     mat[i, j] = Symbol('{' + str(self) + '}_{' + str(i+1) + str(j+1) + '}', **assump)
                 else:
                     if self.is_symmetric:
                         mat[i, j] = mat[j, i]
+                    elif self.is_antisymmetric:
+                        mat[i, j] = -1*mat[j, i]
                     elif self.is_hermitian:
                         mat[i, j] = conjugate(mat[j, i])
                     else:

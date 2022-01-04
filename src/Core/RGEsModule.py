@@ -279,7 +279,6 @@ class RGEsModule():
         self.y = Tensor((self.nS, self.nF, self.nF))
         for k,v in self.YDic.items():
             self.y.dic[k] = v
-            self.y.dic[(k[0], k[2], k[1])] = transpose(v)
 
         self.yt = Tensor((self.nS, self.nF, self.nF))
         self.yt.dic = self.dicTilde(self.y.dic, [1,2])
@@ -295,7 +294,6 @@ class RGEsModule():
         self.M = Tensor((self.nF, self.nF))
         for k,v in self.MFdic.items():
             self.M.dic[k] = v
-            self.M.dic[(k[1], k[0])] = transpose(v)
 
         self.Mt = Tensor((self.nF, self.nF))
         self.Mt.dic = self.dicTilde(self.M.dic, [0,1])

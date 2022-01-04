@@ -6,7 +6,7 @@ import itertools
 
 from sympy import (DiagonalMatrix, Indexed, IndexedBase, Integer, Matrix, Mul, Pow,
                    Rational, SparseMatrix, Symbol, eye, flatten, lambdify, pi,
-                   simplify, sqrt, zeros)
+                   simplify, sqrt, zeros, transpose)
 
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication
 
@@ -903,7 +903,7 @@ class Model(object):
                 sortFunc = lambda x: (len(set(x[0])), len(x[1].as_coeff_add()[1]), x[0])
 
                 for key, val in translation[couplingType].items():
-                    if key[-1] is True:
+                    if key[-1] is True or val.find(transpose) != set():
                         continue
                     if val not in auxDic:
                         auxDic[val] = key
