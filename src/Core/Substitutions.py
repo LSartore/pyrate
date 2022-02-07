@@ -783,8 +783,11 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
     for cType, loopDic in self.couplingRGEs.items():
         for nLoop, RGEdic in loopDic.items():
             for c, bFunc in list(RGEdic.items()):
-                newRGE = bFunc.subs(unitarySubs)
-                newRGE = newRGE.replace(lambda x: x.is_Pow and isinstance(x.base, Identity), lambda x: x.base).doit()
+                if not isinstance(bFunc, list):
+                    newRGE = bFunc.subs(unitarySubs).replace(lambda x: x.is_Pow and isinstance(x.base, Identity), lambda x: x.base).doit()
+                else:
+                    newRGE = [bFunc[0].subs(unitarySubs).replace(lambda x: x.is_Pow and isinstance(x.base, Identity), lambda x: x.base).doit(),
+                              {k:v.subs(unitarySubs).replace(lambda x: x.is_Pow and isinstance(x.base, Identity), lambda x: x.base).doit() for k,v in bFunc[1].items()}]
                 self.couplingRGEs[cType][nLoop][c] = newRGE
 
 
