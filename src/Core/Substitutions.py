@@ -385,7 +385,10 @@ def doSubstitutions(self, substitutionDic, inconsistentRGEerror=False):
                             noncomm.append(el.__class__(mat))
 
                 if noncomm == []:
-                    shape = self.couplingStructure[str(trElements[0])][0]
+                    auxCoupling = trElements[0]
+                    if type(auxCoupling) in (adjoint, conjugate, transpose):
+                        auxCoupling = auxCoupling.args[0]
+                    shape = self.couplingStructure[str(auxCoupling)][0]
                     ret = shape*comm
                 else:
                     ret = comm*traceSub(trace(Mul(*noncomm)))
