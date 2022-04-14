@@ -600,6 +600,7 @@ class Lagrangian():
         expanded = []
 
         duplicateFermion = duplicateFermions[0]
+
         symbs = [el[0].symbol for el in contractArgs]
         duplicatePos = [i for i, el in enumerate(symbs) if el == duplicateFermion]
 
@@ -620,7 +621,7 @@ class Lagrangian():
                     newcArgs.append(el)
                 else:
                     if len(contractArgs[pos]) > 1:
-                        newcArgs.append((duplicateTensor, contractArgs[pos][1]))
+                        newcArgs.append((duplicateTensor, *contractArgs[pos][1:]))
                     else:
                         newcArgs.append((duplicateTensor, ))
 
