@@ -104,7 +104,7 @@ class RGEsModule():
             if g.abelian :
                 for fName, f in model.allFermions.items():
                     if f[1].Qnb[gName] != 0:
-                        self.TDic[((gPos,0), f[0], f[0])] = identity(f[1].gen)*Rational(f[1].Qnb[gName])
+                        self.TDic[((gPos,0), f[0], f[0])] = identity(f[1].gen)*f[1].Qnb[gName]
 
             else:
                 nAbelPos = nonAbelGroupNames.index(gName)

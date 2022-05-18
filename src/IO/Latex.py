@@ -241,7 +241,7 @@ r""" \\ \hline
                 gPos = list(model.gaugeGroups).index(g)
 
                 if model.gaugeGroups[g].abelian:
-                    repName = ('+' if qnb > 0 else '') + self.totex(Rational(qnb))
+                    repName = ('+' if qnb > 0 else '') + self.totex(qnb)
                 else:
                     repName = model.gaugeGroups[g].repName(qnb)
 
@@ -288,7 +288,7 @@ r""" \\[.1cm] \hline
                 gPos = list(model.gaugeGroups).index(g)
 
                 if model.gaugeGroups[g].abelian:
-                    repName = ('+' if qnb > 0 else '') + self.totex(Rational(qnb))
+                    repName = ('+' if qnb > 0 else '') + self.totex(qnb)
                 else:
                     repName = model.gaugeGroups[g].repName(qnb)
                 rep[gPos] = '$' + repName + '$'
@@ -1139,6 +1139,23 @@ class Printer(LatexPrinter):
         else:
             return r"%s^{\trans}" % matStr
 
+    def _print_adjoint(self, expr, exp=None):
+        mat = expr.args[0]
+        matStr = self._print(mat)
+
+        expString = ""
+
+        if exp is not None:
+            expString = exp + "\\, "
+
+        daggerStr = "{" + expString + "\\dagger}"
+
+        if '^' in matStr:
+            s = (r"{%s}^" % matStr) + daggerStr
+        else:
+            s = r"%s^" % matStr + daggerStr
+
+        return s
 
     def _print_Delta(self, expr):
         i,j,k,l = eval(expr.name)
@@ -1177,15 +1194,6 @@ class Printer(LatexPrinter):
         s += '\\right)'
 
         return s
-
-    def _print_adjoint(self, expr):
-        mat = expr.args[0]
-        matStr = self._print(mat)
-
-        if '^' in matStr:
-            return r"{%s}^{\dagger}" % matStr
-        else:
-            return r"%s^{\dagger}" % matStr
 
     def sortTerms(self, args):
         if self.cType == 'GaugeCouplings':
