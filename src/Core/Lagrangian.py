@@ -833,7 +833,7 @@ class Lagrangian():
                 else:
                     self.dicToFill[adjTensorInds] += adjCoupling*adjCoeff
 
-                if tensorInds[1] != tensorInds[2]:
+                if tensorInds[-2] != tensorInds[-1]:
                     rev = self.reverseFermionInds(tensorInds)
                     revAdj = tuple(list(self.reverseFermionInds(adjTensorInds[:-1])) + [True])
 
