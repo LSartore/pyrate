@@ -605,7 +605,7 @@ class LieAlgebra(object):
         """
         if (self._cmp(list(weights), list(self.conjugateIrrep(weights))) in [-1, 0]) and not (np.all(
                     (self.conjugateIrrep(weights)) == weights)):
-            return [np.array([-1, 1], dtype=int) * el for el in self._weights(self.conjugateIrrep(weights))]
+            return [[-1*el[0], el[1]] for el in self._weights(self.conjugateIrrep(weights))]
         else:
             dw = self._dominantWeights(weights)
             result = sum(
