@@ -39,7 +39,7 @@ class Inputs():
 
         if os.path.abspath(settings['Results']) != settings['Results']:
             settings['Results'] = os.path.abspath(os.path.join(wd, settings['Results']))
-        if not (os.path.exists(settings['Results'])):
+        if not (os.path.exists(settings['Results'])) and not runSettings['LightCppSolverOnly']:
             os.makedirs(settings['Results'])
 
         if settings['ForceLog']:
@@ -55,15 +55,15 @@ class Inputs():
         checkDependencies()
 
         # A useful check before going on : no export was selected
-        if not any((settings['LatexOutput'], settings['MathematicaOutput'], settings['PythonOutput'], settings['UFOfolder'])):
-            loggingCritical("Error : No ouput would be produced after the computation. Please choose at least one export option (Latex, Mathematica, Python, UFO).")
+        if not any((settings['LatexOutput'], settings['MathematicaOutput'], settings['PythonOutput'])) and not settings["LightCppSolverOnly"] and not settings["LightCppSolver"]:
+            loggingCritical("Error: No ouput would be produced after the computation. Please choose at least one export option (Latex, Mathematica, Python).")
             exit()
 
-        if settings['UFOfolder'] is not None:
-            if os.path.abspath(settings['UFOfolder']) != settings['UFOfolder']:
-                settings['UFOfolder'] = os.path.abspath(os.path.join(wd, settings['UFOfolder']))
-            if not (os.path.exists(settings['UFOfolder'])):
-                os.makedirs(settings['UFOfolder'])
+        if settings["LightCppSolverOnly"] is True:
+            if settings["LightCppSolver"] is False:
+                loggingCritical("Error: --LightCppSolver was set to True although no LightCppSolver path was provided.")
+                exit()
+            settings['LatexOutput'], settings['MathematicaOutput'], settings['PythonOutput'] = False, False, False
 
         if 'RealBasis' in settings and type(settings['RealBasis']) == str:
             settings['RealBasis'] = settings['RealBasis'].lower()
@@ -155,6 +155,11 @@ class Inputs():
         parser.add_argument('--Results', '-res', dest='Results', action='store', default=default['ResultsFolder'],
                             help='Store all the output files in the path')
 
+        # Create subfolder with model's name
+        parser.add_argument('--CreateFolder', dest='CreateFolder', action='store', default=default['CreateFolder'],
+                            help='Whether to create a subfolder with the name of the model to store the results')
+        parser.set_defaults(CreateFolder=default['CreateFolder'])
+
         # Output files
 
             # Latex
@@ -196,16 +201,10 @@ class Inputs():
         # Optional lighter cpp solver
         parser.add_argument('--LightCppSolver', '-lcpp', dest='LightCppSolver', action='store', default=False,
                             help='Provide the path of an optional lighter Cpp solver. This is mainly intended to be used with the FeynRules/MadGraph interface.')
+        parser.add_argument('--LightCppSolverOnly', dest='LightCppSolverOnly', action='store_true', default=False,
+                            help='No other output than the lighter Cpp solver. This is mainly intended to be used with the FeynRules/MadGraph interface.')
 
-
-        # parser.add_argument('--CppCouplingsList', '-cpplist', dest='CppCouplingsList', action='store_true', default=False,
-        #                     help='Request the C++ solver to export a list of running couplings (mainly designed for the FeynRules interface)')
-
-            # UFO export
-        parser.add_argument('--UFOfolder', '-ufo', dest='UFOfolder', action='store', default=None,
-                            help='Ask PyR@TE to produce a UFO \'running.py\' file in the specified folder')
-
-            # Some additional options
+        # Some additional options
         parser.add_argument('--no-KinMix', '-no-kin', dest='NoKinMix', action='store_true', default=False,
                             help='Switch off the kinetic mixing terms if multiple U(1) gauge groups are present.')
 
