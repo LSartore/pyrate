@@ -39,7 +39,7 @@ def exports(runSettings, model):
 
         if runSettings['PythonOutput'] is False and runSettings['LightCppSolverOnly'] is False:
             loggingInfo("Skipping C++ output (python output required).")
-        else
+        else:
             loggingInfo("\tExporting to C++...", end=' ')
             try:
                 cpp = CppExport(model, lightSolverOnly=True)
